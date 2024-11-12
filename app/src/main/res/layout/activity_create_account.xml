@@ -6,7 +6,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".NewAccount">
 
-    <Toolbar
+    <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -40,62 +40,64 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/toolbar">
+        app:layout_constraintTop_toBottomOf="@+id/toolbar"
+        app:layout_constraintVertical_bias="0.5">
 
         <EditText
             android:id="@+id/create_firstName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ems="10"
+            android:hint="First Name"
             android:inputType="text"
-            android:text=""
-            android:hint="First Name"/>
+            android:text="" />
 
         <EditText
             android:id="@+id/create_surname"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ems="10"
+            android:hint="Surname"
             android:inputType="text"
-            android:text=""
-            android:hint="Surname"/>
+            android:text="" />
 
         <EditText
             android:id="@+id/create_password"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ems="10"
-            android:inputType="textPassword"
-            android:hint="Password"/>
+            android:hint="Password"
+            android:inputType="textPassword" />
 
         <EditText
             android:id="@+id/create_emailAddress"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ems="10"
-            android:inputType="textEmailAddress"
-            android:hint="Email"/>
+            android:hint="Email"
+            android:inputType="textEmailAddress" />
 
         <EditText
             android:id="@+id/create_phone"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ems="10"
-            android:inputType="phone"
-            android:hint="Phone #"/>
+            android:hint="Phone #"
+            android:inputType="phone" />
 
         <Spinner
             android:id="@+id/create_type"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:entries="@array/user_type_array"
-            tools:listitem=""/>
+            tools:listitem="" />
 
         <Button
             android:id="@+id/create_account"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Create Account"/>
+            android:onClick="createNewUser"
+            android:text="Create Account" />
 
 
     </LinearLayout>

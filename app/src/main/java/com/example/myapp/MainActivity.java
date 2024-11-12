@@ -3,7 +3,8 @@ package com.example.myapp;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -12,6 +13,8 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 public class MainActivity extends AppCompatActivity {
+
+    private DBHelper DBHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,15 +27,32 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
-        Button signInButton = findViewById(R.id.login);
+        DBHelper = new DBHelper(this);
+    }
 
-        signInButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Navigate to the Welcome Screen
-                Intent intent = new Intent(MainActivity.this, WelcomeScreen.class);
-                startActivity(intent);
-            }
-        });
+    // sign in to account
+    public void signIn(View v) {
+        EditText emailInput = findViewById(R.id.username);
+        EditText passwordInput = findViewById(R.id.password);
+        String email = emailInput.getText().toString().trim();
+        String password = passwordInput.getText().toString().trim();
+
+        if (email.isEmpty() || password.isEmpty()) {
+            Toast.makeText(MainActivity.this, "Please enter both email and password", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (DBHelper.checkUserCredentials(email, password)) {
+            Intent intent = new Intent(MainActivity.this, WelcomeScreen.class);
+            startActivity(intent);
+        } else {
+            Toast.makeText(MainActivity.this, "Invalid email or password!", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    // create new account
+    public void navCreateAccount(View v) {
+        Intent intent = new Intent(MainActivity.this, NewAccount.class);
+        startActivity(intent);
     }
 }

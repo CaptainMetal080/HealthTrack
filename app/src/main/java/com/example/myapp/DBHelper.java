@@ -2,6 +2,7 @@ package com.example.myapp;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
@@ -59,5 +60,22 @@ public class DBHelper extends SQLiteOpenHelper {
         long var = db.insert(USERS_TABLE_NAME, null, values);
         db.close();
         return var != -1;
+    }
+
+    public boolean checkUserCredentials(String email, String password) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        boolean userExists = false;
+
+        // Query the user table for a match with the email and password
+        String query = "SELECT * FROM " + USERS_TABLE_NAME + " WHERE " + COLUMN_EMAIL + " = ? AND " + COLUMN_PASSWORD + " = ?";
+        cursor = db.rawQuery(query, new String[] {email, password});
+
+        if (cursor != null && cursor.moveToFirst()) {
+            // If a row is returned, it means user credentials match
+            userExists = true;
+        }
+
+        return userExists;
     }
 }

@@ -68,12 +68,13 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Sign in"
-            android:onClick="onSignIn"/>
+            android:onClick="signIn"/>
 
         <Button
             android:id="@+id/signup"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Create account" />
+            android:text="Create account"
+            android:onClick="navCreateAccount"/>
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
