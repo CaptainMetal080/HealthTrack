@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">My App</string>
+    <string-array name="user_type_array">
+        <item>Doctor</item>
+        <item>Patient</item>
+    </string-array>
 </resources>

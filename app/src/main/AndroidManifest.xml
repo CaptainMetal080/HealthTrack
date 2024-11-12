@@ -24,6 +24,7 @@
 
         <activity android:name=".WelcomeScreen" />
         <activity android:name=".PatientHealthData" />
+        <activity android:name=".NewAccount" />
     </application>
 
 </manifest>
