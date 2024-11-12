@@ -6,6 +6,8 @@ import android.os.Handler;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.healthtrack.R;
+
 public class WelcomeScreen extends AppCompatActivity {
 
     @Override

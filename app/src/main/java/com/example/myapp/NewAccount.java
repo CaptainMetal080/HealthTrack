@@ -10,6 +10,8 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
+import com.example.healthtrack.R;
+
 public class NewAccount extends AppCompatActivity {
 
     public DBHelper DBHelper;
