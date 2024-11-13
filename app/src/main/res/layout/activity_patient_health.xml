@@ -30,7 +30,7 @@
         android:layout_height="wrap_content"
         android:gravity="center"
         android:text="Heart Rate: -- BPM"
-        android:textStyle="bold||italic"
+        android:textStyle="bold|italic"
         android:textSize="32sp"
         android:layout_gravity="center"/>
 

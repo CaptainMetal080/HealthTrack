@@ -5,6 +5,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.View;
@@ -12,6 +13,7 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
@@ -41,7 +43,7 @@ public class PatientHealthData extends AppCompatActivity {
 
         // Find views
         heartRateTextView = findViewById(R.id.heartRateTextView);
-        connectButton = findViewById(R.id.connectButton);
+
 
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
@@ -49,17 +51,20 @@ public class PatientHealthData extends AppCompatActivity {
             Toast.makeText(this, "Bluetooth not available or not enabled", Toast.LENGTH_SHORT).show();
             return;
         }
-
-        // Button click listener to connect to Bluetooth
-        connectButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                connectToBluetoothDevice();
+        try {
+            while(true) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    connectToBluetoothDevice();
+                }
             }
-        });
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
     // Method to connect to Bluetooth device
+    @RequiresApi(api = Build.VERSION_CODES.S)
     private void connectToBluetoothDevice() {
         // Check if Bluetooth permissions are granted
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
