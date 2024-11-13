@@ -29,7 +29,7 @@ public class PatientHealthData extends AppCompatActivity {
     private BluetoothDevice mDevice;
     private OutputStream mOutputStream;
     private InputStream mInputStream;
-    private final String DEVICE_ADDRESS = "00:11:22:33:44:55"; // Replace with your HC-05 address
+    private final String DEVICE_ADDRESS = "bc:b5:a2:5b:02:16";
     private final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"); // Standard SPP UUID
     private TextView heartRateTextView;
     private Button connectButton;

@@ -30,7 +30,7 @@
         <activity android:name="com.example.myapp.PatientHealthData" />
 
 
-        <activity android:name=".NewAccount" />
+        <activity android:name="com.example.myapp.NewAccount" />
     </application>
     <uses-feature android:name="android.hardware.bluetooth" android:required="true"/>
 
