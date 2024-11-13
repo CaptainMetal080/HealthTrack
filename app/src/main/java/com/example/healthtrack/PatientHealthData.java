@@ -17,8 +17,6 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
-import com.example.healthtrack.R;
-
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.IOException;
