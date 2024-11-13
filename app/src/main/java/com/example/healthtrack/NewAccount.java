@@ -10,6 +10,10 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
+import android.util.Patterns;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import com.example.healthtrack.R;
 
 public class NewAccount extends AppCompatActivity {
@@ -56,6 +60,18 @@ public class NewAccount extends AppCompatActivity {
             return;
         }
 
+        // Validate email format
+        if (!isValidEmail(email)) {
+            Toast.makeText(this, "Invalid email address", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        // Validate phone number forma
+        if (!isValidPhoneNumber(phone)) {
+            Toast.makeText(this, "Invalid phone number", Toast.LENGTH_LONG).show();
+            return;
+        }
+        
         User newUser = new User(0, firstName, lastName, password, Long.parseLong(phone), email, selectedUserType);
         boolean userAdded = DBHelper.addUser(newUser);
         if (userAdded) {
@@ -64,5 +80,17 @@ public class NewAccount extends AppCompatActivity {
         } else {
             Toast.makeText(this, "Error creating account, please try again!", Toast.LENGTH_LONG).show();
         }
+    }
+
+    // Helper method to validate email format
+    private boolean isValidEmail(String email) {
+        return Patterns.EMAIL_ADDRESS.matcher(email).matches();
+    }
+
+    private boolean isValidPhoneNumber(String phone) {
+        // Example: Validates if the phone number contains only digits and is 10 digits long
+        Pattern pattern = Pattern.compile("^[0-9]{10}$");
+        Matcher matcher = pattern.matcher(phone);
+        return matcher.matches();
     }
 }
