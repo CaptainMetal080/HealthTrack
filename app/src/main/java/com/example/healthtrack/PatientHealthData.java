@@ -1,4 +1,4 @@
-package com.example.myapp;
+package com.example.healthtrack;
 
 import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
@@ -52,19 +52,14 @@ public class PatientHealthData extends AppCompatActivity {
             return;
         }
         try {
-            while(true) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    connectToBluetoothDevice();
-                }
-            }
+            connectToBluetoothDevice();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
     }
 
-    // Method to connect to Bluetooth device
-    @RequiresApi(api = Build.VERSION_CODES.S)
+    // Method to connect to Bluetooth device :)
     private void connectToBluetoothDevice() {
         // Check if Bluetooth permissions are granted
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
@@ -147,9 +142,7 @@ public class PatientHealthData extends AppCompatActivity {
         if (requestCode == 1) { // Check if this is the permission request for Bluetooth Connect
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Permission granted, proceed with Bluetooth connection
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    connectToBluetoothDevice();
-                }
+                connectToBluetoothDevice();
             } else {
                 // Permission denied, inform the user
                 Toast.makeText(this, "Bluetooth permission is required to connect to the device", Toast.LENGTH_SHORT).show();

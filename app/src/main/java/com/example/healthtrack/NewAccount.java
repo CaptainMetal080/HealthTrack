@@ -1,4 +1,4 @@
-package com.example.myapp;
+package com.example.healthtrack;
 
 import android.os.Bundle;
 import android.view.View;

@@ -1,4 +1,4 @@
-package com.example.myapp;
+package com.example.healthtrack;
 
 import android.content.ContentValues;
 import android.content.Context;

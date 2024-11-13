@@ -1,4 +1,4 @@
-package com.example.myapp;
+package com.example.healthtrack;
 
 public class User {
     private int id;

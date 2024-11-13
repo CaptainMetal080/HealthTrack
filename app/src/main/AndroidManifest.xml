@@ -18,7 +18,7 @@
         android:theme="@style/Theme.MyApp"
         tools:targetApi="31">
         <activity
-            android:name="com.example.myapp.MainActivity"
+            android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -27,11 +27,11 @@
             </intent-filter>
         </activity>
 
-        <activity android:name="com.example.myapp.WelcomeScreen" />
-        <activity android:name="com.example.myapp.PatientHealthData" />
+        <activity android:name=".WelcomeScreen" />
+        <activity android:name=".PatientHealthData" />
 
 
-        <activity android:name="com.example.myapp.NewAccount" />
+        <activity android:name=".NewAccount" />
     </application>
     <uses-feature android:name="android.hardware.bluetooth" android:required="true"/>
 
