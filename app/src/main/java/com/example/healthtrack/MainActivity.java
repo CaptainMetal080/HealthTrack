@@ -31,9 +31,9 @@ public class MainActivity extends AppCompatActivity {
 
         DBHelper = new DBHelper(this);
 
-        User testUser = new User(0, "John", "Doe", "1234", 647888123, "test@example.com", "patient");
+        //User testUser = new User(0, "John", "Doe", "1234", 647888123, "test@example.com", "patient");
         // Add the user to the database
-        boolean isUserAdded = DBHelper.addUser(testUser);
+        //boolean isUserAdded = DBHelper.addUser(testUser);
     }
 
     // sign in to account
