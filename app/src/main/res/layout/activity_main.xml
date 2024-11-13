@@ -5,7 +5,8 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.example.myapp.MainActivity">
+    tools:context="com.example.myapp.MainActivity"
+    android:background="#FCE4EC">
 
     <Toolbar
         android:id="@+id/toolbar"
@@ -17,7 +18,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.0"
-        android:background="#d62448"
+        android:background="#E91E63"
         />
 
     <TextView
@@ -32,49 +33,55 @@
         app:layout_constraintBottom_toBottomOf="@+id/toolbar"
         app:layout_constraintEnd_toEndOf="@+id/toolbar"
         app:layout_constraintStart_toStartOf="@+id/toolbar"
-        app:layout_constraintTop_toTopOf="@+id/toolbar" />
+        app:layout_constraintTop_toTopOf="@+id/toolbar"
+       />
 
     <LinearLayout
-        android:id="@+id/linearLayout"
-        android:layout_width="416dp"
-        android:layout_height="597dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:orientation="vertical"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.634">
+        app:layout_constraintTop_toBottomOf="@+id/toolbar"
+        android:padding="7dp">
 
         <EditText
             android:id="@+id/username"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ems="10"
+            android:padding="5dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="10dp"
             android:hint="Username"
             android:inputType="text"
-            android:text="" />
+            android:text=""
+            android:background="@color/white"/>
 
         <EditText
             android:id="@+id/password"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
             android:ems="10"
+            android:padding="5dp"
             android:hint="Password"
-            android:inputType="textPassword" />
+            android:inputType="textPassword"
+            android:background="@color/white"/>
 
         <Button
             android:id="@+id/login"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="100dp"
             android:text="Sign in"
-            android:onClick="signIn"/>
+            android:onClick="signIn"
+            android:backgroundTint="#D81B60"/>
 
         <Button
             android:id="@+id/signup"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Create account"
-            android:onClick="navCreateAccount"/>
+            android:onClick="navCreateAccount"
+            android:backgroundTint="@color/black"/>
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
