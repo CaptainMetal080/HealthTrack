@@ -29,7 +29,7 @@ public class PatientHealthData extends AppCompatActivity {
     private BluetoothDevice mDevice;
     private OutputStream mOutputStream;
     private InputStream mInputStream;
-    private final String DEVICE_ADDRESS = "bc:b5:a2:5b:02:16";
+    private final String DEVICE_ADDRESS = "bc:b5:a2:5b:02:16"; // Your HC-05 Bluetooth MAC address
     private final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"); // Standard SPP UUID
     private TextView heartRateTextView;
     private Button connectButton;
@@ -99,13 +99,19 @@ public class PatientHealthData extends AppCompatActivity {
                         bytes[0] = mInputStream.read(buffer);
                         final String data = new String(buffer, 0, bytes[0]);
 
-                        // Update the UI with the heart rate data
-                        handler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                heartRateTextView.setText("Heart Rate: " + data + " BPM");
-                            }
-                        });
+                        // Check if the data contains the keyword "BPM:"
+                        if (data.contains("BPM:")) {
+                            // Extract BPM value from the received string
+                            final String bpm = data.replace("BPM: ", "").trim();
+
+                            // Update the UI with the heart rate data
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    heartRateTextView.setText("Heart Rate: " + bpm + " BPM");
+                                }
+                            });
+                        }
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
