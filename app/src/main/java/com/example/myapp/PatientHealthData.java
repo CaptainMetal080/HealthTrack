@@ -83,7 +83,7 @@ public class PatientHealthData extends AppCompatActivity {
             mOutputStream = mSocket.getOutputStream();
             mInputStream = mSocket.getInputStream();
 
-            listenForData();  // Start listening for data
+            //listenForData();  // Start listening for data
         } catch (IOException e) {
             e.printStackTrace();
             Toast.makeText(this, "Failed to connect", Toast.LENGTH_SHORT).show();
@@ -91,41 +91,41 @@ public class PatientHealthData extends AppCompatActivity {
     }
 
     // Method to listen for incoming data from Bluetooth
-    private void listenForData() {
-        final Handler handler = new Handler();
-        final byte[] buffer = new byte[1024];  // Buffer to store incoming data
-        final int[] bytes = {0};
-
-        Thread listenThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                while (true) {
-                    try {
-                        bytes[0] = mInputStream.read(buffer);
-                        final String data = new String(buffer, 0, bytes[0]);
-
-                        // Check if the data contains the keyword "BPM:"
-                        if (data.contains("BPM:")) {
-                            // Extract BPM value from the received string
-                            final String bpm = data.replace("BPM: ", "").trim();
-
-                            // Update the UI with the heart rate data
-                            handler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    heartRateTextView.setText("Heart Rate: " + bpm + " BPM");
-                                }
-                            });
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        });
-
-        listenThread.start();
-    }
+//    private void listenForData() {
+//        final Handler handler = new Handler();
+//        final byte[] buffer = new byte[1024];  // Buffer to store incoming data
+//        final int[] bytes = {0};
+//
+//        Thread listenThread = new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                while (true) {
+//                    try {
+//                        bytes[0] = mInputStream.read(buffer);
+//                        final String data = new String(buffer, 0, bytes[0]);
+//
+//                        // Check if the data contains the keyword "BPM:"
+//                        if (data.contains("BPM")) {
+//                            // Extract BPM value from the received string
+//                            final String bpm = data.replace("BPM: ", "").trim();
+//
+//                            // Update the UI with the heart rate data
+//                            handler.post(new Runnable() {
+//                                @Override
+//                                public void run() {
+//                                    heartRateTextView.setText("Heart Rate: " + bpm + " BPM");
+//                                }
+//                            });
+//                        }
+//                    } catch (IOException e) {
+//                        e.printStackTrace();
+//                    }
+//                }
+//            }
+//        });
+//
+//        listenThread.start();
+//    }
 
     @Override
     protected void onDestroy() {
@@ -147,7 +147,9 @@ public class PatientHealthData extends AppCompatActivity {
         if (requestCode == 1) { // Check if this is the permission request for Bluetooth Connect
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Permission granted, proceed with Bluetooth connection
-                connectToBluetoothDevice();
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    connectToBluetoothDevice();
+                }
             } else {
                 // Permission denied, inform the user
                 Toast.makeText(this, "Bluetooth permission is required to connect to the device", Toast.LENGTH_SHORT).show();
