@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.android.application)
 }
 
+
 android {
     namespace = "com.example.healthtrack"
     compileSdk = 34
@@ -39,7 +40,9 @@ dependencies {
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
-    implementation(files("GraphView-4.2.1.jar"))
+    implementation("androidx.core:core-ktx:1.15.0")
+    implementation("androidx.recyclerview:recyclerview:1.3.2")
+    implementation("com.jjoe64:graphview:4.2.2")
     implementation(libs.androidx.bluetooth)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
