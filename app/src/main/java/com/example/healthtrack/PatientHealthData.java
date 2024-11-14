@@ -14,9 +14,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.EditText;
 import android.widget.Toast;
-import com.jjoe64.graphview.GraphView;
-import com.jjoe64.graphview.series.DataPoint;
-import com.jjoe64.graphview.series.LineGraphSeries;
+import android.widget.TextView;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -35,30 +34,19 @@ public class PatientHealthData extends AppCompatActivity {
     private BluetoothGatt bluetoothGatt;
 
     private static final int REQUEST_BLUETOOTH_PERMISSIONS = 1;
-    private GraphView healthGraph;
-    private GraphView spo2Graph;
-
-    private LineGraphSeries<DataPoint> heartRateSeries;
-    private LineGraphSeries<DataPoint> oxygenSeries;
+    TextView heartRateView;
+    TextView spo2View;
     private int heartRateIndex = 0;
     private int oxygenIndex = 0;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_overall_patient_health);  // Make sure this is correct
-
+        heartRateView = findViewById(R.id.heartRateTextView);
+        spo2View =findViewById(R.id.OxiTextView);
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         device = bluetoothAdapter.getRemoteDevice(DEVICE_ADDRESS);
-
-        healthGraph = findViewById(R.id.healthGraph);
-        spo2Graph = findViewById(R.id.spo2Graph);
-
-        heartRateSeries = new LineGraphSeries<>();
-        oxygenSeries = new LineGraphSeries<>();
-
-        // Configure the graphs
-        configureGraph(healthGraph);
-        configureGraph(spo2Graph);
 
         checkBluetoothPermissions();  // Your Bluetooth connection code
     }
@@ -125,62 +113,62 @@ public class PatientHealthData extends AppCompatActivity {
 
                 // Get heart rate and oxygen characteristics
                 BluetoothGattCharacteristic heartRateCharacteristic = gatt.getService(SERVICE_UUID).getCharacteristic(HEARTRATE_CHAR_UUID);
-                BluetoothGattCharacteristic oxygenCharacteristic = gatt.getService(SERVICE_UUID).getCharacteristic(OXI_CHAR_UUID);
 
                 gatt.setCharacteristicNotification(heartRateCharacteristic, true);
-                gatt.setCharacteristicNotification(oxygenCharacteristic, true);
-                //gatt.readCharacteristic(heartRateCharacteristic);
-                //gatt.readCharacteristic(oxygenCharacteristic);
 
                 // Write the descriptor to enable notifications
                 BluetoothGattDescriptor heartRateDescriptor = heartRateCharacteristic.getDescriptor(UUID.fromString("00002902-0000-1000-8000-00805f9b34fb"));
-                BluetoothGattDescriptor oxygenDescriptor = oxygenCharacteristic.getDescriptor(UUID.fromString("00002902-0000-1000-8000-00805f9b34fb"));
-
                 if (heartRateDescriptor != null) {
                     heartRateDescriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                    Log.d("BluetoothGattCallback", "Heart Notif");
                     gatt.writeDescriptor(heartRateDescriptor); // Enable heart rate notifications
                 }
-
-                if (oxygenDescriptor != null) {
-                    oxygenDescriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-                    gatt.writeDescriptor(oxygenDescriptor); // Enable SpO2 notifications
-                }
             }
         }
 
-        @Override
-        public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+         @Override
+         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
             if (HEARTRATE_CHAR_UUID.equals(characteristic.getUuid())) {
                 int heartRate = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
-                Log.d("HeartRate", "Updated heart rate: " + heartRate);
-                // Update graph with new heart rate value
-                updateGraph(healthGraph, heartRateSeries, heartRate);
 
-            } else if (OXI_CHAR_UUID.equals(characteristic.getUuid())) {
+                // Update the UI using runOnUiThread
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        // Update your UI elements here
+                        heartRateView.setText("Heart Rate: " + heartRate);
+                    }
+                });
+
+            } else if(OXI_CHAR_UUID.equals(characteristic.getUuid())){
                 int oxygenLevel = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
-                Log.d("Oxygen", "Updated SpO2: " + oxygenLevel);
-                // Update graph with new heart rate value
-                updateGraph(spo2Graph, oxygenSeries, oxygenLevel);
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        spo2View.setText("O2: " + oxygenLevel);
+                    }
+                });
             }
         }
 
-    };
-    private void configureGraph(GraphView graph) {
-        graph.getViewport().setScalable(true);
-        graph.getViewport().setScalableY(true);
-        graph.getViewport().setScrollable(true);
-        graph.getViewport().setScrollableY(true);
-        graph.getViewport().setXAxisBoundsManual(true);
-        graph.getViewport().setMinX(0);
-        graph.getViewport().setMaxX(60);
-        // For example, 60 points on the X-axis, corresponding to 60 seconds
-        graph.addSeries(new LineGraphSeries<DataPoint>());
-    }
+        @SuppressLint("MissingPermission")
+        @Override
+        public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                Log.d("DescriptorWrite", "Descriptor write successful for: " + descriptor.getUuid().toString());
+                BluetoothGattCharacteristic oxygenCharacteristic = gatt.getService(SERVICE_UUID).getCharacteristic(OXI_CHAR_UUID);
+                gatt.setCharacteristicNotification(oxygenCharacteristic, true);
 
-    // Method to update the graph with a new data point
-    private void updateGraph(GraphView graph, LineGraphSeries<DataPoint> series, int value) {
-        // Add a new data point with the current index (time) and value
-        series.appendData(new DataPoint(heartRateIndex++, value), true, 60);
-        graph.getViewport().setMaxX(heartRateIndex); // Update the max X value to reflect the latest time
-    }
+                BluetoothGattDescriptor oxygenDescriptor = oxygenCharacteristic.getDescriptor(UUID.fromString("00002902-0000-1000-8000-00805f9b34fb"));
+                if (oxygenDescriptor != null) {
+                    oxygenDescriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                    Log.d("BluetoothGattCallback", "O2 Notif");
+                    gatt.writeDescriptor(oxygenDescriptor); // Enable SpO2 notifications
+                }
+            } else {
+                Log.e("DescriptorWrite", "Descriptor write failed for: " + descriptor.getUuid().toString());
+            }
+        }
+    };
 }
