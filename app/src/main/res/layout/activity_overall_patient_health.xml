@@ -33,6 +33,15 @@
             android:textStyle="bold|italic"
             android:textSize="32sp"
             android:layout_gravity="center"/>
+        <TextView
+            android:id="@+id/OxiTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="Oximeter: -- O2"
+            android:textStyle="bold|italic"
+            android:textSize="32sp"
+            android:layout_gravity="center"/>
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

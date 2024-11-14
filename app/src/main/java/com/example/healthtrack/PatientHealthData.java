@@ -1,6 +1,7 @@
 package com.example.healthtrack;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
@@ -10,10 +11,11 @@ import android.bluetooth.BluetoothProfile;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.TextView;
 import android.widget.Toast;
-import com.jjoe64.graphview.GraphView;
-import com.jjoe64.graphview.series.LineGraphSeries;
-import com.jjoe64.graphview.series.DataPoint;
+//import com.jjoe64.graphview.GraphView;
+//import com.jjoe64.graphview.series.LineGraphSeries;
+//import com.jjoe64.graphview.series.DataPoint;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -31,12 +33,14 @@ public class PatientHealthData extends AppCompatActivity {
     private BluetoothAdapter bluetoothAdapter;
     private BluetoothDevice device;
     private BluetoothGatt bluetoothGatt;
+            TextView heartratetxt;
+            TextView oxitxt;
 
     private static final int REQUEST_BLUETOOTH_PERMISSIONS = 1;
 
-    private GraphView graph;
-    private LineGraphSeries<DataPoint> heartRateSeries;
-    private LineGraphSeries<DataPoint> oxygenSeries;
+//    private GraphView graph;
+//    private LineGraphSeries<DataPoint> heartRateSeries;
+//    private LineGraphSeries<DataPoint> oxygenSeries;
 
     private int heartRateIndex = 0;
     private int oxygenIndex = 0;
@@ -44,19 +48,20 @@ public class PatientHealthData extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_overall_patient_health);  // Make sure this is correct
-
+        heartratetxt=findViewById(R.id.heartRateTextView);
+        oxitxt=findViewById(R.id.OxiTextView);
         // Initialize GraphView
-        graph = findViewById(R.id.graph);
-        heartRateSeries = new LineGraphSeries<>();
-        oxygenSeries = new LineGraphSeries<>();
-
-        // Add the series to the graph
-        graph.addSeries(heartRateSeries);
-        graph.addSeries(oxygenSeries);
-
-        // Optional: Customize the graph, such as enabling scrolling
-        graph.getViewport().setScrollable(true);
-        graph.getViewport().setScalable(true);
+//        graph = findViewById(R.id.graph);
+//        heartRateSeries = new LineGraphSeries<>();
+//        oxygenSeries = new LineGraphSeries<>();
+//
+//        // Add the series to the graph
+//        graph.addSeries(heartRateSeries);
+//        graph.addSeries(oxygenSeries);
+//
+//        // Optional: Customize the graph, such as enabling scrolling
+//        graph.getViewport().setScrollable(true);
+//        graph.getViewport().setScalable(true);
 
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         device = bluetoothAdapter.getRemoteDevice(DEVICE_ADDRESS);
@@ -118,6 +123,7 @@ public class PatientHealthData extends AppCompatActivity {
             }
         }
 
+        @SuppressLint("MissingPermission")
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
@@ -127,17 +133,7 @@ public class PatientHealthData extends AppCompatActivity {
                 BluetoothGattCharacteristic heartRateCharacteristic = gatt.getService(SERVICE_UUID).getCharacteristic(HEARTRATE_CHAR_UUID);
                 BluetoothGattCharacteristic oxygenCharacteristic = gatt.getService(SERVICE_UUID).getCharacteristic(OXI_CHAR_UUID);
 
-                // Enable notifications for heart rate and oxygen level changes
-                if (ActivityCompat.checkSelfPermission(PatientHealthData.this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-                    // TODO: Consider calling
-                    //    ActivityCompat#requestPermissions
-                    // here to request the missing permissions, and then overriding
-                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                    //                                          int[] grantResults)
-                    // to handle the case where the user grants the permission. See the documentation
-                    // for ActivityCompat#requestPermissions for more details.
-                    return;
-                }
+
                 gatt.setCharacteristicNotification(heartRateCharacteristic, true);
                 gatt.setCharacteristicNotification(oxygenCharacteristic, true);
                 gatt.readCharacteristic(heartRateCharacteristic);
@@ -152,11 +148,14 @@ public class PatientHealthData extends AppCompatActivity {
                 if (HEARTRATE_CHAR_UUID.equals(characteristic.getUuid())) {
                     // Heart rate data
                     int heartRate = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
-                    updateHeartRateGraph(heartRate);
+                    heartratetxt.setText(heartRate);
+
+//                    updateHeartRateGraph(heartRate);
                 } else if (OXI_CHAR_UUID.equals(characteristic.getUuid())) {
                     // Oxygen data
                     int oxygenLevel = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
-                    updateOxygenGraph(oxygenLevel);
+//                    updateOxygenGraph(oxygenLevel);
+                    oxitxt.setText(oxygenLevel);
                 }
             }
         }
@@ -165,13 +164,13 @@ public class PatientHealthData extends AppCompatActivity {
     // Update the heart rate graph
     private void updateHeartRateGraph(int heartRate) {
         // Create a new DataPoint for heart rate and add it to the series
-        heartRateSeries.appendData(new DataPoint(heartRateIndex++, heartRate), true, 50); // Only keep the last 50 points
+//        heartRateSeries.appendData(new DataPoint(heartRateIndex++, heartRate), true, 50); // Only keep the last 50 points
     }
 
     // Update the oxygen level graph
     private void updateOxygenGraph(int oxygenLevel) {
         // Create a new DataPoint for oxygen level and add it to the series
-        oxygenSeries.appendData(new DataPoint(oxygenIndex++, oxygenLevel), true, 50); // Only keep the last 50 points
+//        oxygenSeries.appendData(new DataPoint(oxygenIndex++, oxygenLevel), true, 50); // Only keep the last 50 points
     }
 
 }
