@@ -224,6 +224,5 @@ public class PatientHealthData extends AppCompatActivity {
     private void updateChart(LineChart chart, LineDataSet dataSet, int value) {
         dataSet.addEntry(new Entry(heartRateIndex++, value));
         chart.notifyDataSetChanged();
-        chart.invalidate();  // Refresh the chart
     }
 }
