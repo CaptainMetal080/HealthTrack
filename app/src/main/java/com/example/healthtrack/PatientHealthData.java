@@ -7,15 +7,13 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothProfile;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
-import android.widget.TextView;
+import android.widget.EditText;
 import android.widget.Toast;
-//import com.jjoe64.graphview.GraphView;
-//import com.jjoe64.graphview.series.LineGraphSeries;
-//import com.jjoe64.graphview.series.DataPoint;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -33,14 +31,8 @@ public class PatientHealthData extends AppCompatActivity {
     private BluetoothAdapter bluetoothAdapter;
     private BluetoothDevice device;
     private BluetoothGatt bluetoothGatt;
-            TextView heartratetxt;
-            TextView oxitxt;
 
     private static final int REQUEST_BLUETOOTH_PERMISSIONS = 1;
-
-//    private GraphView graph;
-//    private LineGraphSeries<DataPoint> heartRateSeries;
-//    private LineGraphSeries<DataPoint> oxygenSeries;
 
     private int heartRateIndex = 0;
     private int oxygenIndex = 0;
@@ -48,20 +40,6 @@ public class PatientHealthData extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_overall_patient_health);  // Make sure this is correct
-        heartratetxt=findViewById(R.id.heartRateTextView);
-        oxitxt=findViewById(R.id.OxiTextView);
-        // Initialize GraphView
-//        graph = findViewById(R.id.graph);
-//        heartRateSeries = new LineGraphSeries<>();
-//        oxygenSeries = new LineGraphSeries<>();
-//
-//        // Add the series to the graph
-//        graph.addSeries(heartRateSeries);
-//        graph.addSeries(oxygenSeries);
-//
-//        // Optional: Customize the graph, such as enabling scrolling
-//        graph.getViewport().setScrollable(true);
-//        graph.getViewport().setScalable(true);
 
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         device = bluetoothAdapter.getRemoteDevice(DEVICE_ADDRESS);
@@ -133,44 +111,39 @@ public class PatientHealthData extends AppCompatActivity {
                 BluetoothGattCharacteristic heartRateCharacteristic = gatt.getService(SERVICE_UUID).getCharacteristic(HEARTRATE_CHAR_UUID);
                 BluetoothGattCharacteristic oxygenCharacteristic = gatt.getService(SERVICE_UUID).getCharacteristic(OXI_CHAR_UUID);
 
-
                 gatt.setCharacteristicNotification(heartRateCharacteristic, true);
                 gatt.setCharacteristicNotification(oxygenCharacteristic, true);
-                gatt.readCharacteristic(heartRateCharacteristic);
-                gatt.readCharacteristic(oxygenCharacteristic);
+                //gatt.readCharacteristic(heartRateCharacteristic);
+                //gatt.readCharacteristic(oxygenCharacteristic);
+
+                // Write the descriptor to enable notifications
+                BluetoothGattDescriptor heartRateDescriptor = heartRateCharacteristic.getDescriptor(UUID.fromString("00002902-0000-1000-8000-00805f9b34fb"));
+                BluetoothGattDescriptor oxygenDescriptor = oxygenCharacteristic.getDescriptor(UUID.fromString("00002902-0000-1000-8000-00805f9b34fb"));
+
+                if (heartRateDescriptor != null) {
+                    heartRateDescriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                    gatt.writeDescriptor(heartRateDescriptor); // Enable heart rate notifications
+                }
+
+                if (oxygenDescriptor != null) {
+                    oxygenDescriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                    gatt.writeDescriptor(oxygenDescriptor); // Enable SpO2 notifications
+                }
             }
         }
 
         @Override
-        public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-            if (status == BluetoothGatt.GATT_SUCCESS) {
-                // Check which characteristic has been read
-                if (HEARTRATE_CHAR_UUID.equals(characteristic.getUuid())) {
-                    // Heart rate data
-                    int heartRate = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
-                    heartratetxt.setText(heartRate);
+        public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+            if (HEARTRATE_CHAR_UUID.equals(characteristic.getUuid())) {
+                int heartRate = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
+                Log.d("HeartRate", "Updated heart rate: " + heartRate);
 
-//                    updateHeartRateGraph(heartRate);
-                } else if (OXI_CHAR_UUID.equals(characteristic.getUuid())) {
-                    // Oxygen data
-                    int oxygenLevel = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
-//                    updateOxygenGraph(oxygenLevel);
-                    oxitxt.setText(oxygenLevel);
-                }
+            } else if (OXI_CHAR_UUID.equals(characteristic.getUuid())) {
+                int oxygenLevel = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
+                Log.d("Oxygen", "Updated SpO2: " + oxygenLevel);
             }
         }
+
     };
-
-    // Update the heart rate graph
-    private void updateHeartRateGraph(int heartRate) {
-        // Create a new DataPoint for heart rate and add it to the series
-//        heartRateSeries.appendData(new DataPoint(heartRateIndex++, heartRate), true, 50); // Only keep the last 50 points
-    }
-
-    // Update the oxygen level graph
-    private void updateOxygenGraph(int oxygenLevel) {
-        // Create a new DataPoint for oxygen level and add it to the series
-//        oxygenSeries.appendData(new DataPoint(oxygenIndex++, oxygenLevel), true, 50); // Only keep the last 50 points
-    }
 
 }
