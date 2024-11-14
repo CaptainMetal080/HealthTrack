@@ -33,6 +33,11 @@
             android:textStyle="bold|italic"
             android:textSize="32sp"
             android:layout_gravity="center"/>
+
+        <com.jjoe64.graphview.GraphView
+            android:layout_width="match_parent"
+            android:layout_height="100dp"
+            android:id="@+id/healthGraph"/>
         <TextView
             android:id="@+id/OxiTextView"
             android:layout_width="wrap_content"
@@ -42,16 +47,16 @@
             android:textStyle="bold|italic"
             android:textSize="32sp"
             android:layout_gravity="center"/>
+
+        <com.jjoe64.graphview.GraphView
+            android:layout_width="match_parent"
+            android:layout_height="100dp"
+            android:id="@+id/spo2Graph"/>
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/connect"
             android:text="connect"/>
-
-<!--        <com.jjoe64.graphview.GraphView-->
-<!--            android:id="@+id/graph"-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="300dp" />-->
 
 
     </LinearLayout>

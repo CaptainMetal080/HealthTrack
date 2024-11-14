@@ -1,7 +1,6 @@
 [versions]
 agp = "8.6.1"
 bluetooth = "1.1.0"
-graphview = "4.2.2"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
@@ -13,7 +12,6 @@ bluetoothVersion = "1.0.0-alpha02"
 
 [libraries]
 bluetooth = { module = "androidx.bluetooth:bluetooth", version.ref = "bluetooth" }
-#graphview = { module = "com.jjoe64.graphview:graphview", version.ref = "graphview" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
