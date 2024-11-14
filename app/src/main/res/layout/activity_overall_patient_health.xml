@@ -31,9 +31,8 @@
             android:gravity="center"
             android:text="Heart Rate: -- BPM"
             android:textStyle="bold|italic"
-            android:textSize="32sp"
+            android:textSize="24sp"
             android:layout_gravity="center"/>
-
         <com.jjoe64.graphview.GraphView
             android:layout_width="match_parent"
             android:layout_height="100dp"
@@ -43,15 +42,15 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:text="Oximeter: -- O2"
+            android:text="O2: -- spo2"
             android:textStyle="bold|italic"
-            android:textSize="32sp"
+            android:textSize="24sp"
             android:layout_gravity="center"/>
-
         <com.jjoe64.graphview.GraphView
             android:layout_width="match_parent"
             android:layout_height="100dp"
             android:id="@+id/spo2Graph"/>
+
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

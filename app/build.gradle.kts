@@ -1,6 +1,9 @@
+import java.util.regex.Pattern.compile
+
 plugins {
     alias(libs.plugins.android.application)
 }
+
 
 android {
     namespace = "com.example.healthtrack"
@@ -43,6 +46,7 @@ dependencies {
         exclude(group = "com.android.support", module = "support-v4")
     }
     implementation(libs.constraintlayout)
+    implementation("com.jjoe64:graphview:4.2.2")
     implementation(libs.androidx.bluetooth)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
