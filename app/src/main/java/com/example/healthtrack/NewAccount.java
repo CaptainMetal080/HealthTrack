@@ -66,9 +66,15 @@ public class NewAccount extends AppCompatActivity {
             return;
         }
 
-        // Validate phone number forma
+        // Validate phone number format
         if (!isValidPhoneNumber(phone)) {
             Toast.makeText(this, "Invalid phone number", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        // Check if email already exists in the database
+        if (DBHelper.emailExists(email)) {
+            Toast.makeText(this, "Email already exists", Toast.LENGTH_LONG).show();
             return;
         }
         

@@ -49,8 +49,15 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (DBHelper.checkUserCredentials(email, password)) {
-            Intent intent = new Intent(MainActivity.this, WelcomeScreen.class);
-            startActivity(intent);
+            String userType = DBHelper.getUserTypeByEmail(email);
+
+            if (userType != null) {
+                Intent intent = new Intent(MainActivity.this, WelcomeScreen.class);
+                intent.putExtra("userType", userType);
+                startActivity(intent);
+            } else {
+                Toast.makeText(MainActivity.this, "Error retrieving user type!", Toast.LENGTH_SHORT).show();
+            }
         } else {
             Toast.makeText(MainActivity.this, "Invalid email or password!", Toast.LENGTH_SHORT).show();
         }

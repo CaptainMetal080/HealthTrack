@@ -27,7 +27,7 @@ public class DBHelper extends SQLiteOpenHelper {
             + COLUMN_FIRST_NAME + " TEXT, "
             + COLUMN_LAST_NAME + " TEXT, "
             + COLUMN_PASSWORD + " TEXT, "
-            + COLUMN_EMAIL + " TEXT, "
+            + COLUMN_EMAIL + " TEXT UNIQUE, "
             + COLUMN_PHONE + " REAL, "
             + COLUMN_TYPE + " TEXT); ";
 
@@ -77,5 +77,36 @@ public class DBHelper extends SQLiteOpenHelper {
         }
 
         return userExists;
+    }
+
+    public boolean emailExists(String email) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String query = "SELECT 1 FROM " + USERS_TABLE_NAME + " WHERE " + COLUMN_EMAIL + " = ?";
+        Cursor cursor = db.rawQuery(query, new String[]{email});
+
+        boolean exists = cursor.moveToFirst();
+        cursor.close();
+        db.close();
+
+        return exists;
+    }
+
+    public String getUserTypeByEmail(String email) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.query(
+                "users", // Table name
+                new String[] {"user_type"}, // Column to retrieve
+                "email = ?", // WHERE clause
+                new String[] {email}, // Arguments for the WHERE clause
+                null, null, null);
+
+        if (cursor != null && cursor.moveToFirst()) {
+            String userType = cursor.getString(cursor.getColumnIndex("user_type"));
+            cursor.close();
+            return userType;
+        } else {
+            cursor.close();
+            return null; // Return null if user type is not found
+        }
     }
 }
