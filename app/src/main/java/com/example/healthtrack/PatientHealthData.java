@@ -15,8 +15,13 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import java.util.UUID;
+
 public class PatientHealthData extends AppCompatActivity {
-    private final String DEVICE_ADDRESS = "BC:B5:A2:5B:02:16"; // Example: Your BLE device MAC address
+    private final String DEVICE_ADDRESS = "BC:B5:A2:5B:02:16";
+
+    private static final UUID SERVICE_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+    private static final UUID HEARTRATE_CHAR_UUID = UUID.fromString("00002101-0000-1000-8000-00805F9B34FB");
 
     private BluetoothAdapter bluetoothAdapter;
     private BluetoothDevice device;
