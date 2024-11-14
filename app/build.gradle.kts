@@ -39,14 +39,14 @@ dependencies {
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
-    implementation("com.jjoe64:graphview:4.2.1"){
-        exclude(group = "com.android.support", module = "support-v4")
+    implementation("com.jjoe64:graphview:4.2.2") {
+        exclude(group = "com.android.support", module = "support-compat")
     }
+
     implementation("androidx.core:core:1.13.0") {
         exclude(group = "com.android.support", module = "support-v4")
     }
     implementation(libs.constraintlayout)
-    implementation("com.jjoe64:graphview:4.2.2")
     implementation(libs.androidx.bluetooth)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
