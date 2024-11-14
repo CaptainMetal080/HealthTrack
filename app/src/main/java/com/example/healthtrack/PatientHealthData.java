@@ -14,7 +14,9 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.EditText;
 import android.widget.Toast;
-
+import com.jjoe64.graphview.GraphView;
+import com.jjoe64.graphview.series.DataPoint;
+import com.jjoe64.graphview.series.LineGraphSeries;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -33,7 +35,11 @@ public class PatientHealthData extends AppCompatActivity {
     private BluetoothGatt bluetoothGatt;
 
     private static final int REQUEST_BLUETOOTH_PERMISSIONS = 1;
+    private GraphView healthGraph;
+    private GraphView spo2Graph;
 
+    private LineGraphSeries<DataPoint> heartRateSeries;
+    private LineGraphSeries<DataPoint> oxygenSeries;
     private int heartRateIndex = 0;
     private int oxygenIndex = 0;
     @Override
@@ -43,6 +49,16 @@ public class PatientHealthData extends AppCompatActivity {
 
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         device = bluetoothAdapter.getRemoteDevice(DEVICE_ADDRESS);
+
+        healthGraph = findViewById(R.id.healthGraph);
+        spo2Graph = findViewById(R.id.spo2Graph);
+
+        heartRateSeries = new LineGraphSeries<>();
+        oxygenSeries = new LineGraphSeries<>();
+
+        // Configure the graphs
+        configureGraph(healthGraph);
+        configureGraph(spo2Graph);
 
         checkBluetoothPermissions();  // Your Bluetooth connection code
     }
@@ -137,13 +153,33 @@ public class PatientHealthData extends AppCompatActivity {
             if (HEARTRATE_CHAR_UUID.equals(characteristic.getUuid())) {
                 int heartRate = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
                 Log.d("HeartRate", "Updated heart rate: " + heartRate);
+                // Update graph with new heart rate value
+                updateGraph(healthGraph, heartRateSeries, heartRate);
 
             } else if (OXI_CHAR_UUID.equals(characteristic.getUuid())) {
                 int oxygenLevel = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
                 Log.d("Oxygen", "Updated SpO2: " + oxygenLevel);
+                // Update graph with new heart rate value
+                updateGraph(spo2Graph, oxygenSeries, oxygenLevel);
             }
         }
 
     };
+    private void configureGraph(GraphView graph) {
+        graph.getViewport().setScalable(true);
+        graph.getViewport().setScalableY(true);
+        graph.getViewport().setScrollable(true);
+        graph.getViewport().setScrollableY(true);
+        graph.getViewport().setXAxisBoundsManual(true);
+        graph.getViewport().setMinX(0);
+        graph.getViewport().setMaxX(60); // For example, 60 points on the X-axis, corresponding to 60 seconds
+        graph.addSeries(new LineGraphSeries<DataPoint>());
+    }
 
+    // Method to update the graph with a new data point
+    private void updateGraph(GraphView graph, LineGraphSeries<DataPoint> series, int value) {
+        // Add a new data point with the current index (time) and value
+        series.appendData(new DataPoint(heartRateIndex++, value), true, 60);
+        graph.getViewport().setMaxX(heartRateIndex); // Update the max X value to reflect the latest time
+    }
 }
