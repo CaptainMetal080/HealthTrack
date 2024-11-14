@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    tools:context="com.example.healthtrack.NewAccount"
+    tools:context=".NewAccount"
     android:background="#FCE4EC">
 
     <androidx.appcompat.widget.Toolbar

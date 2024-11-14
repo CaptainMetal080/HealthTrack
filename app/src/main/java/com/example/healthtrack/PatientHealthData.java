@@ -22,6 +22,7 @@ public class PatientHealthData extends AppCompatActivity {
 
     private static final UUID SERVICE_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
     private static final UUID HEARTRATE_CHAR_UUID = UUID.fromString("00002101-0000-1000-8000-00805F9B34FB");
+    private static final UUID OXI_CHAR_UUID = UUID.fromString("00002102-0000-1000-8000-00805F9B34FB");
 
     private BluetoothAdapter bluetoothAdapter;
     private BluetoothDevice device;
