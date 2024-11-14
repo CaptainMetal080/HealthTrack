@@ -13,7 +13,6 @@ bluetoothVersion = "1.0.0-alpha02"
 
 [libraries]
 bluetooth = { module = "androidx.bluetooth:bluetooth", version.ref = "bluetooth" }
-graphview = { module = "com.jjoe64.graphview:graphview", version.ref = "graphview" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }

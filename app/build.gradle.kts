@@ -40,8 +40,6 @@ dependencies {
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
-    implementation("androidx.core:core-ktx:1.15.0")
-    implementation("androidx.recyclerview:recyclerview:1.3.2")
     implementation("com.jjoe64:graphview:4.2.2")
     implementation(libs.androidx.bluetooth)
     testImplementation(libs.junit)
