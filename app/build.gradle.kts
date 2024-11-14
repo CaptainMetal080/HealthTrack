@@ -40,7 +40,7 @@ dependencies {
     implementation(libs.material)
     implementation(libs.activity)
     implementation("com.jjoe64:graphview:4.2.2") {
-        exclude(group = "com.android.support", module = "support-compat")
+        exclude(group = "com.android.support", module = "support-v4")
     }
 
     implementation("androidx.core:core:1.13.0") {
