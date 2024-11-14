@@ -172,7 +172,8 @@ public class PatientHealthData extends AppCompatActivity {
         graph.getViewport().setScrollableY(true);
         graph.getViewport().setXAxisBoundsManual(true);
         graph.getViewport().setMinX(0);
-        graph.getViewport().setMaxX(60); // For example, 60 points on the X-axis, corresponding to 60 seconds
+        graph.getViewport().setMaxX(60);
+        // For example, 60 points on the X-axis, corresponding to 60 seconds
         graph.addSeries(new LineGraphSeries<DataPoint>());
     }
 
