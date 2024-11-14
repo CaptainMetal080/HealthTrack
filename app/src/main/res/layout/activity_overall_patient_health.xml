@@ -48,10 +48,10 @@
             android:id="@+id/connect"
             android:text="connect"/>
 
-        <com.jjoe64.graphview.GraphView
-            android:id="@+id/graph"
-            android:layout_width="match_parent"
-            android:layout_height="300dp" />
+<!--        <com.jjoe64.graphview.GraphView-->
+<!--            android:id="@+id/graph"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="300dp" />-->
 
 
     </LinearLayout>
