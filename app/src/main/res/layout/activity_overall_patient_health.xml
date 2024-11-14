@@ -33,7 +33,7 @@
             android:textStyle="bold|italic"
             android:textSize="24sp"
             android:layout_gravity="center"/>
-        <com.jjoe64.graphview.GraphView
+        <com.github.mikephil.charting.charts.LineChart
             android:layout_width="match_parent"
             android:layout_height="100dp"
             android:id="@+id/healthGraph"/>
@@ -46,7 +46,7 @@
             android:textStyle="bold|italic"
             android:textSize="24sp"
             android:layout_gravity="center"/>
-        <com.jjoe64.graphview.GraphView
+        <com.github.mikephil.charting.charts.LineChart
             android:layout_width="match_parent"
             android:layout_height="100dp"
             android:id="@+id/spo2Graph"/>

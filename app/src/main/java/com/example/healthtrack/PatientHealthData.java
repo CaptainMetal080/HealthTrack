@@ -15,14 +15,18 @@ import android.util.Log;
 import android.widget.EditText;
 import android.widget.Toast;
 import android.widget.TextView;
-import com.jjoe64.graphview.GraphView;
-import com.jjoe64.graphview.series.DataPoint;
-import com.jjoe64.graphview.series.LineGraphSeries;
+
+import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import java.util.UUID;
+import java.util.ArrayList;
 
 public class PatientHealthData extends AppCompatActivity {
     private final String DEVICE_ADDRESS = "BC:B5:A2:5B:02:16";
@@ -35,11 +39,11 @@ public class PatientHealthData extends AppCompatActivity {
     private BluetoothDevice device;
     private BluetoothGatt bluetoothGatt;
 
-    private GraphView healthGraph;
-    private GraphView spo2Graph;
+    private LineChart healthChart;
+    private LineChart spo2Chart;
 
-    private LineGraphSeries<DataPoint> heartRateSeries;
-    private LineGraphSeries<DataPoint> oxygenSeries;
+    private LineDataSet heartRateDataSet;
+    private LineDataSet oxygenDataSet;
 
     private static final int REQUEST_BLUETOOTH_PERMISSIONS = 1;
     TextView heartRateView;
@@ -52,19 +56,32 @@ public class PatientHealthData extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_overall_patient_health);  // Make sure this is correct
         heartRateView = findViewById(R.id.heartRateTextView);
-        spo2View =findViewById(R.id.OxiTextView);
+        spo2View = findViewById(R.id.OxiTextView);
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         device = bluetoothAdapter.getRemoteDevice(DEVICE_ADDRESS);
 
-        healthGraph = findViewById(R.id.healthGraph);
-        spo2Graph = findViewById(R.id.spo2Graph);
+        healthChart = findViewById(R.id.healthGraph);
+        spo2Chart = findViewById(R.id.spo2Graph);
 
-        heartRateSeries = new LineGraphSeries<>();
-        oxygenSeries = new LineGraphSeries<>();
+        // Initialize the data sets
+        heartRateDataSet = new LineDataSet(new ArrayList<>(), "Heart Rate");
+        oxygenDataSet = new LineDataSet(new ArrayList<>(), "Oxygen Level");
 
-        // Configure the graphs
-        configureGraph(healthGraph);
-        configureGraph(spo2Graph);
+        // Set line styles (optional)
+        heartRateDataSet.setColor(getResources().getColor(R.color.black));
+        oxygenDataSet.setColor(getResources().getColor(R.color.black));
+
+        // Create LineData objects
+        LineData heartRateData = new LineData(heartRateDataSet);
+        LineData oxygenData = new LineData(oxygenDataSet);
+
+        // Set data to charts
+        healthChart.setData(heartRateData);
+        spo2Chart.setData(oxygenData);
+
+        // Configure the charts
+        configureChart(healthChart);
+        configureChart(spo2Chart);
 
         checkBluetoothPermissions();  // Your Bluetooth connection code
     }
@@ -75,7 +92,7 @@ public class PatientHealthData extends AppCompatActivity {
                 ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
 
             ActivityCompat.requestPermissions(this,
-                    new String[]{
+                    new String[] {
                             Manifest.permission.BLUETOOTH_CONNECT,
                             Manifest.permission.BLUETOOTH_SCAN
                     },
@@ -155,18 +172,18 @@ public class PatientHealthData extends AppCompatActivity {
                     public void run() {
                         // Update your UI elements here
                         heartRateView.setText("Heart Rate: " + heartRate);
-                        updateGraph(healthGraph, heartRateSeries, heartRate);
+                        updateChart(healthChart, heartRateDataSet, heartRate);
                     }
                 });
 
-            } else if(OXI_CHAR_UUID.equals(characteristic.getUuid())){
+            } else if (OXI_CHAR_UUID.equals(characteristic.getUuid())) {
                 int oxygenLevel = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
 
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         spo2View.setText("O2: " + oxygenLevel);
-                        updateGraph(spo2Graph, oxygenSeries, oxygenLevel);
+                        updateChart(spo2Chart, oxygenDataSet, oxygenLevel);
                     }
                 });
             }
@@ -192,22 +209,21 @@ public class PatientHealthData extends AppCompatActivity {
         }
     };
 
-    private void configureGraph(GraphView graph) {
-        graph.getViewport().setScalable(true);
-        graph.getViewport().setScalableY(true);
-        graph.getViewport().setScrollable(true);
-        graph.getViewport().setScrollableY(true);
-        graph.getViewport().setXAxisBoundsManual(true);
-        graph.getViewport().setMinX(0);
-        graph.getViewport().setMaxX(60); // For example, 60 points on the X-axis, corresponding to 60 seconds
-
-        graph.addSeries(new LineGraphSeries<DataPoint>());
+    // Configure the chart's appearance and properties
+    private void configureChart(LineChart chart) {
+        chart.setDragEnabled(true);
+        chart.setScaleEnabled(true);
+        chart.getDescription().setEnabled(false);
+        chart.setPinchZoom(true);
+        chart.getAxisRight().setEnabled(false);  // Disable right axis
+        chart.getXAxis().setPosition(com.github.mikephil.charting.components.XAxis.XAxisPosition.BOTTOM);
+        chart.getXAxis().setGranularity(1f);  // Avoid duplicates on X axis
     }
 
-    // Method to update the graph with a new data point
-    private void updateGraph(GraphView graph, LineGraphSeries<DataPoint> series, int value) {
-        // Add a new data point with the current index (time) and value
-        series.appendData(new DataPoint(heartRateIndex++, value), true, 60);
-        graph.getViewport().setMaxX(heartRateIndex); // Update the max X value to reflect the latest time
+    // Update the chart with a new data point
+    private void updateChart(LineChart chart, LineDataSet dataSet, int value) {
+        dataSet.addEntry(new Entry(heartRateIndex++, value));
+        chart.notifyDataSetChanged();
+        chart.invalidate();  // Refresh the chart
     }
 }

@@ -4,7 +4,6 @@ plugins {
     alias(libs.plugins.android.application)
 }
 
-
 android {
     namespace = "com.example.healthtrack"
     compileSdk = 34
@@ -39,13 +38,7 @@ dependencies {
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
-    implementation("com.jjoe64:graphview:4.2.2") {
-        exclude(group = "com.android.support", module = "support-v4")
-    }
-
-    implementation("androidx.core:core:1.13.0") {
-        exclude(group = "com.android.support", module = "support-v4")
-    }
+    implementation ("com.github.PhilJay:MPAndroidChart:v3.1.0")
     implementation(libs.constraintlayout)
     implementation(libs.androidx.bluetooth)
     testImplementation(libs.junit)
