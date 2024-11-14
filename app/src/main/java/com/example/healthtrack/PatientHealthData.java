@@ -15,7 +15,9 @@ import android.util.Log;
 import android.widget.EditText;
 import android.widget.Toast;
 import android.widget.TextView;
-
+import com.jjoe64.graphview.GraphView;
+import com.jjoe64.graphview.series.DataPoint;
+import com.jjoe64.graphview.series.LineGraphSeries;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -33,6 +35,12 @@ public class PatientHealthData extends AppCompatActivity {
     private BluetoothDevice device;
     private BluetoothGatt bluetoothGatt;
 
+    private GraphView healthGraph;
+    private GraphView spo2Graph;
+
+    private LineGraphSeries<DataPoint> heartRateSeries;
+    private LineGraphSeries<DataPoint> oxygenSeries;
+
     private static final int REQUEST_BLUETOOTH_PERMISSIONS = 1;
     TextView heartRateView;
     TextView spo2View;
@@ -47,6 +55,16 @@ public class PatientHealthData extends AppCompatActivity {
         spo2View =findViewById(R.id.OxiTextView);
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         device = bluetoothAdapter.getRemoteDevice(DEVICE_ADDRESS);
+
+        healthGraph = findViewById(R.id.healthGraph);
+        spo2Graph = findViewById(R.id.spo2Graph);
+
+        heartRateSeries = new LineGraphSeries<>();
+        oxygenSeries = new LineGraphSeries<>();
+
+        // Configure the graphs
+        configureGraph(healthGraph);
+        configureGraph(spo2Graph);
 
         checkBluetoothPermissions();  // Your Bluetooth connection code
     }
@@ -137,6 +155,7 @@ public class PatientHealthData extends AppCompatActivity {
                     public void run() {
                         // Update your UI elements here
                         heartRateView.setText("Heart Rate: " + heartRate);
+                        updateGraph(healthGraph, heartRateSeries, heartRate);
                     }
                 });
 
@@ -147,6 +166,7 @@ public class PatientHealthData extends AppCompatActivity {
                     @Override
                     public void run() {
                         spo2View.setText("O2: " + oxygenLevel);
+                        updateGraph(spo2Graph, oxygenSeries, oxygenLevel);
                     }
                 });
             }
@@ -171,4 +191,23 @@ public class PatientHealthData extends AppCompatActivity {
             }
         }
     };
+
+    private void configureGraph(GraphView graph) {
+        graph.getViewport().setScalable(true);
+        graph.getViewport().setScalableY(true);
+        graph.getViewport().setScrollable(true);
+        graph.getViewport().setScrollableY(true);
+        graph.getViewport().setXAxisBoundsManual(true);
+        graph.getViewport().setMinX(0);
+        graph.getViewport().setMaxX(60); // For example, 60 points on the X-axis, corresponding to 60 seconds
+
+        graph.addSeries(new LineGraphSeries<DataPoint>());
+    }
+
+    // Method to update the graph with a new data point
+    private void updateGraph(GraphView graph, LineGraphSeries<DataPoint> series, int value) {
+        // Add a new data point with the current index (time) and value
+        series.appendData(new DataPoint(heartRateIndex++, value), true, 60);
+        graph.getViewport().setMaxX(heartRateIndex); // Update the max X value to reflect the latest time
+    }
 }
