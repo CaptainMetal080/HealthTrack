@@ -172,10 +172,10 @@ public class PatientHealthData extends AppCompatActivity {
                     public void run() {
                         // Update your UI elements here
                         heartRateView.setText("Heart Rate: " + heartRate);
-                        updateChart(healthChart, heartRateDataSet, heartRate);
+                        heartRateDataSet.addEntry(new Entry(heartRateIndex++, heartRate));
+                        healthChart.notifyDataSetChanged();
                     }
                 });
-
             } else if (OXI_CHAR_UUID.equals(characteristic.getUuid())) {
                 int oxygenLevel = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
 
@@ -183,7 +183,8 @@ public class PatientHealthData extends AppCompatActivity {
                     @Override
                     public void run() {
                         spo2View.setText("O2: " + oxygenLevel);
-                        updateChart(spo2Chart, oxygenDataSet, oxygenLevel);
+                        oxygenDataSet.addEntry(new Entry(heartRateIndex++, oxygenLevel));
+                        spo2Chart.notifyDataSetChanged();
                     }
                 });
             }
@@ -220,9 +221,4 @@ public class PatientHealthData extends AppCompatActivity {
         chart.getXAxis().setGranularity(1f);  // Avoid duplicates on X axis
     }
 
-    // Update the chart with a new data point
-    private void updateChart(LineChart chart, LineDataSet dataSet, int value) {
-        dataSet.addEntry(new Entry(heartRateIndex++, value));
-        chart.notifyDataSetChanged();
-    }
 }
