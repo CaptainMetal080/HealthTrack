@@ -248,7 +248,7 @@ public class PatientHealthData extends AppCompatActivity {
         // Move the chart to the latest entry
         chart.moveViewToX(data.getEntryCount());
 
-        // Refresh the chart
+        // Refresh the chartt
         chart.invalidate();
     }
 }
