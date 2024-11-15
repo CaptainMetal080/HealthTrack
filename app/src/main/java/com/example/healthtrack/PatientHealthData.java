@@ -29,7 +29,7 @@ import java.util.ArrayList;
 
 public class PatientHealthData extends AppCompatActivity {
     private final String DEVICE_ADDRESS = "BC:B5:A2:5B:02:16";
-    private static final int MAX_POINTS = 50;
+    private static final int MAX_POINTS = 25;
     private static final UUID SERVICE_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
     private static final UUID HEARTRATE_CHAR_UUID = UUID.fromString("00002101-0000-1000-8000-00805F9B34FB");
     private static final UUID OXI_CHAR_UUID = UUID.fromString("00002102-0000-1000-8000-00805F9B34FB");
@@ -223,7 +223,6 @@ public class PatientHealthData extends AppCompatActivity {
         chart.getXAxis().setAxisMinimum(0f);  // Set X-axis minimum to 0
         chart.getXAxis().setGranularity(1f);  // Prevent duplicates on X-axis
         chart.getXAxis().setAxisMaximum(MAX_POINTS);  // Set max points on X-axis
-        chart.getAxisRight().setEnabled(false);
         // Set the Y-axis properties
         chart.getAxisLeft().setAxisMinimum(0f); // Minimum Y-axis value
         chart.getAxisLeft().setAxisMaximum(max); // Maximum Y-axis value (adjust accordingly)
