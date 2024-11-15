@@ -223,20 +223,21 @@ public class PatientHealthData extends AppCompatActivity {
         chart.getXAxis().setAxisMinimum(0f);  // Set X-axis minimum to 0
         chart.getXAxis().setGranularity(1f);  // Prevent duplicates on X-axis
         chart.getXAxis().setAxisMaximum(MAX_POINTS);  // Set max points on X-axis
-
+        chart.getAxisRight().setEnabled(false);
         // Set the Y-axis properties
         chart.getAxisLeft().setAxisMinimum(0f); // Minimum Y-axis value
         chart.getAxisLeft().setAxisMaximum(max); // Maximum Y-axis value (adjust accordingly)
         chart.getAxisLeft().setGranularity(1f);  // Prevent duplicates on Y-axis
     }
     private void updateChart(LineChart chart, LineDataSet dataSet, int value, int index) {
-        int invertedIndex = MAX_POINTS - index - 1;
         // Add a new data point to the dataset
-        dataSet.addEntry(new Entry(invertedIndex, value));
+        dataSet.addEntry(new Entry(index, value));
 
+        // Keep only the last MAX_POINTS points in the chart (shift left after 50 points)
         if (dataSet.getEntryCount() > MAX_POINTS) {
-            dataSet.removeFirst();  // Remove the first entry (oldest data point)
+            dataSet.removeFirst();  // Remove the oldest point
         }
+
         // Notify the dataset that the data has changed
         LineData data = chart.getData();
         if (data != null) {
@@ -249,7 +250,7 @@ public class PatientHealthData extends AppCompatActivity {
         // Notify the chart that the data has changed
         chart.notifyDataSetChanged();
 
-        // Move the chart to the latest entry
+        // Move the chart to the latest entry (this will keep the chart scrolled to the right)
         chart.moveViewToX(data.getEntryCount());
 
         // Refresh the chart
