@@ -48,8 +48,8 @@ public class PatientHealthData extends AppCompatActivity {
     private static final int REQUEST_BLUETOOTH_PERMISSIONS = 1;
     TextView heartRateView;
     TextView spo2View;
-    private int heartRateIndex = 0;
-    private int oxygenIndex = 0;
+    private int heartRateIndex;
+    private int oxygenIndex;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,7 +59,8 @@ public class PatientHealthData extends AppCompatActivity {
         spo2View = findViewById(R.id.OxiTextView);
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         device = bluetoothAdapter.getRemoteDevice(DEVICE_ADDRESS);
-
+        heartRateIndex = 0;
+        oxygenIndex = 0;
         healthChart = findViewById(R.id.healthGraph);
         spo2Chart = findViewById(R.id.spo2Graph);
 
@@ -223,10 +224,14 @@ public class PatientHealthData extends AppCompatActivity {
         // Set the X-axis to be at the bottom and ensure it allows scrolling
         chart.getXAxis().setPosition(com.github.mikephil.charting.components.XAxis.XAxisPosition.BOTTOM);
         chart.getXAxis().setGranularity(1f);  // Avoid duplicate values
+        chart.getXAxis().setAxisMinimum(0f); // Start from 0 on X-axis
+
+        // Set minimum and maximum range for Y-axis if needed
+        chart.getAxisLeft().setAxisMinimum(0f); // Minimum Y-axis value
+        chart.getAxisLeft().setAxisMaximum(200f); // Maximum Y-axis value (for heart rate, adjust accordingly)
 
         // Enable dynamic range adjustment (optional, based on your needs)
-        chart.getAxisLeft().setAxisMinimum(0f);  // Set minimum Y-axis value
-        chart.getAxisLeft().setAxisMaximum(200f);  // Set maximum Y-axis value (for heart rate)
+        chart.getAxisLeft().setGranularity(1f);
     }
 
 }
