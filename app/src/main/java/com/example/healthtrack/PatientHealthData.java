@@ -238,7 +238,7 @@ public class PatientHealthData extends AppCompatActivity {
             chart.getXAxis().setAxisMaximum(index + 1);  // Remove the oldest point
         }
         dataSet.setDrawCircles(true);
-        dataSet.setCircleSize(16f);
+        dataSet.setCircleSize(3f);
         dataSet.setDrawValues(false);
         // Notify the dataset that the data has changed
         LineData data = chart.getData();
