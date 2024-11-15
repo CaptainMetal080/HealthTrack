@@ -220,14 +220,12 @@ public class PatientHealthData extends AppCompatActivity {
 
         // Set the X-axis to be at the bottom and ensure it allows scrolling
         chart.getXAxis().setPosition(com.github.mikephil.charting.components.XAxis.XAxisPosition.BOTTOM);
-        chart.getXAxis().setGranularity(1f);  // Avoid duplicate values
         chart.getXAxis().setAxisMinimum(0f); // Start from 0 on X-axis
 
         // Set minimum and maximum range for Y-axis if needed
         chart.getAxisLeft().setAxisMinimum(0f); // Minimum Y-axis value
         chart.getAxisLeft().setAxisMaximum(max); // Maximum Y-axis value (for heart rate, adjust accordingly)
         // Enable dynamic range adjustment (optional, based on your needs)
-        chart.getAxisLeft().setGranularity(1f);
     }
     private void updateChart(LineChart chart, LineDataSet dataSet, int value, int index) {
 
