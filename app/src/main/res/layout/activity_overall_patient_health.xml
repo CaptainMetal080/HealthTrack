@@ -36,7 +36,7 @@
         <com.github.mikephil.charting.charts.LineChart
             android:layout_width="match_parent"
             android:layout_height="100dp"
-            android:id="@+id/healthGraph"/>
+            android:id="@+id/heartGraph"/>
         <TextView
             android:id="@+id/OxiTextView"
             android:layout_width="wrap_content"

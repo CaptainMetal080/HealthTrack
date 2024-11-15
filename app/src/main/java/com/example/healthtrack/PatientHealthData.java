@@ -12,7 +12,6 @@ import android.bluetooth.BluetoothProfile;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
-import android.widget.EditText;
 import android.widget.Toast;
 import android.widget.TextView;
 
@@ -39,7 +38,7 @@ public class PatientHealthData extends AppCompatActivity {
     private BluetoothDevice device;
     private BluetoothGatt bluetoothGatt;
 
-    private LineChart healthChart;
+    private LineChart heartChart;
     private LineChart spo2Chart;
 
     private LineDataSet heartRateDataSet;
@@ -61,7 +60,7 @@ public class PatientHealthData extends AppCompatActivity {
         device = bluetoothAdapter.getRemoteDevice(DEVICE_ADDRESS);
         heartRateIndex = 0;
         oxygenIndex = 0;
-        healthChart = findViewById(R.id.healthGraph);
+        heartChart = findViewById(R.id.heartGraph);
         spo2Chart = findViewById(R.id.spo2Graph);
 
         // Initialize the data sets
@@ -77,12 +76,12 @@ public class PatientHealthData extends AppCompatActivity {
         LineData oxygenData = new LineData(oxygenDataSet);
 
         // Set data to charts
-        healthChart.setData(heartRateData);
+        heartChart.setData(heartRateData);
         spo2Chart.setData(oxygenData);
 
         // Configure the charts
-        configureChart(healthChart);
-        configureChart(spo2Chart);
+        configureChart(heartChart,200);
+        configureChart(spo2Chart,100);
 
         checkBluetoothPermissions();  // Your Bluetooth connection code
     }
@@ -173,9 +172,7 @@ public class PatientHealthData extends AppCompatActivity {
                     public void run() {
                         // Update your UI elements here
                         heartRateView.setText("Heart Rate: " + heartRate);
-                        heartRateDataSet.addEntry(new Entry(heartRateIndex++, heartRate));
-                        healthChart.notifyDataSetChanged();
-                        healthChart.invalidate();
+                        updateChart(heartChart,heartRateDataSet,heartRate,heartRateIndex);
                     }
                 });
             } else if (OXI_CHAR_UUID.equals(characteristic.getUuid())) {
@@ -185,9 +182,7 @@ public class PatientHealthData extends AppCompatActivity {
                     @Override
                     public void run() {
                         spo2View.setText("O2: " + oxygenLevel);
-                        oxygenDataSet.addEntry(new Entry(oxygenIndex++, oxygenLevel));
-                        spo2Chart.notifyDataSetChanged();
-                        spo2Chart.invalidate();
+                        updateChart(spo2Chart,oxygenDataSet,oxygenLevel,oxygenIndex);
                     }
                 });
             }
@@ -214,7 +209,7 @@ public class PatientHealthData extends AppCompatActivity {
     };
 
     // Configure the chart's appearance and properties
-    private void configureChart(LineChart chart) {
+    private void configureChart(LineChart chart, float max) {
         chart.setDragEnabled(true);
         chart.setScaleEnabled(true);
         chart.getDescription().setEnabled(false);
@@ -228,10 +223,17 @@ public class PatientHealthData extends AppCompatActivity {
 
         // Set minimum and maximum range for Y-axis if needed
         chart.getAxisLeft().setAxisMinimum(0f); // Minimum Y-axis value
-        chart.getAxisLeft().setAxisMaximum(200f); // Maximum Y-axis value (for heart rate, adjust accordingly)
-
+        chart.getAxisLeft().setAxisMaximum(max); // Maximum Y-axis value (for heart rate, adjust accordingly)
         // Enable dynamic range adjustment (optional, based on your needs)
         chart.getAxisLeft().setGranularity(1f);
     }
+    private void updateChart(LineChart chart, LineDataSet dataSet, int value, int index) {
 
+        // Add a new data point to the dataset
+        dataSet.addEntry(new Entry(index, value));
+        // Notify the chart that the data has changed
+        chart.notifyDataSetChanged();
+        // Invalidate the chart to trigger a redraw
+        chart.invalidate();
+    }
 }
