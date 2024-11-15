@@ -174,6 +174,7 @@ public class PatientHealthData extends AppCompatActivity {
                         heartRateView.setText("Heart Rate: " + heartRate);
                         heartRateDataSet.addEntry(new Entry(heartRateIndex++, heartRate));
                         healthChart.notifyDataSetChanged();
+                        healthChart.invalidate();
                     }
                 });
             } else if (OXI_CHAR_UUID.equals(characteristic.getUuid())) {
@@ -185,6 +186,7 @@ public class PatientHealthData extends AppCompatActivity {
                         spo2View.setText("O2: " + oxygenLevel);
                         oxygenDataSet.addEntry(new Entry(oxygenIndex++, oxygenLevel));
                         spo2Chart.notifyDataSetChanged();
+                        spo2Chart.invalidate();
                     }
                 });
             }
@@ -217,8 +219,14 @@ public class PatientHealthData extends AppCompatActivity {
         chart.getDescription().setEnabled(false);
         chart.setPinchZoom(true);
         chart.getAxisRight().setEnabled(false);  // Disable right axis
+
+        // Set the X-axis to be at the bottom and ensure it allows scrolling
         chart.getXAxis().setPosition(com.github.mikephil.charting.components.XAxis.XAxisPosition.BOTTOM);
-        chart.getXAxis().setGranularity(1f);  // Avoid duplicates on X axis
+        chart.getXAxis().setGranularity(1f);  // Avoid duplicate values
+
+        // Enable dynamic range adjustment (optional, based on your needs)
+        chart.getAxisLeft().setAxisMinimum(0f);  // Set minimum Y-axis value
+        chart.getAxisLeft().setAxisMaximum(200f);  // Set maximum Y-axis value (for heart rate)
     }
 
 }
