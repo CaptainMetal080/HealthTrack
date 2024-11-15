@@ -218,21 +218,25 @@ public class PatientHealthData extends AppCompatActivity {
         chart.setPinchZoom(true);
         chart.getAxisRight().setEnabled(false);  // Disable right axis
 
-        // Set the X-axis to be at the bottom and ensure it allows scrolling
+        // Invert the X-axis to make data flow from right to left
         chart.getXAxis().setPosition(com.github.mikephil.charting.components.XAxis.XAxisPosition.BOTTOM);
-        chart.getXAxis().setGranularity(1f);  // Avoid duplicate values
-        chart.getXAxis().setAxisMinimum(0f); // Start from 0 on X-axis
-        chart.getAxisLeft().setAxisMaximum(50);
-        // Set minimum and maximum range for Y-axis if needed
+        chart.getXAxis().setAxisMinimum(0f);  // Set X-axis minimum to 0
+        chart.getXAxis().setGranularity(1f);  // Prevent duplicates on X-axis
+        chart.getXAxis().setAxisMaximum(MAX_POINTS);  // Set max points on X-axis
+
+        // Set the Y-axis properties
         chart.getAxisLeft().setAxisMinimum(0f); // Minimum Y-axis value
-        chart.getAxisLeft().setAxisMaximum(max); // Maximum Y-axis value (for heart rate, adjust accordingly)
-        // Enable dynamic range adjustment (optional, based on your needs)
-        chart.getAxisLeft().setGranularity(1f);
+        chart.getAxisLeft().setAxisMaximum(max); // Maximum Y-axis value (adjust accordingly)
+        chart.getAxisLeft().setGranularity(1f);  // Prevent duplicates on Y-axis
     }
     private void updateChart(LineChart chart, LineDataSet dataSet, int value, int index) {
+        int invertedIndex = MAX_POINTS - index - 1;
         // Add a new data point to the dataset
-        dataSet.addEntry(new Entry(index, value));
+        dataSet.addEntry(new Entry(invertedIndex, value));
 
+        if (dataSet.getEntryCount() > MAX_POINTS) {
+            dataSet.removeFirst();  // Remove the first entry (oldest data point)
+        }
         // Notify the dataset that the data has changed
         LineData data = chart.getData();
         if (data != null) {
@@ -242,17 +246,14 @@ public class PatientHealthData extends AppCompatActivity {
             chart.setData(data);
         }
 
-        if (dataSet.getEntryCount() > MAX_POINTS) {
-            dataSet.removeFirst();  // Remove the first entry (oldest data point)
-        }
-
         // Notify the chart that the data has changed
         chart.notifyDataSetChanged();
 
         // Move the chart to the latest entry
         chart.moveViewToX(data.getEntryCount());
 
-        // Refresh the chartt
+        // Refresh the chart
         chart.invalidate();
     }
+
 }
