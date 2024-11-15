@@ -183,7 +183,7 @@ public class PatientHealthData extends AppCompatActivity {
                     @Override
                     public void run() {
                         spo2View.setText("O2: " + oxygenLevel);
-                        oxygenDataSet.addEntry(new Entry(heartRateIndex++, oxygenLevel));
+                        oxygenDataSet.addEntry(new Entry(oxygenIndex++, oxygenLevel));
                         spo2Chart.notifyDataSetChanged();
                     }
                 });
