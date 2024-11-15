@@ -231,8 +231,9 @@ public class PatientHealthData extends AppCompatActivity {
     }
     private void updateChart(LineChart chart, LineDataSet dataSet, int value, int index) {
 
+        Entry entry = new Entry(index, value);
         // Add a new data point to the dataset
-        dataSet.addEntry(new Entry(index, value));
+        dataSet.addEntry(entry);
         // Notify the chart that the data has changed
         chart.notifyDataSetChanged();
         // Invalidate the chart to trigger a redraw
