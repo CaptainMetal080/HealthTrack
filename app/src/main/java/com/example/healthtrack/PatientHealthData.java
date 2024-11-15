@@ -230,12 +230,25 @@ public class PatientHealthData extends AppCompatActivity {
         chart.getAxisLeft().setGranularity(1f);
     }
     private void updateChart(LineChart chart, LineDataSet dataSet, int value, int index) {
-
         // Add a new data point to the dataset
         dataSet.addEntry(new Entry(index, value));
+
+        // Notify the dataset that the data has changed
+        LineData data = chart.getData();
+        if (data != null) {
+            data.notifyDataChanged();
+        } else {
+            data = new LineData(dataSet);
+            chart.setData(data);
+        }
+
         // Notify the chart that the data has changed
         chart.notifyDataSetChanged();
-        // Invalidate the chart to trigger a redraw
+
+        // Move the chart to the latest entry
+        chart.moveViewToX(data.getEntryCount());
+
+        // Refresh the chart
         chart.invalidate();
     }
 }
