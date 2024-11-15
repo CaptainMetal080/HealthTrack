@@ -29,7 +29,7 @@ import java.util.ArrayList;
 
 public class PatientHealthData extends AppCompatActivity {
     private final String DEVICE_ADDRESS = "BC:B5:A2:5B:02:16";
-    private static final int MAX_POINTS = 25;
+    private static final int MAX_POINTS = 10;
     private static final UUID SERVICE_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
     private static final UUID HEARTRATE_CHAR_UUID = UUID.fromString("00002101-0000-1000-8000-00805F9B34FB");
     private static final UUID OXI_CHAR_UUID = UUID.fromString("00002102-0000-1000-8000-00805F9B34FB");
@@ -234,7 +234,8 @@ public class PatientHealthData extends AppCompatActivity {
 
         // Keep only the last MAX_POINTS points in the chart (shift left after 50 points)
         if (dataSet.getEntryCount() > MAX_POINTS) {
-            dataSet.removeFirst();  // Remove the oldest point
+            chart.getXAxis().setAxisMinimum(index - MAX_POINTS + 1); // Shift the axis left
+            chart.getXAxis().setAxisMaximum(index + 1);  // Remove the oldest point
         }
 
         // Notify the dataset that the data has changed
@@ -248,10 +249,8 @@ public class PatientHealthData extends AppCompatActivity {
 
         // Notify the chart that the data has changed
         chart.notifyDataSetChanged();
-
         // Move the chart to the latest entry (this will keep the chart scrolled to the right)
         chart.moveViewToX(data.getEntryCount());
-
         // Refresh the chart
         chart.invalidate();
     }
