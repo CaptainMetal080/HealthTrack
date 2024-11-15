@@ -173,6 +173,7 @@ public class PatientHealthData extends AppCompatActivity {
                         // Update your UI elements here
                         heartRateView.setText("Heart Rate: " + heartRate);
                         updateChart(heartChart,heartRateDataSet,heartRate,heartRateIndex);
+                        heartRateIndex++;
                     }
                 });
             } else if (OXI_CHAR_UUID.equals(characteristic.getUuid())) {
@@ -183,6 +184,7 @@ public class PatientHealthData extends AppCompatActivity {
                     public void run() {
                         spo2View.setText("O2: " + oxygenLevel);
                         updateChart(spo2Chart,oxygenDataSet,oxygenLevel,oxygenIndex);
+                        oxygenIndex++;
                     }
                 });
             }
