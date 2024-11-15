@@ -29,7 +29,7 @@ import java.util.ArrayList;
 
 public class PatientHealthData extends AppCompatActivity {
     private final String DEVICE_ADDRESS = "BC:B5:A2:5B:02:16";
-    private static final int MAX_POINTS = 10;
+    private static final int MAX_POINTS = 25;
     private static final UUID SERVICE_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
     private static final UUID HEARTRATE_CHAR_UUID = UUID.fromString("00002101-0000-1000-8000-00805F9B34FB");
     private static final UUID OXI_CHAR_UUID = UUID.fromString("00002102-0000-1000-8000-00805F9B34FB");
@@ -68,10 +68,10 @@ public class PatientHealthData extends AppCompatActivity {
         oxygenDataSet = new LineDataSet(new ArrayList<>(), "Oxygen Level");
 
         // Set line styles (optional)
-        heartRateDataSet.setColor(getResources().getColor(R.color.black));
-        heartRateDataSet.setCircleHoleRadius(10);
-        oxygenDataSet.setColor(getResources().getColor(R.color.black));
-        oxygenDataSet.setCircleHoleRadius(10);
+        heartRateDataSet.setColor(getColor(R.color.heartred));
+        heartRateDataSet.setCircleColor(getColor(R.color.heartred));
+        oxygenDataSet.setColor(getColor(R.color.o2blue));
+        heartRateDataSet.setCircleColor(getColor(R.color.o2blue));
         // Create LineData objects
         LineData heartRateData = new LineData(heartRateDataSet);
         LineData oxygenData = new LineData(oxygenDataSet);
@@ -218,7 +218,6 @@ public class PatientHealthData extends AppCompatActivity {
         chart.getDescription().setEnabled(false);
         chart.setPinchZoom(true);
         chart.getAxisRight().setEnabled(false);  // Disable right axis
-
         // Invert the X-axis to make data flow from right to left
         chart.getXAxis().setPosition(com.github.mikephil.charting.components.XAxis.XAxisPosition.BOTTOM);
         chart.getXAxis().setAxisMinimum(0f);  // Set X-axis minimum to 0
@@ -238,7 +237,9 @@ public class PatientHealthData extends AppCompatActivity {
             chart.getXAxis().setAxisMinimum(index - MAX_POINTS + 1); // Shift the axis left
             chart.getXAxis().setAxisMaximum(index + 1);  // Remove the oldest point
         }
-
+        dataSet.setDrawCircles(true);
+        dataSet.setCircleSize(16f);
+        dataSet.setDrawValues(false);
         // Notify the dataset that the data has changed
         LineData data = chart.getData();
         if (data != null) {
