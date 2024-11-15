@@ -4,7 +4,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context="com.example.healthtrack.PatientHealthData">
+    tools:context="com.example.healthtrack.PatientHealthData"
+    android:background="#FFF7F9">
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
@@ -50,12 +51,6 @@
             android:layout_width="match_parent"
             android:layout_height="100dp"
             android:id="@+id/spo2Graph"/>
-
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/connect"
-            android:text="connect"/>
 
 
     </LinearLayout>

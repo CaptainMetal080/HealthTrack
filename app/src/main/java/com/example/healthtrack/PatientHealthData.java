@@ -29,7 +29,7 @@ import java.util.ArrayList;
 
 public class PatientHealthData extends AppCompatActivity {
     private final String DEVICE_ADDRESS = "BC:B5:A2:5B:02:16";
-
+    private static final int MAX_POINTS = 50;
     private static final UUID SERVICE_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
     private static final UUID HEARTRATE_CHAR_UUID = UUID.fromString("00002101-0000-1000-8000-00805F9B34FB");
     private static final UUID OXI_CHAR_UUID = UUID.fromString("00002102-0000-1000-8000-00805F9B34FB");
@@ -222,7 +222,7 @@ public class PatientHealthData extends AppCompatActivity {
         chart.getXAxis().setPosition(com.github.mikephil.charting.components.XAxis.XAxisPosition.BOTTOM);
         chart.getXAxis().setGranularity(1f);  // Avoid duplicate values
         chart.getXAxis().setAxisMinimum(0f); // Start from 0 on X-axis
-
+        chart.getAxisLeft().setAxisMaximum(50);
         // Set minimum and maximum range for Y-axis if needed
         chart.getAxisLeft().setAxisMinimum(0f); // Minimum Y-axis value
         chart.getAxisLeft().setAxisMaximum(max); // Maximum Y-axis value (for heart rate, adjust accordingly)
@@ -240,6 +240,10 @@ public class PatientHealthData extends AppCompatActivity {
         } else {
             data = new LineData(dataSet);
             chart.setData(data);
+        }
+
+        if (dataSet.getEntryCount() > MAX_POINTS) {
+            dataSet.removeFirst();  // Remove the first entry (oldest data point)
         }
 
         // Notify the chart that the data has changed
