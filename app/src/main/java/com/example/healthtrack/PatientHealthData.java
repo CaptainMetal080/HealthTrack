@@ -69,8 +69,9 @@ public class PatientHealthData extends AppCompatActivity {
 
         // Set line styles (optional)
         heartRateDataSet.setColor(getResources().getColor(R.color.black));
+        heartRateDataSet.setCircleHoleRadius(10);
         oxygenDataSet.setColor(getResources().getColor(R.color.black));
-
+        oxygenDataSet.setCircleHoleRadius(10);
         // Create LineData objects
         LineData heartRateData = new LineData(heartRateDataSet);
         LineData oxygenData = new LineData(oxygenDataSet);
