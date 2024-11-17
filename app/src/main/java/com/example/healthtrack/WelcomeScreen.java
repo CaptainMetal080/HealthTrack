@@ -6,23 +6,39 @@ import android.os.Handler;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.healthtrack.R;
-
 public class WelcomeScreen extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_welcome_screen); // Your welcome screen layout
+        setContentView(R.layout.activity_welcome_screen);
 
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                Intent i = new Intent(WelcomeScreen.this, PatientHealthData.class);
-                startActivity(i);
-                overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
-                finish();
-            }
-        }, 3000);
+        // Get the email from the intent
+        String email = getIntent().getStringExtra("email");
+
+        if (email != null) {
+            // Get the user type from the DB
+            DBHelper dbHelper = new DBHelper(this);
+            String userType = dbHelper.getUserTypeByEmail(email);
+
+            // Redirect to the appropriate screen based on user type
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    Intent intent;
+                    if ("doctor".equals(userType)) {
+                        intent = new Intent(WelcomeScreen.this, DoctorHomeScreen.class);
+                    } else if ("patient".equals(userType)) {
+                        intent = new Intent(WelcomeScreen.this, PatientHealthData.class);
+                    } else {
+                        // Default to Patient Health Data if the type is unknown
+                        intent = new Intent(WelcomeScreen.this, PatientHealthData.class);
+                    }
+                    startActivity(intent);
+                    overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+                    finish();
+                }
+            }, 3000); // Wait for 3 seconds before redirecting
+        }
     }
 }

@@ -12,8 +12,6 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import com.example.healthtrack.R;
-
 public class MainActivity extends AppCompatActivity {
 
     private DBHelper DBHelper;
@@ -30,14 +28,9 @@ public class MainActivity extends AppCompatActivity {
         });
 
         DBHelper = new DBHelper(this);
-
-        //User testUser = new User(0, "John", "Doe", "1234", 647888134, "test@example.com", "patient");
-        // Add the user to the database
-        User testDR = new User(0, "Liam", "Brown", "1234", 647888134, "dr@example.com", "doctor");
-        //DBHelper.addUser(testDR);
     }
 
-    // sign in to account
+    // Sign in to account
     public void signIn(View v) {
         EditText emailInput = findViewById(R.id.username);
         EditText passwordInput = findViewById(R.id.password);
@@ -50,21 +43,16 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (DBHelper.checkUserCredentials(email, password)) {
-            String userType = DBHelper.getUserTypeByEmail(email);
-
-            if (userType != null) {
-                Intent intent = new Intent(MainActivity.this, WelcomeScreen.class);
-                intent.putExtra("userType", userType);
-                startActivity(intent);
-            } else {
-                Toast.makeText(MainActivity.this, "Error retrieving user type!", Toast.LENGTH_SHORT).show();
-            }
+            Intent intent = new Intent(MainActivity.this, WelcomeScreen.class);
+            intent.putExtra("email", email); // Pass the email to the WelcomeScreen
+            startActivity(intent);
+            finish(); // Optional: Close the current activity to prevent back navigation
         } else {
             Toast.makeText(MainActivity.this, "Invalid email or password!", Toast.LENGTH_SHORT).show();
         }
     }
 
-    // create new account
+    // Navigate to create new account screen
     public void navCreateAccount(View v) {
         Intent intent = new Intent(MainActivity.this, NewAccount.class);
         startActivity(intent);
