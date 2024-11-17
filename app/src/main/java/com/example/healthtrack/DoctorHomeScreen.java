@@ -29,6 +29,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.appcompat.app.AppCompatActivity;
 
+import java.util.ArrayList;
 import java.util.Set;
 import java.util.UUID;
 
@@ -149,11 +150,15 @@ public class DoctorHomeScreen extends AppCompatActivity {
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
             if (MOBILE_HEART_CHAR_UUID.equals(characteristic.getUuid())) {
+                byte[] heartArray=characteristic.getValue();
+                reconstructListFromBytes(heartArray);
                 int heartRate = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
-                Log.i("BluetoothGatt", "Heart rate value: " + heartRate);
+                Log.i("BluetoothGatt", "Heart rate value: " + heartArray);
             } else if (MOBILE_SPO2_CHAR_UUID.equals(characteristic.getUuid())) {
+                byte[] oxygenArray=characteristic.getValue();
+                reconstructListFromBytes(oxygenArray);
                 int oxygenLevel = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
-                Log.i("BluetoothGatt", "SpO2 value: " + oxygenLevel);
+                Log.i("BluetoothGatt", "SpO2 value: " + oxygenArray);
             }
         }
 
@@ -177,5 +182,23 @@ public class DoctorHomeScreen extends AppCompatActivity {
         }
     };
 
+    public static ArrayList<Integer> reconstructListFromBytes(byte[] byteArray) {
+        // Step 1: Convert byte array back to String
+        String str = new String(byteArray);
 
+        // Step 2: Remove the surrounding square brackets "[" and "]"
+        str = str.substring(1, str.length() - 1);  // Remove the first and last characters
+
+        // Step 3: Split the string by ", " to get individual elements
+        String[] stringElements = str.split(", ");
+
+        // Step 4: Convert string elements back to Integers and add to ArrayList
+        ArrayList<Integer> newList = new ArrayList<>();
+        for (String element : stringElements) {
+            newList.add(Integer.parseInt(element));  // Convert string to Integer
+        }
+
+        // Return the reconstructed ArrayList
+        return newList;
+    }
 }
