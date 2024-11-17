@@ -60,6 +60,10 @@ public class PatientHealthData extends AppCompatActivity {
     private final float THRESHOLD_MILD = 0.15f;
     private final float THRESHOLD_CRITICAL = 0.25f;
 
+    private static final UUID MOBILE_SERVICE_UUID = UUID.fromString("0AC359B3-1A3B-4f8C-8378-E715F4F1B775");
+    private static final UUID MOBILE_HEART_CHAR_UUID = UUID.fromString("4CE9B062-DE2D-4E36-BE57-5CE9D2F1418B");
+    private static final UUID MOBILE_SPO2_CHAR_UUID = UUID.fromString("1009A25F-8934-4270-AAF6-E0D76AD669E5");
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -67,11 +71,11 @@ public class PatientHealthData extends AppCompatActivity {
         heartRateView = findViewById(R.id.heartRateTextView);
         spo2View = findViewById(R.id.OxiTextView);
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        device = bluetoothAdapter.getRemoteDevice(DEVICE_ADDRESS);
         heartRateIndex = 0;
         oxygenIndex = 0;
         heartChart = findViewById(R.id.heartGraph);
         spo2Chart = findViewById(R.id.spo2Graph);
+        device = bluetoothAdapter.getRemoteDevice(DEVICE_ADDRESS);
 
         // Initialize the data sets
         heartRateDataSet = new LineDataSet(new ArrayList<>(), "Heart Rate");
@@ -227,6 +231,8 @@ public class PatientHealthData extends AppCompatActivity {
                         heartRateIndex++;
                     }
                 });
+                sendHeartRateToMobileDevice(heartRate);
+
             } else if (OXI_CHAR_UUID.equals(characteristic.getUuid())) {
                 int oxygenLevel = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
 
@@ -257,6 +263,7 @@ public class PatientHealthData extends AppCompatActivity {
                         oxygenIndex++;
                     }
                 });
+                sendSpO2ToMobileDevice(oxygenLevel);
             }
         }
 
@@ -331,5 +338,47 @@ public class PatientHealthData extends AppCompatActivity {
         // Refresh the chart
         chart.invalidate();
     }
+
+    @SuppressLint("MissingPermission")
+    private void sendHeartRateToMobileDevice(int heartRate) {
+        if (bluetoothGatt != null) {
+            BluetoothGattCharacteristic heartCharacteristic =
+                    bluetoothGatt.getService(MOBILE_SERVICE_UUID).getCharacteristic(MOBILE_HEART_CHAR_UUID);
+
+            if (heartCharacteristic != null) {
+                heartCharacteristic.setValue(String.valueOf(heartRate).getBytes());
+                boolean success = bluetoothGatt.writeCharacteristic(heartCharacteristic);
+                if (success) {
+                    Log.d("BluetoothGattCallback", "Heart Rate sent to mobile: " + heartRate);
+                } else {
+                    Log.e("BluetoothGattCallback", "Failed to send Heart Rate to mobile");
+                }
+            } else {
+                Log.e("BluetoothGattCallback", "Heart Rate characteristic for mobile not found");
+            }
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private void sendSpO2ToMobileDevice(int spo2) {
+        if (bluetoothGatt != null) {
+            BluetoothGattCharacteristic spo2Characteristic =
+                    bluetoothGatt.getService(MOBILE_SERVICE_UUID).getCharacteristic(MOBILE_SPO2_CHAR_UUID);
+
+            if (spo2Characteristic != null) {
+                spo2Characteristic.setValue(String.valueOf(spo2).getBytes());
+                boolean success = bluetoothGatt.writeCharacteristic(spo2Characteristic);
+                if (success) {
+                    Log.d("BluetoothGattCallback", "SpO2 sent to mobile: " + spo2);
+                } else {
+                    Log.e("BluetoothGattCallback", "Failed to send SpO2 to mobile");
+                }
+            } else {
+                Log.e("BluetoothGattCallback", "SpO2 characteristic for mobile not found");
+            }
+        }
+    }
+
+
 
 }
