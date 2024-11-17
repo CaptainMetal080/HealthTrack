@@ -193,7 +193,47 @@ public class PatientHealthData extends AppCompatActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        // Update your UI elements here
+
+
+
+
+                        if (heartRate >= 120) {
+                            Toast.makeText(PatientHealthData.this, "Warning: Mildly high BPM detected!", Toast.LENGTH_SHORT).show();
+                            Log.w("HealthWarning", "Mildly high BPM: " + heartRate);
+                            oxygenDataSet.setColor(getColor(R.color.mild));
+                            oxygenDataSet.setCircleColor(getColor(R.color.mild));
+                            spo2View.setTextColor(getColor(R.color.mild));
+                            if(heartRate >= 140) {
+                                Toast.makeText(PatientHealthData.this, "Critical: High BPM detected!", Toast.LENGTH_SHORT).show();
+                                Log.e("HealthWarning", "Critical BPM: " + heartRate);
+                                spo2View.setTextColor(getColor(R.color.emergency));
+                                oxygenDataSet.setColor(getColor(R.color.emergency));
+                                oxygenDataSet.setCircleColor(getColor(R.color.emergency));
+                                //Make Phone Call
+                                callEmergency();
+                            }
+                        } else if(heartRate <= 65){
+                            Toast.makeText(PatientHealthData.this, "Warning: Mildly low BPM detected!", Toast.LENGTH_SHORT).show();
+                            Log.w("HealthWarning", "Mildly low BPM: " + heartRate);
+                            oxygenDataSet.setColor(getColor(R.color.mild));
+                            oxygenDataSet.setCircleColor(getColor(R.color.mild));
+                            spo2View.setTextColor(getColor(R.color.mild));
+                            if(heartRate <= 50) {
+                                Toast.makeText(PatientHealthData.this, "Critical: low BPM detected!", Toast.LENGTH_SHORT).show();
+                                Log.e("HealthWarning", "Critical BPM: " + heartRate);
+                                spo2View.setTextColor(getColor(R.color.emergency));
+                                oxygenDataSet.setColor(getColor(R.color.emergency));
+                                oxygenDataSet.setCircleColor(getColor(R.color.emergency));
+                                //Make Phone Call
+                                callEmergency();
+                            }
+                        }
+                            else{
+                            oxygenDataSet.setColor(getColor(R.color.healthy));
+                            oxygenDataSet.setCircleColor(getColor(R.color.healthy));
+                            spo2View.setTextColor(getColor(R.color.healthy));  // Reset to default
+                        }
+
                         heartRateView.setText("Heart Rate: " + heartRate);
                         updateChart(heartChart,heartRateDataSet,heartRate,heartRateIndex);
                         heartRateIndex++;
@@ -212,9 +252,7 @@ public class PatientHealthData extends AppCompatActivity {
                             oxygenDataSet.setColor(getColor(R.color.emergency));
                             oxygenDataSet.setCircleColor(getColor(R.color.emergency));
                             //Make Phone Call
-                            Intent phone_intent = new Intent(Intent.ACTION_CALL);
-                            phone_intent.setData(Uri.parse("tel:" + "enterNumberHEre"));
-                            startActivity(phone_intent);
+                            callEmergency();
                         } else if (oxygenLevel <=94){
                             Toast.makeText(PatientHealthData.this, "Warning: Mildly low SpO2 detected!", Toast.LENGTH_SHORT).show();
                             Log.w("HealthWarning", "Mildly low SpO2: " + oxygenLevel);
@@ -253,6 +291,12 @@ public class PatientHealthData extends AppCompatActivity {
             }
         }
     };
+
+    private void callEmergency() {
+        Intent phone_intent = new Intent(Intent.ACTION_CALL);
+        phone_intent.setData(Uri.parse("tel:" + "enterNumberHEre"));
+        startActivity(phone_intent);
+    }
 
     // Configure the chart's appearance and properties
     private void configureChart(LineChart chart, float max) {
