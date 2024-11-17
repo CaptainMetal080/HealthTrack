@@ -72,10 +72,10 @@ public class PatientHealthData extends AppCompatActivity {
         oxygenDataSet = new LineDataSet(new ArrayList<>(), "Oxygen Level");
 
         // Set line styles (optional)
-        heartRateDataSet.setColor(getColor(R.color.heartred));
-        heartRateDataSet.setCircleColor(getColor(R.color.heartred));
-        oxygenDataSet.setColor(getColor(R.color.o2blue));
-        heartRateDataSet.setCircleColor(getColor(R.color.o2blue));
+        heartRateDataSet.setColor(getColor(R.color.healthy));
+        heartRateDataSet.setCircleColor(getColor(R.color.healthy));
+        oxygenDataSet.setColor(getColor(R.color.healthy));
+        oxygenDataSet.setCircleColor(getColor(R.color.healthy));
         // Create LineData objects
         LineData heartRateData = new LineData(heartRateDataSet);
         LineData oxygenData = new LineData(oxygenDataSet);
@@ -209,7 +209,8 @@ public class PatientHealthData extends AppCompatActivity {
                             Toast.makeText(PatientHealthData.this, "Critical: Low SpO2 detected!", Toast.LENGTH_SHORT).show();
                             Log.e("HealthWarning", "Critical SpO2: " + oxygenLevel);
                             spo2View.setTextColor(getColor(R.color.emergency));
-
+                            oxygenDataSet.setColor(getColor(R.color.emergency));
+                            oxygenDataSet.setCircleColor(getColor(R.color.emergency));
                             //Make Phone Call
                             Intent phone_intent = new Intent(Intent.ACTION_CALL);
                             phone_intent.setData(Uri.parse("tel:" + "enterNumberHEre"));
@@ -217,11 +218,14 @@ public class PatientHealthData extends AppCompatActivity {
                         } else if (oxygenLevel <=94){
                             Toast.makeText(PatientHealthData.this, "Warning: Mildly low SpO2 detected!", Toast.LENGTH_SHORT).show();
                             Log.w("HealthWarning", "Mildly low SpO2: " + oxygenLevel);
+                            oxygenDataSet.setColor(getColor(R.color.mild));
+                            oxygenDataSet.setCircleColor(getColor(R.color.mild));
                             spo2View.setTextColor(getColor(R.color.mild));
                         }else{
+                            oxygenDataSet.setColor(getColor(R.color.healthy));
+                            oxygenDataSet.setCircleColor(getColor(R.color.healthy));
                             spo2View.setTextColor(getColor(R.color.healthy));  // Reset to default
                         }
-
                         spo2View.setText("O2: " + oxygenLevel);
                         updateChart(spo2Chart,oxygenDataSet,oxygenLevel,oxygenIndex);
                         oxygenIndex++;
