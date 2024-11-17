@@ -5,4 +5,8 @@
     <color name="heartred">#CC4E4E</color>
     <color name="o2blue">#3384CE</color>
     <color name="orange">#FFFFFFFF</color>
+
+    <color name="emergency">#E20000</color>
+    <color name="mild">#E6AB42</color>
+    <color name="healthy">#49E64D</color>
 </resources>

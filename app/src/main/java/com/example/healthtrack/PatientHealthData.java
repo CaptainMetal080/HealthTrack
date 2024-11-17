@@ -189,7 +189,7 @@ public class PatientHealthData extends AppCompatActivity {
                         if (oxygenLevel < 90) {
                             Toast.makeText(PatientHealthData.this, "Critical: Low SpO2 detected!", Toast.LENGTH_SHORT).show();
                             Log.e("HealthWarning", "Critical SpO2: " + oxygenLevel);
-                            spo2View.setTextColor(Color.RED);
+                            spo2View.setTextColor(getColor(R.color.emergency));
 
                             //Make Phone Call
                             Intent phone_intent = new Intent(Intent.ACTION_CALL);
@@ -198,9 +198,9 @@ public class PatientHealthData extends AppCompatActivity {
                         } else if (oxygenLevel <=94){
                             Toast.makeText(PatientHealthData.this, "Warning: Mildly low SpO2 detected!", Toast.LENGTH_SHORT).show();
                             Log.w("HealthWarning", "Mildly low SpO2: " + oxygenLevel);
-                            spo2View.setTextColor(Color.RED);
+                            spo2View.setTextColor(getColor(R.color.mild));
                         }else{
-                            spo2View.setTextColor(Color.BLACK);  // Reset to default
+                            spo2View.setTextColor(getColor(R.color.healthy));  // Reset to default
                         }
 
                         spo2View.setText("O2: " + oxygenLevel);
