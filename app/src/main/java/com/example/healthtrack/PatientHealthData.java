@@ -194,43 +194,40 @@ public class PatientHealthData extends AppCompatActivity {
                     @Override
                     public void run() {
 
-
-
-
                         if (heartRate >= 120) {
                             Toast.makeText(PatientHealthData.this, "Warning: Mildly high BPM detected!", Toast.LENGTH_SHORT).show();
                             Log.w("HealthWarning", "Mildly high BPM: " + heartRate);
-                            oxygenDataSet.setColor(getColor(R.color.mild));
-                            oxygenDataSet.setCircleColor(getColor(R.color.mild));
+                            heartRateDataSet.setColor(getColor(R.color.mild));
+                            heartRateDataSet.setCircleColor(getColor(R.color.mild));
                             spo2View.setTextColor(getColor(R.color.mild));
                             if(heartRate >= 140) {
                                 Toast.makeText(PatientHealthData.this, "Critical: High BPM detected!", Toast.LENGTH_SHORT).show();
                                 Log.e("HealthWarning", "Critical BPM: " + heartRate);
                                 spo2View.setTextColor(getColor(R.color.emergency));
-                                oxygenDataSet.setColor(getColor(R.color.emergency));
-                                oxygenDataSet.setCircleColor(getColor(R.color.emergency));
+                                heartRateDataSet.setColor(getColor(R.color.emergency));
+                                heartRateDataSet.setCircleColor(getColor(R.color.emergency));
                                 //Make Phone Call
                                 callEmergency();
                             }
                         } else if(heartRate <= 65){
                             Toast.makeText(PatientHealthData.this, "Warning: Mildly low BPM detected!", Toast.LENGTH_SHORT).show();
                             Log.w("HealthWarning", "Mildly low BPM: " + heartRate);
-                            oxygenDataSet.setColor(getColor(R.color.mild));
-                            oxygenDataSet.setCircleColor(getColor(R.color.mild));
+                            heartRateDataSet.setColor(getColor(R.color.mild));
+                            heartRateDataSet.setCircleColor(getColor(R.color.mild));
                             spo2View.setTextColor(getColor(R.color.mild));
                             if(heartRate <= 50) {
                                 Toast.makeText(PatientHealthData.this, "Critical: low BPM detected!", Toast.LENGTH_SHORT).show();
                                 Log.e("HealthWarning", "Critical BPM: " + heartRate);
                                 spo2View.setTextColor(getColor(R.color.emergency));
-                                oxygenDataSet.setColor(getColor(R.color.emergency));
-                                oxygenDataSet.setCircleColor(getColor(R.color.emergency));
+                                heartRateDataSet.setColor(getColor(R.color.emergency));
+                                heartRateDataSet.setCircleColor(getColor(R.color.emergency));
                                 //Make Phone Call
                                 callEmergency();
                             }
                         }
                             else{
-                            oxygenDataSet.setColor(getColor(R.color.healthy));
-                            oxygenDataSet.setCircleColor(getColor(R.color.healthy));
+                            heartRateDataSet.setColor(getColor(R.color.healthy));
+                            heartRateDataSet.setCircleColor(getColor(R.color.healthy));
                             spo2View.setTextColor(getColor(R.color.healthy));  // Reset to default
                         }
 
