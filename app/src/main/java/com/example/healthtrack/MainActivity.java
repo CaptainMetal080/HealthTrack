@@ -28,6 +28,11 @@ public class MainActivity extends AppCompatActivity {
         });
 
         DBHelper = new DBHelper(this);
+
+        //User testUser = new User(0, "John", "Doe", "1234", 647888134, "test@example.com", "patient");
+        //DBHelper.addUser(testUser);
+        // User testDR = new User(0, "Liam", "Brown", "1234", 647888134, "dr@example.com", "doctor");
+        //DBHelper.addUser(testDR);
     }
 
     // Sign in to account

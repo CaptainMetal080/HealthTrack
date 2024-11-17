@@ -49,6 +49,7 @@ public class DoctorHomeScreen extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_doctor_screen);
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         
         checkBluetoothPermissions();

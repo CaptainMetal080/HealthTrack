@@ -26,9 +26,9 @@ public class WelcomeScreen extends AppCompatActivity {
                 @Override
                 public void run() {
                     Intent intent;
-                    if ("doctor".equals(userType)) {
+                    if (userType.equals("doctor")) {
                         intent = new Intent(WelcomeScreen.this, DoctorHomeScreen.class);
-                    } else if ("patient".equals(userType)) {
+                    } else if (userType.equals("patient")) {
                         intent = new Intent(WelcomeScreen.this, PatientHealthData.class);
                     } else {
                         // Default to Patient Health Data if the type is unknown
