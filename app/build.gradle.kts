@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.healthtrack"
-        minSdk = 31
+        minSdk = 30
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -41,6 +41,7 @@ dependencies {
     implementation (libs.mpandroidchart)
     implementation(libs.constraintlayout)
     implementation(libs.androidx.bluetooth)
+    implementation(libs.identity.jvm)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)

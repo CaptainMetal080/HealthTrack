@@ -1,5 +1,6 @@
 package com.example.healthtrack;
 
+import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -101,7 +102,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 null, null, null);
 
         if (cursor != null && cursor.moveToFirst()) {
-            String userType = cursor.getString(cursor.getColumnIndex("user_type"));
+            @SuppressLint("Range") String userType = cursor.getString(cursor.getColumnIndex("user_type"));
             cursor.close();
             return userType;
         } else {

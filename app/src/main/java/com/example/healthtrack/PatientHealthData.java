@@ -221,8 +221,8 @@ public class PatientHealthData extends AppCompatActivity {
                             //Make Phone Call
                             callEmergency();
                         }else{
-                            oxygenDataSet.setColor(getColor(R.color.healthy));
-                            oxygenDataSet.setCircleColor(getColor(R.color.healthy));
+                            heartRateDataSet.setColor(getColor(R.color.healthy));
+                            heartRateDataSet.setCircleColor(getColor(R.color.healthy));
                             spo2View.setTextColor(getColor(R.color.healthy));  // Reset to default
                         }
 
@@ -231,7 +231,7 @@ public class PatientHealthData extends AppCompatActivity {
                         heartRateIndex++;
                     }
                 });
-                sendHeartRateToMobileDevice(heartRate);
+                sendHeartRateToMobileDevice(heartRateDataSet);
 
             } else if (OXI_CHAR_UUID.equals(characteristic.getUuid())) {
                 int oxygenLevel = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
@@ -263,7 +263,7 @@ public class PatientHealthData extends AppCompatActivity {
                         oxygenIndex++;
                     }
                 });
-                sendSpO2ToMobileDevice(oxygenLevel);
+                sendSpO2ToMobileDevice(oxygenDataSet);
             }
         }
 
@@ -284,6 +284,7 @@ public class PatientHealthData extends AppCompatActivity {
             } else {
                 Log.e("DescriptorWrite", "Descriptor write failed for: " + descriptor.getUuid().toString());
             }
+
         }
     };
 
@@ -340,7 +341,7 @@ public class PatientHealthData extends AppCompatActivity {
     }
 
     @SuppressLint("MissingPermission")
-    private void sendHeartRateToMobileDevice(int heartRate) {
+    private void sendHeartRateToMobileDevice(LineDataSet heartRate) {
         if (bluetoothGatt != null) {
             BluetoothGattCharacteristic heartCharacteristic =
                     bluetoothGatt.getService(MOBILE_SERVICE_UUID).getCharacteristic(MOBILE_HEART_CHAR_UUID);
@@ -360,7 +361,7 @@ public class PatientHealthData extends AppCompatActivity {
     }
 
     @SuppressLint("MissingPermission")
-    private void sendSpO2ToMobileDevice(int spo2) {
+    private void sendSpO2ToMobileDevice(LineDataSet spo2) {
         if (bluetoothGatt != null) {
             BluetoothGattCharacteristic spo2Characteristic =
                     bluetoothGatt.getService(MOBILE_SERVICE_UUID).getCharacteristic(MOBILE_SPO2_CHAR_UUID);
