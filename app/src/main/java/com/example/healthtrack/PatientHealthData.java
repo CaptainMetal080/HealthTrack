@@ -2,6 +2,7 @@ package com.example.healthtrack;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
@@ -9,11 +10,12 @@ import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothProfile;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.widget.Toast;
 import android.widget.TextView;
@@ -289,9 +291,53 @@ public class PatientHealthData extends AppCompatActivity {
     };
 
     private void callEmergency() {
-        Intent phone_intent = new Intent(Intent.ACTION_CALL);
-        phone_intent.setData(Uri.parse("tel:" + "enterNumberHEre"));
-        startActivity(phone_intent);
+        // Show confirmation dialog
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Emergency Call");
+        builder.setMessage("Critical Health condition detected call emergency?");
+
+        // Positive button to call emergency
+        builder.setPositiveButton("Call", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                Call();  // Proceed with the call
+            }
+        });
+
+        // Negative button to cancel
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                dialog.dismiss();  // Dismiss the dialog without calling
+            }
+        });
+
+        // Create and show the dialog
+        AlertDialog dialog = builder.create();
+        dialog.show();
+
+        // Create a handler to automatically proceed with the call after 5 seconds if the user doesn't interact
+        Handler handler = new Handler();
+        Runnable callRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (dialog.isShowing()) {
+                    // If the dialog is still showing after 5 seconds, proceed with the call
+                    Call();
+                }
+            }
+        };
+        handler.postDelayed(callRunnable, 5000);  // Delay of 5000ms (5 seconds)
+    }
+
+    private void Call() {
+        try {
+            // Make the call
+            Intent phone_intent = new Intent(Intent.ACTION_CALL);
+            phone_intent.setData(Uri.parse("tel:" + "enterNumberHere"));  // Replace with actual number
+            startActivity(phone_intent);
+        } catch (Exception e) {
+            // Handle exception if the phone intent fails
+            Toast.makeText(this, "Error making the call: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
     }
 
     // Configure the chart's appearance and properties
