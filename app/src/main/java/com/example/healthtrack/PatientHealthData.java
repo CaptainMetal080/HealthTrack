@@ -199,6 +199,15 @@ public class PatientHealthData extends AppCompatActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
+                        if(heartRate >160){
+                            Toast.makeText(PatientHealthData.this, "Critical: High Heart Rate!", Toast.LENGTH_SHORT).show();
+                            Log.e("HealthWarning", "Critical BPM: " + heartRate);
+                            spo2View.setTextColor(getColor(R.color.emergency));
+                            heartRateDataSet.setColor(getColor(R.color.emergency));
+                            heartRateDataSet.setCircleColor(getColor(R.color.emergency));
+                            //Make Phone Call
+                            callEmergency();
+                        }
                         if(heartRate < 50){
                             Toast.makeText(PatientHealthData.this, "Critical: Slow Heart Rate!", Toast.LENGTH_SHORT).show();
                             Log.e("HealthWarning", "Critical BPM: " + heartRate);
@@ -207,6 +216,10 @@ public class PatientHealthData extends AppCompatActivity {
                             heartRateDataSet.setCircleColor(getColor(R.color.emergency));
                             //Make Phone Call
                             callEmergency();
+                        }else{
+                            oxygenDataSet.setColor(getColor(R.color.healthy));
+                            oxygenDataSet.setCircleColor(getColor(R.color.healthy));
+                            spo2View.setTextColor(getColor(R.color.healthy));  // Reset to default
                         }
 
                         heartRateView.setText("Heart Rate: " + heartRate);
