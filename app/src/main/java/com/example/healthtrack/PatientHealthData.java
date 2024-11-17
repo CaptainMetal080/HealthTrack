@@ -17,6 +17,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.widget.Button;
 import android.widget.Toast;
 import android.widget.TextView;
 
@@ -276,7 +277,6 @@ public class PatientHealthData extends AppCompatActivity {
                 Log.d("DescriptorWrite", "Descriptor write successful for: " + descriptor.getUuid().toString());
                 BluetoothGattCharacteristic oxygenCharacteristic = gatt.getService(SERVICE_UUID).getCharacteristic(OXI_CHAR_UUID);
                 gatt.setCharacteristicNotification(oxygenCharacteristic, true);
-
                 BluetoothGattDescriptor oxygenDescriptor = oxygenCharacteristic.getDescriptor(UUID.fromString("00002902-0000-1000-8000-00805f9b34fb"));
                 if (oxygenDescriptor != null) {
                     oxygenDescriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
@@ -286,7 +286,6 @@ public class PatientHealthData extends AppCompatActivity {
             } else {
                 Log.e("DescriptorWrite", "Descriptor write failed for: " + descriptor.getUuid().toString());
             }
-
         }
     };
 
@@ -312,6 +311,19 @@ public class PatientHealthData extends AppCompatActivity {
 
         // Create and show the dialog
         AlertDialog dialog = builder.create();
+
+        dialog.setOnShowListener(new DialogInterface.OnShowListener() {
+            @Override
+            public void onShow(DialogInterface dialogInterface) {
+                // Get reference to the positive and negative buttons
+                Button positiveButton = dialog.getButton(DialogInterface.BUTTON_POSITIVE);
+                Button negativeButton = dialog.getButton(DialogInterface.BUTTON_NEGATIVE);
+
+                // Set the colors of the buttons (use your custom color values)
+                positiveButton.setTextColor(ContextCompat.getColor(PatientHealthData.this, R.color.healthy));  // Change to your desired color
+                negativeButton.setTextColor(ContextCompat.getColor(PatientHealthData.this, R.color.heartred));  // Change to your desired color
+            }
+        });
         dialog.show();
 
         // Create a handler to automatically proceed with the call after 5 seconds if the user doesn't interact
