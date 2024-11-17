@@ -48,6 +48,7 @@ public class PatientHealthData extends AppCompatActivity {
     private LineDataSet oxygenDataSet;
 
     private static final int REQUEST_BLUETOOTH_PERMISSIONS = 1;
+    private static final int REQUEST_CALL_PHONE_PERMISSION = 2;
     TextView heartRateView;
     TextView spo2View;
     private int heartRateIndex;
@@ -87,7 +88,8 @@ public class PatientHealthData extends AppCompatActivity {
         configureChart(heartChart,200);
         configureChart(spo2Chart,100);
 
-        checkBluetoothPermissions();  // Your Bluetooth connection code
+        checkBluetoothPermissions();
+        checkCallPhonePermission();
     }
 
     // Method to check and request Bluetooth permissions
@@ -106,6 +108,13 @@ public class PatientHealthData extends AppCompatActivity {
         }
     }
 
+    private void checkCallPhonePermission() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+            // Permission not granted, request the permission
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CALL_PHONE}, REQUEST_CALL_PHONE_PERMISSION);
+        }
+    }
+
     // Callback for handling the result of the permissions request
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
@@ -117,6 +126,16 @@ public class PatientHealthData extends AppCompatActivity {
             } else {
                 // Permissions not granted, inform the user
                 Toast.makeText(this, "Bluetooth permissions are required to connect.", Toast.LENGTH_SHORT).show();
+            }
+        }
+
+        if (requestCode == REQUEST_CALL_PHONE_PERMISSION) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission granted, now you can make the call
+                Log.d("Permissions", "CALL_PHONE permission granted.");
+            } else {
+                // Permission denied, inform the user
+                Toast.makeText(this, "Phone call permission denied", Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -193,7 +212,7 @@ public class PatientHealthData extends AppCompatActivity {
 
                             //Make Phone Call
                             Intent phone_intent = new Intent(Intent.ACTION_CALL);
-                            phone_intent.setData(Uri.parse("tel:" + ));
+                            phone_intent.setData(Uri.parse("tel:" + "enterNumberHEre"));
                             startActivity(phone_intent);
                         } else if (oxygenLevel <=94){
                             Toast.makeText(PatientHealthData.this, "Warning: Mildly low SpO2 detected!", Toast.LENGTH_SHORT).show();
