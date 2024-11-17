@@ -9,8 +9,10 @@ import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothProfile;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
@@ -187,15 +189,18 @@ public class PatientHealthData extends AppCompatActivity {
                         if (oxygenLevel < 90) {
                             Toast.makeText(PatientHealthData.this, "Critical: Low SpO2 detected!", Toast.LENGTH_SHORT).show();
                             Log.e("HealthWarning", "Critical SpO2: " + oxygenLevel);
+                            spo2View.setTextColor(Color.RED);
 
-                            heartRateView.setTextColor(Color.RED);
-                        } else if (oxygenLevel >= 90 && oxygenLevel <=94){
+                            //Make Phone Call
+                            Intent phone_intent = new Intent(Intent.ACTION_CALL);
+                            phone_intent.setData(Uri.parse("tel:" + ));
+                            startActivity(phone_intent);
+                        } else if (oxygenLevel <=94){
                             Toast.makeText(PatientHealthData.this, "Warning: Mildly low SpO2 detected!", Toast.LENGTH_SHORT).show();
                             Log.w("HealthWarning", "Mildly low SpO2: " + oxygenLevel);
-
-                            heartRateView.setTextColor(Color.RED);
-                        }else {
-                            heartRateView.setTextColor(Color.BLACK);  // Reset to default
+                            spo2View.setTextColor(Color.RED);
+                        }else{
+                            spo2View.setTextColor(Color.BLACK);  // Reset to default
                         }
 
                         spo2View.setText("O2: " + oxygenLevel);
