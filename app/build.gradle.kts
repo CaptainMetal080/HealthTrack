@@ -8,6 +8,10 @@ android {
     namespace = "com.example.healthtrack"
     compileSdk = 34
 
+    packagingOptions {
+        exclude("META-INF/versions/9/OSGI-INF/MANIFEST.MF");
+    }
+
     defaultConfig {
         applicationId = "com.example.healthtrack"
         minSdk = 30

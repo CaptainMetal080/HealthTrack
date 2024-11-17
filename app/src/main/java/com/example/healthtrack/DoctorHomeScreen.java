@@ -41,6 +41,8 @@ public class DoctorHomeScreen extends AppCompatActivity {
     Set<BluetoothDevice> pairedDevices;
 
     private static final int REQUEST_BLUETOOTH_PERMISSIONS = 1;
+    private static final int REQUEST_LOCATION_PERMISSION = 2;
+    private static final int REQUEST_ENABLE_BT = 3;
     private BluetoothGatt bluetoothGatt;
 
     @Override
@@ -53,16 +55,27 @@ public class DoctorHomeScreen extends AppCompatActivity {
 
     private void checkBluetoothPermissions() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED ||
-            ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
-        
+                ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
+
             ActivityCompat.requestPermissions(this,
-                new String[] {
-                    Manifest.permission.BLUETOOTH_CONNECT,
-                    Manifest.permission.BLUETOOTH_SCAN
-                },
-                REQUEST_BLUETOOTH_PERMISSIONS);
+                    new String[]{
+                            Manifest.permission.BLUETOOTH_CONNECT,
+                            Manifest.permission.BLUETOOTH_SCAN,
+                            Manifest.permission.ACCESS_FINE_LOCATION // Required for Bluetooth device scanning
+                    },
+                    REQUEST_BLUETOOTH_PERMISSIONS);
         } else {
-            connectToDevice(); // Permissions are already granted, proceed with connection
+            ensureBluetoothEnabled(); // Permissions are granted, proceed with enabling Bluetooth
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private void ensureBluetoothEnabled() {
+        if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled()) {
+            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT); // Prompt to enable Bluetooth
+        } else {
+            connectToDevice(); // Bluetooth is enabled, connect to the device
         }
     }
 
@@ -71,9 +84,15 @@ public class DoctorHomeScreen extends AppCompatActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == REQUEST_BLUETOOTH_PERMISSIONS) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                connectToDevice();
+                ensureBluetoothEnabled();
             } else {
                 Toast.makeText(this, "Bluetooth permissions are required.", Toast.LENGTH_SHORT).show();
+            }
+        } else if (requestCode == REQUEST_LOCATION_PERMISSION) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                connectToDevice();
+            } else {
+                Toast.makeText(this, "Location permission is required for Bluetooth.", Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -83,7 +102,7 @@ public class DoctorHomeScreen extends AppCompatActivity {
         pairedDevices = bluetoothAdapter.getBondedDevices();
 
         for (BluetoothDevice device : pairedDevices) {
-            if (device.getName().equals("TargetDeviceName")) { // Replace with the server device's name
+            if (device.getName().equals("Mithusan's S20 FE")) { // Replace with the server device's name
                 bluetoothGatt = device.connectGatt(this, false, gattCallback);
                 return;
             }

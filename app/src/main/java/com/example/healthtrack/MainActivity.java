@@ -34,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
         //User testUser = new User(0, "John", "Doe", "1234", 647888134, "test@example.com", "patient");
         // Add the user to the database
         User testDR = new User(0, "Liam", "Brown", "1234", 647888134, "dr@example.com", "doctor");
-        //DBHelper.addUser(testUser);
+        //DBHelper.addUser(testDR);
     }
 
     // sign in to account
