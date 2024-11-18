@@ -2,10 +2,6 @@ package com.example.healthtrack;
 
 import android.util.Log;
 
-import com.example.healthtrack.ApiService;
-import com.example.healthtrack.PatientData;
-import com.example.healthtrack.RetrofitClient;
-
 import java.util.List;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -18,16 +14,17 @@ public class DataFetcher {
         apiService = RetrofitClient.getClient().create(ApiService.class);
     }
 
-    public void fetchHealthData(Integer patientId) {
+    public void fetchHealthData(Integer patientId, DataCallback dataCallback) {
         // Fetch data with or without a patientId filter
         Call<List<PatientData>> call = apiService.getHealthData(patientId);
+        PatientData patient;
         call.enqueue(new Callback<List<PatientData>>() {
             @Override
             public void onResponse(Call<List<PatientData>> call, Response<List<PatientData>> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     List<PatientData> data = response.body();
                     for (PatientData record : data) {
-                        Log.d("DataFetcher", "Fetched record: " + record.toString());
+
                     }
                 } else {
                     Log.e("DataFetcher", "Failed to fetch data: " + response.message());
@@ -39,5 +36,10 @@ public class DataFetcher {
                 Log.e("DataFetcher", "Error: " + t.getMessage());
             }
         });
+    }
+
+    public interface DataCallback {
+        void onSuccess(List<PatientData> data);
+        void onError(String errorMessage);
     }
 }

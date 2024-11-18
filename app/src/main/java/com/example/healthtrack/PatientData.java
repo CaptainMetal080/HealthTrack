@@ -49,4 +49,8 @@ public class PatientData {
     public void setOxygenLevel(int spo2_level) {
         this.spo2_level = spo2_level;
     }
+    
+    public PatientData getPatient(){
+        return this;
+    }
 }
