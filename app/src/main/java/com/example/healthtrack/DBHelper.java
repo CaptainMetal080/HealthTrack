@@ -90,7 +90,7 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
     // Add a new patient record
-    public boolean addPatientData(PatientData patientData) {
+    public void addPatientData(PatientData patientData) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(COLUMN_PATIENT_ID, patientData.getpId());
@@ -98,9 +98,8 @@ public class DBHelper extends SQLiteOpenHelper {
         values.put(COLUMN_HEART_RATE, patientData.getHeartRate());
         values.put(COLUMN_OXYGEN_LEVEL, patientData.getOxygenLevel());
 
-        long result = db.insert(PATIENT_TABLE_NAME, null, values);
+       db.insert(PATIENT_TABLE_NAME, null, values);
         db.close();
-        return result != -1; // Return true if the insertion is successful
     }
 
     // Retrieve patient data by ID
@@ -175,7 +174,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return patientDataList;
     }
 
-    public boolean addUser(User user) {
+    public void addUser(User user) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(COLUMN_FIRST_NAME, user.getFirstName());
@@ -186,9 +185,8 @@ public class DBHelper extends SQLiteOpenHelper {
         values.put(COLUMN_TYPE, user.getUserType());
 
         // Insert user into the database
-        long result = db.insert(USERS_TABLE_NAME, null, values);
+        db.insert(USERS_TABLE_NAME, null, values);
         db.close();
-        return result != -1; // Return true if the insertion is successful
     }
 
     // Check if user credentials match
