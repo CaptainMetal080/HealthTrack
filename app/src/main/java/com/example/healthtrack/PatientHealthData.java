@@ -281,15 +281,7 @@ public class PatientHealthData extends AppCompatActivity {
 
                 PatientData patientData = new PatientData(pId, timestamp, latestHeart, latestOxygen);
                 // Insert this data into the database
-
-                boolean isInserted = dbHelper.addPatientData(patientData);
-                if (isInserted) {
-                    // Successfully inserted data
-                    Log.d("PatientData", "Patient data inserted successfully at timestamp: " + timestamp);
-                } else {
-                    // Insertion failed
-                    Log.e("PatientData", "Failed to insert patient data.");
-                }
+                dbHelper.addPatientData(patientData);
 
                 if(dbHelper.getAllPatientData().getCount() % 10 == 0){
                     DataUploader uploader = new DataUploader(PatientHealthData.this);
