@@ -79,13 +79,8 @@ public class NewAccount extends AppCompatActivity {
         }
         
         User newUser = new User(0, firstName, lastName, password, Long.parseLong(phone), email, selectedUserType);
-        boolean userAdded = DBHelper.addUser(newUser);
-        if (userAdded) {
-            Toast.makeText(this, "Account created!", Toast.LENGTH_LONG).show();
-            finish();
-        } else {
-            Toast.makeText(this, "Error creating account, please try again!", Toast.LENGTH_LONG).show();
-        }
+        DBHelper.addUser(newUser);
+
     }
 
     // Helper method to validate email format
