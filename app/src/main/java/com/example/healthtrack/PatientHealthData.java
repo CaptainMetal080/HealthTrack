@@ -10,12 +10,14 @@ import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothProfile;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.ParcelUuid;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.Toast;
@@ -32,6 +34,10 @@ import androidx.core.content.ContextCompat;
 
 import java.util.UUID;
 import java.util.ArrayList;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class PatientHealthData extends AppCompatActivity {
     private final String DEVICE_ADDRESS = "BC:B5:A2:5B:02:16";
@@ -57,15 +63,12 @@ public class PatientHealthData extends AppCompatActivity {
     private int heartRateIndex;
     private int oxygenIndex;
 
-    private float heartSum = 0;
-    private ArrayList<Integer> heartRateReadings = new ArrayList<>();
-    private final int heartSampleSize = 5;
-    private final float THRESHOLD_MILD = 0.15f;
-    private final float THRESHOLD_CRITICAL = 0.25f;
-
-    private static final UUID MOBILE_SERVICE_UUID = UUID.fromString("0AC359B3-1A3B-4f8C-8378-E715F4F1B775");
-    private static final UUID MOBILE_HEART_CHAR_UUID = UUID.fromString("4CE9B062-DE2D-4E36-BE57-5CE9D2F1418B");
-    private static final UUID MOBILE_SPO2_CHAR_UUID = UUID.fromString("1009A25F-8934-4270-AAF6-E0D76AD669E5");
+    private int oxygenLevel;
+    private int heartRate;
+    private boolean isHeartUpdated = false;
+    private boolean isOxygenUpdated = false;
+    private DBHelper dbHelper;
+    private DataUploader uploader;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,7 +82,7 @@ public class PatientHealthData extends AppCompatActivity {
         heartChart = findViewById(R.id.heartGraph);
         spo2Chart = findViewById(R.id.spo2Graph);
         device = bluetoothAdapter.getRemoteDevice(DEVICE_ADDRESS);
-
+        dbHelper = new DBHelper(PatientHealthData.this);
         // Initialize the data sets
         heartRateDataSet = new LineDataSet(new ArrayList<>(), "Heart Rate");
         oxygenDataSet = new LineDataSet(new ArrayList<>(), "Oxygen Level");
@@ -200,7 +203,7 @@ public class PatientHealthData extends AppCompatActivity {
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
             if (HEARTRATE_CHAR_UUID.equals(characteristic.getUuid())) {
-                int heartRate = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
+                heartRate = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
 
                 // Update the UI using runOnUiThread
                 runOnUiThread(new Runnable() {
@@ -209,7 +212,7 @@ public class PatientHealthData extends AppCompatActivity {
                         if(heartRate >160){
                             Toast.makeText(PatientHealthData.this, "Critical: High Heart Rate!", Toast.LENGTH_SHORT).show();
                             Log.e("HealthWarning", "Critical BPM: " + heartRate);
-                            spo2View.setTextColor(getColor(R.color.emergency));
+                            heartRateView.setTextColor(getColor(R.color.emergency));
                             heartRateDataSet.setColor(getColor(R.color.emergency));
                             heartRateDataSet.setCircleColor(getColor(R.color.emergency));
                             //Make Phone Call
@@ -218,7 +221,7 @@ public class PatientHealthData extends AppCompatActivity {
                         if(heartRate < 50){
                             Toast.makeText(PatientHealthData.this, "Critical: Slow Heart Rate!", Toast.LENGTH_SHORT).show();
                             Log.e("HealthWarning", "Critical BPM: " + heartRate);
-                            spo2View.setTextColor(getColor(R.color.emergency));
+                            heartRateView.setTextColor(getColor(R.color.emergency));
                             heartRateDataSet.setColor(getColor(R.color.emergency));
                             heartRateDataSet.setCircleColor(getColor(R.color.emergency));
                             //Make Phone Call
@@ -226,18 +229,19 @@ public class PatientHealthData extends AppCompatActivity {
                         }else{
                             heartRateDataSet.setColor(getColor(R.color.healthy));
                             heartRateDataSet.setCircleColor(getColor(R.color.healthy));
-                            spo2View.setTextColor(getColor(R.color.healthy));  // Reset to default
+                            heartRateView.setTextColor(getColor(R.color.healthy));  // Reset to default
                         }
 
                         heartRateView.setText("Heart Rate: " + heartRate);
                         updateChart(heartChart,heartRateDataSet,heartRate,heartRateIndex);
                         heartRateIndex++;
+                        isHeartUpdated=true;
                     }
+
                 });
-                sendHeartRateToMobileDevice(heartRateDataSet);
 
             } else if (OXI_CHAR_UUID.equals(characteristic.getUuid())) {
-                int oxygenLevel = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
+                oxygenLevel = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
 
                 runOnUiThread(new Runnable() {
                     @Override
@@ -264,9 +268,36 @@ public class PatientHealthData extends AppCompatActivity {
                         spo2View.setText("O2: " + oxygenLevel);
                         updateChart(spo2Chart,oxygenDataSet,oxygenLevel,oxygenIndex);
                         oxygenIndex++;
-                    }
+                        isOxygenUpdated=true;
+ }
                 });
-                sendSpO2ToMobileDevice(oxygenDataSet);
+            }
+
+            if(isHeartUpdated && isOxygenUpdated){
+                int latestHeart=(int)heartRateDataSet.getEntryForIndex(heartRateDataSet.getEntryCount() - 1).getY();
+                int latestOxygen=(int)oxygenDataSet.getEntryForIndex(oxygenDataSet.getEntryCount() - 1).getY();
+                long timestamp = System.currentTimeMillis();
+                int pId=Integer.parseInt(getIntent().getStringExtra("id"));
+
+                PatientData patientData = new PatientData(pId, timestamp, latestHeart, latestOxygen);
+                // Insert this data into the database
+
+                boolean isInserted = dbHelper.addPatientData(patientData);
+                if (isInserted) {
+                    // Successfully inserted data
+                    Log.d("PatientData", "Patient data inserted successfully at timestamp: " + timestamp);
+                } else {
+                    // Insertion failed
+                    Log.e("PatientData", "Failed to insert patient data.");
+                }
+
+                if(dbHelper.getAllPatientData().getCount() % 10 == 0){
+                    DataUploader uploader = new DataUploader(PatientHealthData.this);
+                    uploader.uploadPatientDataBatch();
+                }
+
+                isHeartUpdated = false;
+                isOxygenUpdated = false;
             }
         }
 
@@ -397,47 +428,4 @@ public class PatientHealthData extends AppCompatActivity {
         // Refresh the chart
         chart.invalidate();
     }
-
-    @SuppressLint("MissingPermission")
-    private void sendHeartRateToMobileDevice(LineDataSet heartRate) {
-        if (bluetoothGatt != null) {
-            BluetoothGattCharacteristic heartCharacteristic =
-                    bluetoothGatt.getService(MOBILE_SERVICE_UUID).getCharacteristic(MOBILE_HEART_CHAR_UUID);
-
-            if (heartCharacteristic != null) {
-                heartCharacteristic.setValue(String.valueOf(heartRate).getBytes());
-                boolean success = bluetoothGatt.writeCharacteristic(heartCharacteristic);
-                if (success) {
-                    Log.d("BluetoothGattCallback", "Heart Rate sent to mobile: " + heartRate);
-                } else {
-                    Log.e("BluetoothGattCallback", "Failed to send Heart Rate to mobile");
-                }
-            } else {
-                Log.e("BluetoothGattCallback", "Heart Rate characteristic for mobile not found");
-            }
-        }
-    }
-
-    @SuppressLint("MissingPermission")
-    private void sendSpO2ToMobileDevice(LineDataSet spo2) {
-        if (bluetoothGatt != null) {
-            BluetoothGattCharacteristic spo2Characteristic =
-                    bluetoothGatt.getService(MOBILE_SERVICE_UUID).getCharacteristic(MOBILE_SPO2_CHAR_UUID);
-
-            if (spo2Characteristic != null) {
-                spo2Characteristic.setValue(String.valueOf(spo2).getBytes());
-                boolean success = bluetoothGatt.writeCharacteristic(spo2Characteristic);
-                if (success) {
-                    Log.d("BluetoothGattCallback", "SpO2 sent to mobile: " + spo2);
-                } else {
-                    Log.e("BluetoothGattCallback", "Failed to send SpO2 to mobile");
-                }
-            } else {
-                Log.e("BluetoothGattCallback", "SpO2 characteristic for mobile not found");
-            }
-        }
-    }
-
-
-
 }

@@ -61,8 +61,6 @@ public class DoctorHomeScreen extends AppCompatActivity {
 
             ActivityCompat.requestPermissions(this,
                     new String[]{
-                            Manifest.permission.BLUETOOTH_CONNECT,
-                            Manifest.permission.BLUETOOTH_SCAN,
                             Manifest.permission.ACCESS_FINE_LOCATION // Required for Bluetooth device scanning
                     },
                     REQUEST_BLUETOOTH_PERMISSIONS);
@@ -82,15 +80,9 @@ public class DoctorHomeScreen extends AppCompatActivity {
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_BLUETOOTH_PERMISSIONS) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                ensureBluetoothEnabled();
-            } else {
-                Toast.makeText(this, "Bluetooth permissions are required.", Toast.LENGTH_SHORT).show();
-            }
-        } else if (requestCode == REQUEST_LOCATION_PERMISSION) {
+        if (requestCode == REQUEST_LOCATION_PERMISSION) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 connectToDevice();
             } else {
@@ -151,15 +143,15 @@ public class DoctorHomeScreen extends AppCompatActivity {
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
             if (MOBILE_HEART_CHAR_UUID.equals(characteristic.getUuid())) {
-                byte[] heartArray=characteristic.getValue();
-                reconstructListFromBytes(heartArray);
+                //byte[] heartArray=characteristic.getValue();
+                //reconstructListFromBytes(heartArray);
                 int heartRate = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
-                Log.i("BluetoothGatt", "Heart rate value: " + heartArray);
+                Log.i("BluetoothGatt", "Heart rate value: " + heartRate);
             } else if (MOBILE_SPO2_CHAR_UUID.equals(characteristic.getUuid())) {
-                byte[] oxygenArray=characteristic.getValue();
-                reconstructListFromBytes(oxygenArray);
+                //byte[] oxygenArray=characteristic.getValue();
+                //reconstructListFromBytes(oxygenArray);
                 int oxygenLevel = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
-                Log.i("BluetoothGatt", "SpO2 value: " + oxygenArray);
+                Log.i("BluetoothGatt", "SpO2 value: " + oxygenLevel);
             }
         }
 

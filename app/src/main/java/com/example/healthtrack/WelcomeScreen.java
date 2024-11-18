@@ -20,6 +20,7 @@ public class WelcomeScreen extends AppCompatActivity {
             // Get the user type from the DB
             DBHelper dbHelper = new DBHelper(this);
             String userType = dbHelper.getUserTypeByEmail(email);
+            int id=dbHelper.getUserIdByEmail(email);
 
             // Redirect to the appropriate screen based on user type
             new Handler().postDelayed(new Runnable() {
@@ -34,6 +35,7 @@ public class WelcomeScreen extends AppCompatActivity {
                         // Default to Patient Health Data if the type is unknown
                         intent = new Intent(WelcomeScreen.this, PatientHealthData.class);
                     }
+                    intent.putExtra("id", id);
                     startActivity(intent);
                     overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
                     finish();
