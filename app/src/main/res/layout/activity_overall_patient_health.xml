@@ -30,13 +30,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:text="Heart Rate: -- BPM"
+            android:text="BPM: -- BPM"
             android:textStyle="bold|italic"
             android:textSize="24sp"
             android:layout_gravity="center"/>
         <com.github.mikephil.charting.charts.LineChart
             android:layout_width="match_parent"
-            android:layout_height="100dp"
+            android:layout_height="250dp"
             android:id="@+id/heartGraph"/>
         <TextView
             android:id="@+id/OxiTextView"
@@ -49,7 +49,7 @@
             android:layout_gravity="center"/>
         <com.github.mikephil.charting.charts.LineChart
             android:layout_width="match_parent"
-            android:layout_height="100dp"
+            android:layout_height="250dp"
             android:id="@+id/spo2Graph"/>
 
 
