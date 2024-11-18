@@ -51,7 +51,7 @@ public class DoctorHomeScreen extends AppCompatActivity {
         @Override
         public void run() {
             fetchPatientData();
-            plotHealthData()
+            plotHealthData();
             // Schedule the next fetch after the interval
             handler.postDelayed(this, FETCH_INTERVAL);
         }

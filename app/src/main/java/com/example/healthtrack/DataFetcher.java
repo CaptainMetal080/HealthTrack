@@ -24,7 +24,7 @@ public class DataFetcher {
                 if (response.isSuccessful() && response.body() != null) {
                     List<PatientData> data = response.body();
                     for (PatientData record : data) {
-
+                        Log.d("DataFetcher", "Fetched record: " + record.toString());
                     }
                 } else {
                     Log.e("DataFetcher", "Failed to fetch data: " + response.message());
