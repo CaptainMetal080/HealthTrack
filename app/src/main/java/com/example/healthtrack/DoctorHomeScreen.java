@@ -26,7 +26,7 @@ public class DoctorHomeScreen extends AppCompatActivity {
     private List<PatientData> patientDataList;
 
     private Handler handler;
-    private final int FETCH_INTERVAL = 10000; // 10 seconds
+    private final int FETCH_INTERVAL = 15000; // 15 seconds
 
     private LineChart heartChart;
     private LineChart spo2Chart;
@@ -39,7 +39,8 @@ public class DoctorHomeScreen extends AppCompatActivity {
 
         patientDataList = new ArrayList<>();
         handler = new Handler();
-        
+        apiService = RetrofitClient.getClient().create(ApiService.class);
+
         startFetchingData();
     }
 
@@ -50,32 +51,34 @@ public class DoctorHomeScreen extends AppCompatActivity {
     private final Runnable fetchDataRunnable = new Runnable() {
         @Override
         public void run() {
-            fetchPatientData();
-            plotHealthData();
+            fetchHealthData(1);
+
             // Schedule the next fetch after the interval
             handler.postDelayed(this, FETCH_INTERVAL);
         }
     };
 
-    private void fetchPatientData() {
-        DataFetcher dataFetcher = new DataFetcher();
-
-        // Fetch all health data (or filter by patient_id if required)
-        dataFetcher.fetchHealthData(1, new DataFetcher.DataCallback() {
+    public void fetchHealthData(Integer patientId) {
+        // Fetch data with or without a patientId filter
+        Call<List<PatientData>> call = apiService.getHealthData(patientId);
+        call.enqueue(new Callback<List<PatientData>>() {
             @Override
-            public void onSuccess(List<PatientData> data) {
-                patientDataList.addAll(data);
+            public void onResponse(Call<List<PatientData>> call, Response<List<PatientData>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    patientDataList = response.body();
+                    for (PatientData record : patientDataList) {
+                        Log.d("DataFetcher", "Fetched record: " + record.getHeartRate() + ", " + record.getOxygenLevel());
+                    }
 
-                // Example: Log fetched data
-                for (PatientData patient : patientDataList) {
-                    Log.d("DoctorHomeScreen", "Patient Data: " + patient.toString());
+                    plotHealthData();
+                } else {
+                    Log.e("DataFetcher", "Failed to fetch data: " + response.message());
                 }
-
             }
 
             @Override
-            public void onError(String errorMessage) {
-                Log.e("DoctorHomeScreen", "Failed to fetch data: " + errorMessage);
+            public void onFailure(Call<List<PatientData>> call, Throwable t) {
+                Log.e("DataFetcher", "Error: " + t.getMessage());
             }
         });
     }
