@@ -31,7 +31,7 @@ public class DoctorHomeScreen extends AppCompatActivity {
     private LineChart heartChart;
     private LineChart spo2Chart;
 
-    private int MAX_POINTS=15;
+    private int MAX_POINTS=40;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -51,7 +51,7 @@ public class DoctorHomeScreen extends AppCompatActivity {
         @Override
         public void run() {
             fetchPatientData();
-
+            plotHealthData()
             // Schedule the next fetch after the interval
             handler.postDelayed(this, FETCH_INTERVAL);
         }
