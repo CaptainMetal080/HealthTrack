@@ -20,7 +20,7 @@ public class WelcomeScreen extends AppCompatActivity {
             // Get the user type from the DB
             DBHelper dbHelper = new DBHelper(this);
             String userType = dbHelper.getUserTypeByEmail(email);
-            int id=dbHelper.getUserIdByEmail(email);
+            int id = dbHelper.getUserIdByEmail(email);
 
             // Redirect to the appropriate screen based on user type
             new Handler().postDelayed(new Runnable() {
@@ -28,13 +28,19 @@ public class WelcomeScreen extends AppCompatActivity {
                 public void run() {
                     Intent intent;
                     if (userType.equals("doctor")) {
+                        // Get the last name of the doctor
+                        String lastName = dbHelper.getLastNameByEmail(email);
+
+                        // Pass the last name to DoctorHomeScreen
                         intent = new Intent(WelcomeScreen.this, DoctorHomeScreen.class);
+                        intent.putExtra("lastName", lastName);  // Pass the last name
                     } else if (userType.equals("patient")) {
                         intent = new Intent(WelcomeScreen.this, PatientHealthData.class);
                     } else {
                         // Default to Patient Health Data if the type is unknown
                         intent = new Intent(WelcomeScreen.this, PatientHealthData.class);
                     }
+
                     intent.putExtra("id", String.valueOf(id));
                     startActivity(intent);
                     overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);

@@ -1,7 +1,10 @@
 package com.example.healthtrack;
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -31,6 +34,9 @@ public class DoctorHomeScreen extends AppCompatActivity {
     private LineChart heartChart;
     private LineChart spo2Chart;
 
+    private TextView heartText;
+    private TextView spo2Text;
+
     private int MAX_POINTS=40;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,6 +46,10 @@ public class DoctorHomeScreen extends AppCompatActivity {
         patientDataList = new ArrayList<>();
         handler = new Handler();
         apiService = RetrofitClient.getClient().create(ApiService.class);
+
+        String lastName = getIntent().getStringExtra("lastName");
+        TextView doctorNameTextView = findViewById(R.id.drTitle);
+        doctorNameTextView.setText("Welcome, Dr. " + lastName);
 
         startFetchingData();
     }
@@ -92,13 +102,18 @@ public class DoctorHomeScreen extends AppCompatActivity {
         }
     }
 
+   @SuppressLint("DefaultLocale")
    private void plotHealthData() {
        // Prepare data for the charts (e.g., heart rate or oxygen levels)
        ArrayList<Entry> heartRateEntries = new ArrayList<>();
        ArrayList<Entry> oxygenLevelEntries = new ArrayList<>();
-
+       LineDataSet heartDataSet=new LineDataSet(heartRateEntries, "Heart Rate (bpm)");
+       LineDataSet spo2DataSet=new LineDataSet(oxygenLevelEntries, "Oxygen Level (%)");
        heartChart = findViewById(R.id.heartGraph);  // Heart Rate Chart
        spo2Chart = findViewById(R.id.spo2Graph);    // Oxygen Level Chart
+
+       heartText=findViewById(R.id.heartRateTextView);
+       spo2Text=findViewById(R.id.OxiTextView);
 
        // Configure the charts with maximum Y values
        configureChart(heartChart, 200f);  // Assuming the max heart rate is 200 bpm
@@ -112,11 +127,58 @@ public class DoctorHomeScreen extends AppCompatActivity {
            Entry heartRateEntry = new Entry(i, data.getHeartRate());
            Entry oxygenLevelEntry = new Entry(i, data.getOxygenLevel());
 
+           //BPM Irregularities
+           if(data.getHeartRate() >160){
+               Toast.makeText(DoctorHomeScreen.this, "Critical: High Heart Rate detected!", Toast.LENGTH_SHORT).show();
+               Log.e("HealthWarning", "Critical BPM: " + data.getHeartRate());
+               heartText.setTextColor(getColor(R.color.emergency));
+               heartDataSet.setColor(getColor(R.color.emergency));
+               heartDataSet.setCircleColor(getColor(R.color.emergency));
+               //Make Phone Call
+           }
+           if(data.getHeartRate() < 50){
+               Toast.makeText(DoctorHomeScreen.this, "Critical: Slow Heart Rate detected!", Toast.LENGTH_SHORT).show();
+               Log.e("HealthWarning", "Critical BPM: " + data.getHeartRate());
+               heartText.setTextColor(getColor(R.color.emergency));
+               heartDataSet.setColor(getColor(R.color.emergency));
+               heartDataSet.setCircleColor(getColor(R.color.emergency));
+               //Make Phone Call
+           }else{
+               heartDataSet.setColor(getColor(R.color.healthy));
+               heartDataSet.setCircleColor(getColor(R.color.healthy));
+               heartText.setTextColor(getColor(R.color.healthy));  // Reset to default
+           }
+
+           //O2 irregularities
+           if (data.getOxygenLevel() < 90) {
+               Toast.makeText(DoctorHomeScreen.this, "Critical: Major low SPO2 detected!", Toast.LENGTH_SHORT).show();
+               Log.e("HealthWarning", "Critical SpO2: " + data.getOxygenLevel());
+               spo2Text.setTextColor(getColor(R.color.emergency));
+               spo2DataSet.setColor(getColor(R.color.emergency));
+               spo2DataSet.setCircleColor(getColor(R.color.emergency));
+               //Make Phone Call
+           } else if (data.getOxygenLevel() <=94){
+               Toast.makeText(DoctorHomeScreen.this, "Warning: Mildly low SPO2 detected!", Toast.LENGTH_SHORT).show();
+               Log.w("HealthWarning", "Mildly low SpO2: " + data.getOxygenLevel());
+               spo2DataSet.setColor(getColor(R.color.mild));
+               spo2DataSet.setCircleColor(getColor(R.color.mild));
+               spo2Text.setTextColor(getColor(R.color.mild));
+           }else{
+               spo2DataSet.setColor(getColor(R.color.healthy));
+               spo2DataSet.setCircleColor(getColor(R.color.healthy));
+               spo2Text.setTextColor(getColor(R.color.healthy));  // Reset to default
+           }
+
            // Add new data points to the datasets and update the charts
-           updateChart(heartChart, new LineDataSet(heartRateEntries, "Heart Rate (bpm)"), data.getHeartRate(), i);
-           updateChart(spo2Chart, new LineDataSet(oxygenLevelEntries, "Oxygen Level (%)"), data.getOxygenLevel(), i);
+           updateChart(heartChart,heartDataSet, data.getHeartRate(), i);
+           updateChart(spo2Chart,spo2DataSet, data.getOxygenLevel(), i);
        }
 
+       float lastHeartRate = heartDataSet.getEntryForIndex(heartDataSet.getEntryCount() - 1).getY();
+       float lastOxygen = spo2DataSet.getEntryForIndex(spo2DataSet.getEntryCount() - 1).getY();
+
+       heartText.setText(String.format("BPM: %.1f bpm", lastHeartRate));
+       spo2Text.setText(String.format("O2: %.1f%%", lastOxygen));
        // Optionally, refresh and notify data change
        heartChart.invalidate();
        spo2Chart.invalidate();

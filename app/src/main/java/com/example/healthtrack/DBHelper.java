@@ -258,4 +258,22 @@ public class DBHelper extends SQLiteOpenHelper {
 
         return userId;
     }
+    @SuppressLint("Range")
+    public String getLastNameByEmail(String email) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.query(
+                USERS_TABLE_NAME,    // Table name
+                new String[]{COLUMN_LAST_NAME},  // Column to retrieve
+                COLUMN_EMAIL + " = ?",  // WHERE clause
+                new String[]{email},    // Arguments for the WHERE clause
+                null, null, null);
+
+        String lastName = null;
+        if (cursor != null && cursor.moveToFirst()) {
+            lastName = cursor.getString(cursor.getColumnIndex(COLUMN_LAST_NAME));
+        }
+        cursor.close();
+        db.close();
+        return lastName;  // Return null if last name is not found
+    }
 }

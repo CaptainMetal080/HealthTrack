@@ -231,7 +231,7 @@ public class PatientHealthData extends AppCompatActivity {
                             heartRateView.setTextColor(getColor(R.color.healthy));  // Reset to default
                         }
 
-                        heartRateView.setText("Heart Rate: " + heartRate);
+                        heartRateView.setText("BPM: %.1f bpm" + heartRate);
                         updateChart(heartChart,heartRateDataSet,heartRate,heartRateIndex);
                         heartRateIndex++;
                         isHeartUpdated=true;
@@ -264,7 +264,7 @@ public class PatientHealthData extends AppCompatActivity {
                             oxygenDataSet.setCircleColor(getColor(R.color.healthy));
                             spo2View.setTextColor(getColor(R.color.healthy));  // Reset to default
                         }
-                        spo2View.setText("O2: " + oxygenLevel);
+                        spo2View.setText("O2: %.1f%%" + oxygenLevel);
                         updateChart(spo2Chart,oxygenDataSet,oxygenLevel,oxygenIndex);
                         oxygenIndex++;
                         isOxygenUpdated=true;
