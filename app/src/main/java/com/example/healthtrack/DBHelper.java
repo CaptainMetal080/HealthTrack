@@ -6,7 +6,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.util.Log;
 
 import androidx.annotation.Nullable;
 
@@ -16,7 +15,7 @@ import java.util.List;
 public class DBHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "HealthTrack.db";
-    private static final int DATABASE_VERSION = 2;  // Incremented version for schema change
+    private static final int DATABASE_VERSION = 1;
 
     // User table columns
     public static final String USERS_TABLE_NAME = "users";
@@ -58,35 +57,18 @@ public class DBHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        try {
-            // Check if the patient_data table exists before creating it
-            Cursor cursor = db.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='" + PATIENT_TABLE_NAME + "'", null);
-            if (cursor != null && cursor.getCount() == 0) {
-                // Create the patient data table if it doesn't exist
-                db.execSQL(CREATE_PATIENT_TABLE);
-            }
-            cursor.close();
-
-            // Create user table
-            db.execSQL(CREATE_USER_TABLE);
-
-        } catch (Exception e) {
-            Log.e("DBHelper", "Error creating tables", e);
-        }
+        // Create user table
+        db.execSQL(CREATE_USER_TABLE);
+        // Create patient data table
+        db.execSQL(CREATE_PATIENT_TABLE);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        try {
-            if (oldVersion < 2) {
-                // Drop old tables if they exist and recreate
-                db.execSQL("DROP TABLE IF EXISTS " + USERS_TABLE_NAME);
-                db.execSQL("DROP TABLE IF EXISTS " + PATIENT_TABLE_NAME);
-                onCreate(db);
-            }
-        } catch (Exception e) {
-            Log.e("DBHelper", "Error upgrading database", e);
-        }
+        // Drop old tables if they exist and recreate
+        db.execSQL("DROP TABLE IF EXISTS " + USERS_TABLE_NAME);
+        db.execSQL("DROP TABLE IF EXISTS " + PATIENT_TABLE_NAME);
+        onCreate(db);
     }
 
     // Add a new patient record
@@ -108,7 +90,7 @@ public class DBHelper extends SQLiteOpenHelper {
     public PatientData getPatientDataById(int pId) {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = db.query(PATIENT_TABLE_NAME, null, COLUMN_PATIENT_ID + " = ?",
-                new String[]{String.valueOf(pId)}, null, null, null);
+                                 new String[]{String.valueOf(pId)}, null, null, null);
 
         PatientData patientData = null;
         if (cursor != null && cursor.moveToFirst()) {
@@ -131,7 +113,7 @@ public class DBHelper extends SQLiteOpenHelper {
         values.put(COLUMN_OXYGEN_LEVEL, patientData.getOxygenLevel());
 
         int rowsAffected = db.update(PATIENT_TABLE_NAME, values, COLUMN_PATIENT_ID + " = ?",
-                new String[]{String.valueOf(patientData.getpId())});
+                                     new String[]{String.valueOf(patientData.getpId())});
         db.close();
         return rowsAffected > 0;
     }
@@ -140,7 +122,7 @@ public class DBHelper extends SQLiteOpenHelper {
     public boolean deletePatientData(int pId) {
         SQLiteDatabase db = this.getWritableDatabase();
         int rowsDeleted = db.delete(PATIENT_TABLE_NAME, COLUMN_PATIENT_ID + " = ?",
-                new String[]{String.valueOf(pId)});
+                                    new String[]{String.valueOf(pId)});
         db.close();
         return rowsDeleted > 0;
     }
@@ -161,20 +143,21 @@ public class DBHelper extends SQLiteOpenHelper {
 
         if (cursor != null) {
             while (cursor.moveToNext()) {
-                @SuppressLint("Range") int pId = cursor.getInt(cursor.getColumnIndex(COLUMN_PATIENT_ID));
-                @SuppressLint("Range") int heartRate = cursor.getInt(cursor.getColumnIndex(COLUMN_HEART_RATE));
-                @SuppressLint("Range") int oxygenLevel = cursor.getInt(cursor.getColumnIndex(COLUMN_OXYGEN_LEVEL));
-                @SuppressLint("Range") long time = cursor.getLong(cursor.getColumnIndex(COLUMN_TIME));
-
-                PatientData patientData = new PatientData(pId, time, heartRate, oxygenLevel);
+                /*
+                int pId = cursor.getInt(cursor.getColumnIndex(COLUMN_PATIENT_ID));
+                String email = cursor.getString(cursor.getColumnIndex(COLUMN_PATIENT_EMAIL));
+                int heartRate = cursor.getInt(cursor.getColumnIndex(COLUMN_HEART_RATE));
+                int oxygenLevel = cursor.getInt(cursor.getColumnIndex(COLUMN_OXYGEN_LEVEL));
+                PatientData patientData = new PatientData(pId, email, heartRate, oxygenLevel);
                 patientDataList.add(patientData);
+                */
             }
             cursor.close();
         }
         db.close();
         return patientDataList;
     }
-
+    
     public boolean addUser(User user) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -242,20 +225,20 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
     @SuppressLint("Range")
-    public int getUserIdByEmail(String email) {
-        SQLiteDatabase db = this.getReadableDatabase();
-        Cursor cursor = null;
-        int userId = -1; // Default value if user is not found
+   public int getUserIdByEmail(String email) {
+       SQLiteDatabase db = this.getReadableDatabase();
+       Cursor cursor = null;
+       int userId = -1; // Default value if user is not found
 
-        // Query to get the user ID based on the email
-        String query = "SELECT " + COLUMN_ID + " FROM " + USERS_TABLE_NAME + " WHERE " + COLUMN_EMAIL + " = ?";
-        cursor = db.rawQuery(query, new String[]{email});
+       // Query to get the user ID based on the email
+       String query = "SELECT " + COLUMN_ID + " FROM " + USERS_TABLE_NAME + " WHERE " + COLUMN_EMAIL + " = ?";
+       cursor = db.rawQuery(query, new String[]{email});
 
-        if (cursor != null && cursor.moveToFirst()) {
-            // Retrieve the user ID from the cursor
-            userId = cursor.getInt(cursor.getColumnIndex(COLUMN_ID));
-        }
+       if (cursor != null && cursor.moveToFirst()) {
+           // Retrieve the user ID from the cursor
+           userId = cursor.getInt(cursor.getColumnIndex(COLUMN_ID));
+       }
 
-        return userId;
-    }
+       return userId;
+   }
 }

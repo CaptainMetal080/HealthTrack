@@ -148,7 +148,7 @@ public class PatientHealthData extends AppCompatActivity {
         if (requestCode == REQUEST_CALL_PHONE_PERMISSION) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Permission granted, now you can make the call
-                Log.d("Permissions", "CALL_PHONE permission granted.");
+                //Log.d("Permissions", "CALL_PHONE permission granted.");
             } else {
                 // Permission denied, inform the user
                 Toast.makeText(this, "Phone call permission denied", Toast.LENGTH_SHORT).show();
@@ -168,14 +168,14 @@ public class PatientHealthData extends AppCompatActivity {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
             if (newState == BluetoothProfile.STATE_CONNECTED) {
-                Log.d("BluetoothGattCallback", "Connected to GATT server.");
+                //Log.d("BluetoothGattCallback", "Connected to GATT server.");
 
                 // Check permission before discovering services
                 if (ContextCompat.checkSelfPermission(PatientHealthData.this, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
                     gatt.discoverServices(); // Start service discovery
                 }
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                Log.d("BluetoothGattCallback", "Disconnected from GATT server.");
+                //Log.d("BluetoothGattCallback", "Disconnected from GATT server.");
             }
         }
 
@@ -183,7 +183,7 @@ public class PatientHealthData extends AppCompatActivity {
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                Log.d("BluetoothGattCallback", "Services discovered.");
+                //Log.d("BluetoothGattCallback", "Services discovered.");
 
                 // Get heart rate and oxygen characteristics
                 BluetoothGattCharacteristic heartRateCharacteristic = gatt.getService(SERVICE_UUID).getCharacteristic(HEARTRATE_CHAR_UUID);
@@ -194,7 +194,7 @@ public class PatientHealthData extends AppCompatActivity {
                 BluetoothGattDescriptor heartRateDescriptor = heartRateCharacteristic.getDescriptor(UUID.fromString("00002902-0000-1000-8000-00805f9b34fb"));
                 if (heartRateDescriptor != null) {
                     heartRateDescriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-                    Log.d("BluetoothGattCallback", "Heart Notif");
+                    //Log.d("BluetoothGattCallback", "Heart Notif");
                     gatt.writeDescriptor(heartRateDescriptor); // Enable heart rate notifications
                 }
             }
@@ -274,6 +274,7 @@ public class PatientHealthData extends AppCompatActivity {
             }
 
             if(isHeartUpdated && isOxygenUpdated){
+                Log.e("Database", "It Works :)");
                 int latestHeart=(int)heartRateDataSet.getEntryForIndex(heartRateDataSet.getEntryCount() - 1).getY();
                 int latestOxygen=(int)oxygenDataSet.getEntryForIndex(oxygenDataSet.getEntryCount() - 1).getY();
                 long timestamp = System.currentTimeMillis();
@@ -297,13 +298,13 @@ public class PatientHealthData extends AppCompatActivity {
         @Override
         public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                Log.d("DescriptorWrite", "Descriptor write successful for: " + descriptor.getUuid().toString());
+                //Log.d("DescriptorWrite", "Descriptor write successful for: " + descriptor.getUuid().toString());
                 BluetoothGattCharacteristic oxygenCharacteristic = gatt.getService(SERVICE_UUID).getCharacteristic(OXI_CHAR_UUID);
                 gatt.setCharacteristicNotification(oxygenCharacteristic, true);
                 BluetoothGattDescriptor oxygenDescriptor = oxygenCharacteristic.getDescriptor(UUID.fromString("00002902-0000-1000-8000-00805f9b34fb"));
                 if (oxygenDescriptor != null) {
                     oxygenDescriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-                    Log.d("BluetoothGattCallback", "O2 Notif");
+                    //Log.d("BluetoothGattCallback", "O2 Notif");
                     gatt.writeDescriptor(oxygenDescriptor); // Enable SpO2 notifications
                 }
             } else {
