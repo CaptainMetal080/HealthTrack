@@ -30,6 +30,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
     // PatientData table columns
     public static final String PATIENT_TABLE_NAME = "patient_data";
+    public static final String COLUMN_PATIENTID_TIME = "patientId_time";
     public static final String COLUMN_PATIENT_ID = "p_id";
     public static final String COLUMN_TIME = "time"; // Replacing email with time
     public static final String COLUMN_HEART_RATE = "heart_rate";
@@ -47,10 +48,11 @@ public class DBHelper extends SQLiteOpenHelper {
 
     // SQL statement to create the patient data table
     public static final String CREATE_PATIENT_TABLE = "CREATE TABLE " + PATIENT_TABLE_NAME + " (" +
-            COLUMN_PATIENT_ID + " INTEGER PRIMARY KEY, " +
-            COLUMN_TIME + " INTEGER, " + // Changed from email to time
-            COLUMN_HEART_RATE + " INTEGER, " +
-            COLUMN_OXYGEN_LEVEL + " INTEGER);";
+    COLUMN_PATIENT_ID + " INTEGER, " +
+    COLUMN_TIME + " TEXT, " +
+    COLUMN_HEART_RATE + " INTEGER, " +
+    COLUMN_OXYGEN_LEVEL + " INTEGER, " +
+    "PRIMARY KEY (" + COLUMN_PATIENT_ID + ", " + COLUMN_TIME + "));";
 
     public DBHelper(@Nullable Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -98,7 +100,7 @@ public class DBHelper extends SQLiteOpenHelper {
         values.put(COLUMN_HEART_RATE, patientData.getHeartRate());
         values.put(COLUMN_OXYGEN_LEVEL, patientData.getOxygenLevel());
 
-       db.insert(PATIENT_TABLE_NAME, null, values);
+        db.insert(PATIENT_TABLE_NAME, null, values);
         db.close();
     }
 
@@ -113,7 +115,7 @@ public class DBHelper extends SQLiteOpenHelper {
         if (cursor != null && cursor.moveToFirst()) {
             int heartRate = cursor.getInt(cursor.getColumnIndex(COLUMN_HEART_RATE));
             int oxygenLevel = cursor.getInt(cursor.getColumnIndex(COLUMN_OXYGEN_LEVEL));
-            long time = cursor.getLong(cursor.getColumnIndex(COLUMN_TIME)); // Get time instead of email
+            String time = cursor.getString(cursor.getColumnIndex(COLUMN_TIME)); // Get time instead of email
 
             patientData = new PatientData(pId, time, heartRate, oxygenLevel);
         }
@@ -163,7 +165,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 @SuppressLint("Range") int pId = cursor.getInt(cursor.getColumnIndex(COLUMN_PATIENT_ID));
                 @SuppressLint("Range") int heartRate = cursor.getInt(cursor.getColumnIndex(COLUMN_HEART_RATE));
                 @SuppressLint("Range") int oxygenLevel = cursor.getInt(cursor.getColumnIndex(COLUMN_OXYGEN_LEVEL));
-                @SuppressLint("Range") long time = cursor.getLong(cursor.getColumnIndex(COLUMN_TIME));
+                @SuppressLint("Range") String time = cursor.getString(cursor.getColumnIndex(COLUMN_TIME));
 
                 PatientData patientData = new PatientData(pId, time, heartRate, oxygenLevel);
                 patientDataList.add(patientData);

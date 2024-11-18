@@ -1,45 +1,52 @@
 package com.example.healthtrack;
 
+import com.google.gson.annotations.SerializedName;
+
 public class PatientData {
-    private int pId;
-    private long time; // Changed from email to time
-    private int heartRate;
-    private int oxygenLevel;
+    private int patient_id;
+    private String datetime_captured;
+    private int heart_rate;
+    private int spo2_level;
 
     // Updated constructor to use time instead of email
-    public PatientData(int pId, long time, int heartRate, int oxygenLevel) {
-        this.pId = pId;
-        this.time = time;
-        this.heartRate = heartRate;
-        this.oxygenLevel = oxygenLevel;
+    public PatientData(int patient_id, String datetime_captured, int heart_rate, int spo2_level) {
+        this.patient_id = patient_id;
+        this.datetime_captured = datetime_captured;
+        this.heart_rate = heart_rate;
+        this.spo2_level = spo2_level;
     }
 
     // Getters and setters
-    public int getHeartRate() {
-        return heartRate;
-    }
-
-    public void setHeartRate(int heartRate) {
-        this.heartRate = heartRate;
-    }
-
-    public int getOxygenLevel() {
-        return oxygenLevel;
-    }
-
-    public void setOxygenLevel(int oxygenLevel) {
-        this.oxygenLevel = oxygenLevel;
-    }
-
+    @SerializedName("patientId")
     public int getpId() {
-        return pId;
+        return patient_id;
     }
 
-    public long getTime() {
-        return time;
+    @SerializedName("timestamp")
+    public String getTime() {
+        return datetime_captured;
     }
 
-    public void setTime(long time) {
-        this.time = time;
+
+    public void setTime(String datetime_captured) {
+        this.datetime_captured = datetime_captured;
+    }
+
+    @SerializedName("heartRate")
+    public int getHeartRate() {
+        return heart_rate;
+    }
+
+    public void setHeartRate(int heart_rate) {
+        this.heart_rate = heart_rate;
+    }
+
+    @SerializedName("oxygenLevel")
+    public int getOxygenLevel() {
+        return spo2_level;
+    }
+
+    public void setOxygenLevel(int spo2_level) {
+        this.spo2_level = spo2_level;
     }
 }

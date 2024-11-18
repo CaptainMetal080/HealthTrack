@@ -35,7 +35,7 @@ public class WelcomeScreen extends AppCompatActivity {
                         // Default to Patient Health Data if the type is unknown
                         intent = new Intent(WelcomeScreen.this, PatientHealthData.class);
                     }
-                    intent.putExtra("id", id);
+                    intent.putExtra("id", String.valueOf(id));
                     startActivity(intent);
                     overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
                     finish();

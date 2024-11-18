@@ -2,6 +2,8 @@ package com.example.healthtrack;
 import android.content.Context;
 import android.util.Log;
 
+import com.google.gson.Gson;
+
 import java.util.List;
 
 import retrofit2.Call;
@@ -24,6 +26,9 @@ public class DataUploader {
         if (!patientDataList.isEmpty()) {
             // Make the API call to upload the data
             for (PatientData patientData : patientDataList) {
+                Gson gson = new Gson();
+                Log.i("JSON Payload", gson.toJson(patientData));
+
                 Call<Void> call = apiService.uploadHealthData(patientData);
                 call.enqueue(new Callback<Void>() {
                     @Override

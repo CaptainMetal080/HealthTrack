@@ -35,9 +35,8 @@ import androidx.core.content.ContextCompat;
 import java.util.UUID;
 import java.util.ArrayList;
 
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class PatientHealthData extends AppCompatActivity {
     private final String DEVICE_ADDRESS = "BC:B5:A2:5B:02:16";
@@ -269,29 +268,56 @@ public class PatientHealthData extends AppCompatActivity {
                         updateChart(spo2Chart,oxygenDataSet,oxygenLevel,oxygenIndex);
                         oxygenIndex++;
                         isOxygenUpdated=true;
- }
+
+                        LocalDateTime now = LocalDateTime.now();
+
+                        // Format as 'YYYY-MM-DD HH:MM:SS'
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                        String formattedDate = now.format(formatter);
+
+
+                        Intent intent = getIntent();
+                        int pId=Integer.parseInt(intent.getStringExtra("id"));
+
+                        PatientData patientData = new PatientData(pId, formattedDate, heartRate, oxygenLevel);
+                        // Insert this data into the database
+                        dbHelper.addPatientData(patientData);
+
+                        if (dbHelper.getAllPatientData().getCount() % 10 == 0) {
+                            DataUploader uploader = new DataUploader(PatientHealthData.this);
+                            uploader.uploadPatientDataBatch();
+                        }
+
+                        isHeartUpdated = false;
+                        isOxygenUpdated = false;
+                    }
                 });
             }
 
+            /*
             if(isHeartUpdated && isOxygenUpdated){
-                Log.e("Database", "It Works :)");
-                int latestHeart=(int)heartRateDataSet.getEntryForIndex(heartRateDataSet.getEntryCount() - 1).getY();
-                int latestOxygen=(int)oxygenDataSet.getEntryForIndex(oxygenDataSet.getEntryCount() - 1).getY();
-                long timestamp = System.currentTimeMillis();
-                int pId=Integer.parseInt(getIntent().getStringExtra("id"));
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Log.e("Database", "It Works :)");
+                        long timestamp = System.currentTimeMillis();
+                        Intent intent = getIntent();
+                        int pId=Integer.parseInt(intent.getStringExtra("id"));
 
-                PatientData patientData = new PatientData(pId, timestamp, latestHeart, latestOxygen);
-                // Insert this data into the database
-                dbHelper.addPatientData(patientData);
+                        PatientData patientData = new PatientData(pId, timestamp, heartRate, oxygenLevel);
+                        // Insert this data into the database
+                        dbHelper.addPatientData(patientData);
 
-                if(dbHelper.getAllPatientData().getCount() % 10 == 0){
-                    DataUploader uploader = new DataUploader(PatientHealthData.this);
-                    uploader.uploadPatientDataBatch();
-                }
+                        if (dbHelper.getAllPatientData().getCount() % 10 == 0) {
+                            DataUploader uploader = new DataUploader(PatientHealthData.this);
+                            uploader.uploadPatientDataBatch();
+                        }
 
-                isHeartUpdated = false;
-                isOxygenUpdated = false;
-            }
+                        isHeartUpdated = false;
+                        isOxygenUpdated = false;
+                    }
+                });
+            }*/
         }
 
         @SuppressLint("MissingPermission")
