@@ -26,7 +26,7 @@ public class DoctorHomeScreen extends AppCompatActivity {
     private List<PatientData> patientDataList;
 
     private Handler handler;
-    private final int FETCH_INTERVAL = 15000; // 15 seconds
+    private final int FETCH_INTERVAL = 110000; // 110 seconds
 
     private LineChart heartChart;
     private LineChart spo2Chart;
