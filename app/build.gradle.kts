@@ -57,8 +57,11 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:33.8.0"))
     implementation("com.google.firebase:firebase-auth:23.1.0")
     implementation ("com.google.firebase:firebase-database:20.0.5") // For Firebase Realtime Database
-    implementation ("com.google.firebase:firebase-firestore:24.0.0") // For Firestore
+    implementation("com.google.firebase:firebase-firestore:24.11.1") // For Firestore
     implementation ("com.google.firebase:firebase-storage:20.0.0")  // For Firebase Storage if you're uploading files
     implementation ("com.google.firebase:firebase-analytics:21.0.0")
     
 }
+
+apply(plugin = "com.google.gms.google-services")
+

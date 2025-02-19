@@ -13,11 +13,15 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.google.firebase.FirebaseApp;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
@@ -42,18 +46,31 @@ public class MainActivity extends AppCompatActivity {
         User testDR = new User(0, "Liam", "Brown", "1234", 647888134, "dr@example.com", "doctor");
         // DBHelper.addUser(testDR);
 
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-
-        Map<String, Object> patient = new HashMap<>();
-        patient.put("name", "John Doe");
-        patient.put("age", 45);
-        patient.put("assigned_doctor_id", "doc123");
-
-        FirebaseFirestore db_fb = FirebaseFirestore.getInstance();
-        db_fb.collection("Patient_collections").document("2")
-                .set(patient)
-                .addOnSuccessListener(aVoid -> Log.d("Firestore", "Patient added"))
-                .addOnFailureListener(e -> Log.w("Firestore", "Error adding patient", e));
+//        FirebaseApp.initializeApp(this);
+//
+//        Map<String, Object> patient = new HashMap<>();
+//        patient.put("name", "John Doe");
+//        patient.put("age", 45);
+//        patient.put("doctor_id", "123");
+//
+//        FirebaseFirestore db_fb = FirebaseFirestore.getInstance();
+//        db_fb.collection("Patient_collections").document("5")
+//                .set(patient)
+//                .addOnSuccessListener(aVoid -> Log.d("Firestore", "Patient added"))
+//                .addOnFailureListener(e -> Log.w("Firestore", "Error adding patient", e));
+//
+//        String patientId = "3";
+//        String timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
+//
+//        Map<String, Object> healthRecord = new HashMap<>();
+//        healthRecord.put("heartRate", 75);
+//        healthRecord.put("oxygenLevel", 98);
+//
+//        db_fb.collection("Patient_collections").document(patientId)
+//                .collection("health_records").document(timestamp)
+//                .set(healthRecord)
+//                .addOnSuccessListener(aVoid -> Log.d("Firestore", "Health record added"))
+//                .addOnFailureListener(e -> Log.w("Firestore", "Error adding health record", e));
 
     }
 
