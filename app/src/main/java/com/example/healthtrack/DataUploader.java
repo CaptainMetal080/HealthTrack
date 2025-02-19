@@ -4,19 +4,23 @@ import android.util.Log;
 
 import com.google.gson.Gson;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 public class DataUploader {
     private DBHelper dbHelper;
-    private ApiService apiService;
+    private FirebaseFirestore firestore;
 
     public DataUploader(Context context) {
         dbHelper = new DBHelper(context);
-        apiService = RetrofitClient.getClient().create(ApiService.class);
+        firestore = FirebaseFirestore.getInstance();
     }
 
     public void uploadPatientDataBatch() {
@@ -24,29 +28,18 @@ public class DataUploader {
         List<PatientData> patientDataList = dbHelper.getLast10PatientData();
 
         if (!patientDataList.isEmpty()) {
-            // Make the API call to upload the data
-            for (PatientData patientData : patientDataList) {
-                Gson gson = new Gson();
-                Log.i("JSON Payload", gson.toJson(patientData));
+            // Upload each record to Firebase Firestore
 
-                Call<Void> call = apiService.uploadHealthData(patientData);
-                call.enqueue(new Callback<Void>() {
-                    @Override
-                    public void onResponse(Call<Void> call, Response<Void> response) {
-                        if (response.isSuccessful()) {
+            for (PatientData patientData : patientDataList) {
+                // Create a new document for each patient data record
+                firestore.collection("patient_collections").add(patientData)
+                        .addOnSuccessListener(documentReference -> {
                             // If successful, remove these records from the local database
                             dbHelper.deletePatientData(patientData.getpId());
-                        } else {
-                            // Handle the error
-                            Log.e("Upload", "Failed to upload data: " + response.message());
-                        }
-                    }
-
-                    @Override
-                    public void onFailure(Call<Void> call, Throwable t) {
-                        Log.e("Upload", "Error: " + t.getMessage());
-                    }
-                });
+                        })
+                        .addOnFailureListener(e -> {
+                            Log.e("Upload", "Failed to upload data: " + e.getMessage());
+                        });
             }
         }
     }

@@ -2,6 +2,7 @@ package com.example.healthtrack;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -11,6 +12,13 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -32,7 +40,21 @@ public class MainActivity extends AppCompatActivity {
         User testUser = new User(0, "John", "Doe", "1234", 647888134, "test@example.com", "patient");
         // Add the user to the database
         User testDR = new User(0, "Liam", "Brown", "1234", 647888134, "dr@example.com", "doctor");
-        //DBHelper.addUser(testDR);
+        // DBHelper.addUser(testDR);
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        Map<String, Object> patient = new HashMap<>();
+        patient.put("name", "John Doe");
+        patient.put("age", 45);
+        patient.put("assigned_doctor_id", "doc123");
+
+        FirebaseFirestore db_fb = FirebaseFirestore.getInstance();
+        db_fb.collection("Patient_collections").document("2")
+                .set(patient)
+                .addOnSuccessListener(aVoid -> Log.d("Firestore", "Patient added"))
+                .addOnFailureListener(e -> Log.w("Firestore", "Error adding patient", e));
+
     }
 
     // Sign in to account

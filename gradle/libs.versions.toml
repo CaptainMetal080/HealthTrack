@@ -11,6 +11,7 @@ constraintlayout = "2.2.0"
 bluetoothVersion = "1.0.0-alpha02"
 mpandroidchart = "v3.1.0"
 identityJvm = "202411.1"
+firebaseFirestore = "25.1.2"
 
 [libraries]
 bluetooth = { module = "androidx.bluetooth:bluetooth", version.ref = "bluetooth" }
@@ -24,6 +25,7 @@ constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayo
 androidx-bluetooth = { group = "androidx.bluetooth", name = "bluetooth", version.ref = "bluetoothVersion" }
 mpandroidchart = { module = "com.github.PhilJay:MPAndroidChart", version.ref = "mpandroidchart" }
 identity-jvm = { group = "com.android.identity", name = "identity-jvm", version.ref = "identityJvm" }
+firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore", version.ref = "firebaseFirestore" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

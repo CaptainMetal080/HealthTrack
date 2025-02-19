@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "430965607331",
+    "project_id": "capstone-a4ffe",
+    "storage_bucket": "capstone-a4ffe.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:430965607331:android:9192e9ce3aa298c9f5a816",
+        "android_client_info": {
+          "package_name": "com.example.healthtrack"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAjPheVo-gdfZfSmmBLG66-eNpZ0Is9se4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
