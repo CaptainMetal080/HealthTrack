@@ -1,6 +1,7 @@
 package com.example.healthtrack;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -46,11 +47,14 @@ public class SignIn extends Activity {
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
                             FirebaseUser user = mAuth.getCurrentUser();
-                            // Sign in success
-                            Toast.makeText(SignIn.this, "Authentication successful.", Toast.LENGTH_SHORT).show();
-                            // Update UI or navigate to another activity
+                            if (user != null) {
+                                // Pass the UID to WelcomeScreen
+                                Intent intent = new Intent(SignIn.this, WelcomeScreen.class);
+                                intent.putExtra("uid", user.getUid()); // Pass UID
+                                startActivity(intent);
+                                finish();
+                            }
                         } else {
-                            // If sign in fails, display a message to the user.
                             Toast.makeText(SignIn.this, "Authentication failed.", Toast.LENGTH_SHORT).show();
                         }
                     }

@@ -66,7 +66,6 @@ public class PatientHealthData extends AppCompatActivity {
     private int heartRate;
     private boolean isHeartUpdated = false;
     private boolean isOxygenUpdated = false;
-    private DBHelper dbHelper;
     private DataUploader uploader;
 
     @Override
@@ -81,7 +80,6 @@ public class PatientHealthData extends AppCompatActivity {
         heartChart = findViewById(R.id.heartGraph);
         spo2Chart = findViewById(R.id.spo2Graph);
         device = bluetoothAdapter.getRemoteDevice(DEVICE_ADDRESS);
-        dbHelper = new DBHelper(PatientHealthData.this);
         // Initialize the data sets
         heartRateDataSet = new LineDataSet(new ArrayList<>(), "Heart Rate");
         oxygenDataSet = new LineDataSet(new ArrayList<>(), "Oxygen Level");
@@ -277,16 +275,15 @@ public class PatientHealthData extends AppCompatActivity {
 
 
                         Intent intent = getIntent();
-                        int pId=Integer.parseInt(intent.getStringExtra("id"));
+                        String pId=intent.getStringExtra("id");
 
                         PatientData patientData = new PatientData(pId, formattedDate, heartRate, oxygenLevel);
                         // Insert this data into the database
-                        dbHelper.addPatientData(patientData);
-
-                        if (dbHelper.getAllPatientData().getCount() % 10 == 0) {
-                            DataUploader uploader = new DataUploader(PatientHealthData.this);
-                            uploader.uploadPatientDataBatch();
-                        }
+                        uploader.uploadPatientData(patientData);
+                       // if (dbHelper.getAllPatientData().getCount() % 10 == 0) {
+                       //     DataUploader uploader = new DataUploader(PatientHealthData.this);
+                       //     uploader.uploadPatientDataBatch();
+                       // }
 
                         isHeartUpdated = false;
                         isOxygenUpdated = false;

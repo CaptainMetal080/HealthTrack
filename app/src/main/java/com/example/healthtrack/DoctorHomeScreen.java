@@ -45,7 +45,7 @@ public class DoctorHomeScreen extends AppCompatActivity {
         handler = new Handler();
 
         // Firebase Realtime Database reference
-        databaseReference = FirebaseDatabase.getInstance().getReference("patientData");
+        databaseReference = FirebaseDatabase.getInstance().getReference("patient_collection");
 
         String lastName = getIntent().getStringExtra("lastName");
         TextView doctorNameTextView = findViewById(R.id.drTitle);

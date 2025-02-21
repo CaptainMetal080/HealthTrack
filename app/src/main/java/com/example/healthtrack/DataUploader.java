@@ -15,33 +15,26 @@ import retrofit2.Response;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 public class DataUploader {
-    private DBHelper dbHelper;
     private FirebaseFirestore firestore;
 
+
     public DataUploader(Context context) {
-        dbHelper = new DBHelper(context);
         firestore = FirebaseFirestore.getInstance();
     }
 
-    public void uploadPatientDataBatch() {
-        // Get the last 10 records from the database
-        List<PatientData> patientDataList = dbHelper.getLast10PatientData();
 
-        if (!patientDataList.isEmpty()) {
-            // Upload each record to Firebase Firestore
+    public void uploadPatientData(PatientData patient) {
+        FirebaseFirestore db_fb = FirebaseFirestore.getInstance();
 
-            for (PatientData patientData : patientDataList) {
-                // Create a new document for each patient data record
-                firestore.collection("patient_collections").add(patientData)
-                        .addOnSuccessListener(documentReference -> {
-                            // If successful, remove these records from the local database
-                            dbHelper.deletePatientData(patientData.getpId());
-                        })
-                        .addOnFailureListener(e -> {
-                            Log.e("Upload", "Failed to upload data: " + e.getMessage());
-                        });
-            }
-        }
+        Map<String, Object> healthRecord = new HashMap<>();
+        healthRecord.put("heartRate", patient.getHeartRate());
+        healthRecord.put("oxygenLevel", patient.getOxygenLevel());
+
+        db_fb.collection("patient_collections").document(patient.getpId())//Must be changed
+                .collection("health_records").document(patient.getTime())
+                .set(healthRecord)
+                .addOnSuccessListener(aVoid -> Log.d("Firestore", "Health record added"))
+                .addOnFailureListener(e -> Log.w("Firestore", "Error adding health record", e));
     }
 }
 

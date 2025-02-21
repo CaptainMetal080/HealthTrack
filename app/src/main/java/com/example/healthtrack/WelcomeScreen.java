@@ -3,50 +3,67 @@ package com.example.healthtrack;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+
 public class WelcomeScreen extends AppCompatActivity {
+
+    private FirebaseFirestore db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_welcome_screen);
 
-        // Get the email from the intent
-        String email = getIntent().getStringExtra("email");
+        db = FirebaseFirestore.getInstance();
 
-        if (email != null) {
-            // Get the user type from the DB
-            DBHelper dbHelper = new DBHelper(this);
-            String userType = dbHelper.getUserTypeByEmail(email);
-            int id = dbHelper.getUserIdByEmail(email);
+        // Get the UID from the intent
+        String uid = getIntent().getStringExtra("uid");
 
-            // Redirect to the appropriate screen based on user type
+        if (uid != null) {
+            // Check if the user is a patient or doctor
             new Handler().postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    Intent intent;
-                    if (userType.equals("doctor")) {
-                        // Get the last name of the doctor
-                        String lastName = dbHelper.getLastNameByEmail(email);
-
-                        // Pass the last name to DoctorHomeScreen
-                        intent = new Intent(WelcomeScreen.this, DoctorHomeScreen.class);
-                        intent.putExtra("lastName", lastName);  // Pass the last name
-                    } else if (userType.equals("patient")) {
-                        intent = new Intent(WelcomeScreen.this, PatientHealthData.class);
-                    } else {
-                        // Default to Patient Health Data if the type is unknown
-                        intent = new Intent(WelcomeScreen.this, PatientHealthData.class);
-                    }
-
-                    intent.putExtra("id", String.valueOf(id));
-                    startActivity(intent);
-                    overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
-                    finish();
+                    checkUserRole(uid);
                 }
             }, 3000); // Wait for 3 seconds before redirecting
         }
+    }
+
+    private void checkUserRole(String uid) {
+        // Check if the user is in the patient_collection
+        db.collection("patient_collection").document(uid).get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        DocumentSnapshot document = task.getResult();
+                        if (document.exists()) {
+                            // User is a patient, redirect to PatientHealthData
+                            Intent intent = new Intent(WelcomeScreen.this, PatientHealthData.class);
+                            intent.putExtra("uid", uid); // Pass UID
+                            startActivity(intent);
+                            finish();
+                        } else {
+                            // Check if the user is in the doctor_collection
+                            db.collection("doctor_collection").document(uid).get()
+                                    .addOnCompleteListener(task1 -> {
+                                        if (task1.isSuccessful()) {
+                                            DocumentSnapshot doc = task1.getResult();
+                                            if (doc.exists()) {
+                                                // User is a doctor, leave function blank for further edits
+                                                // You can add logic here later
+                                            } else {
+                                                // User not found in either collection
+                                                Log.w("WelcomeScreen", "User not found in any collection");
+                                            }
+                                        }
+                                    });
+                        }
+                    }
+                });
     }
 }

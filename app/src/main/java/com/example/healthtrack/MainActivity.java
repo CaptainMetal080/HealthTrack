@@ -14,19 +14,23 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.google.firebase.FirebaseApp;
+import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
-    private DBHelper DBHelper;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,25 +43,34 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
-        DBHelper = new DBHelper(this);
 
-        User testUser = new User(0, "John", "Doe", "1234", 647888134, "test@example.com", "patient");
-        // Add the user to the database
-        User testDR = new User(0, "Liam", "Brown", "1234", 647888134, "dr@example.com", "doctor");
-        // DBHelper.addUser(testDR);
 
 //        FirebaseApp.initializeApp(this);
+//        SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy", Locale.US);
+//        Date dob;
+//        try {
+//             dob = sdf.parse("January 19, 1970");
+//        } catch (ParseException e) {
+//            throw new RuntimeException(e);
+//        }
+//        List<String> patient_list = new ArrayList<>();
+//        patient_list.add("Ugdp4eTJqogQNLmkLEpbKEAr7Kr1");
+//        patient_list.add("4Zb9phGcAbhZzWldh75sUwF1Rwg1");
 //
 //        Map<String, Object> patient = new HashMap<>();
-//        patient.put("name", "John Doe");
-//        patient.put("age", 45);
-//        patient.put("doctor_id", "123");
+//        patient.put("first_name","Victor" );
+//        patient.put("last_name","Von" );
+//        patient.put("address","582 Guelph St, Kitchener, ON");
+//        patient.put("date_of_birth",dob);
+//        patient.put("patient_list",patient_list);
+//        patient.put("phone", "4326419009");
+//        patient.put("specialty", "Geriatrician");
 //
-//        FirebaseFirestore db_fb = FirebaseFirestore.getInstance();
-//        db_fb.collection("Patient_collections").document("5")
-//                .set(patient)
-//                .addOnSuccessListener(aVoid -> Log.d("Firestore", "Patient added"))
-//                .addOnFailureListener(e -> Log.w("Firestore", "Error adding patient", e));
+//       FirebaseFirestore db_fb = FirebaseFirestore.getInstance();
+//       db_fb.collection("doctor_collection").document("JiUJ6GWvchNUt1rwvYSN0YpLuc63")
+//               .set(patient)
+//               .addOnSuccessListener(aVoid -> Log.d("Firestore", "Patient added"))
+//               .addOnFailureListener(e -> Log.w("Firestore", "Error adding patient", e));
 //
 //        String patientId = "3";
 //        String timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
@@ -72,33 +85,5 @@ public class MainActivity extends AppCompatActivity {
 //                .addOnSuccessListener(aVoid -> Log.d("Firestore", "Health record added"))
 //                .addOnFailureListener(e -> Log.w("Firestore", "Error adding health record", e));
 
-    }
-
-    // Sign in to account
-    public void signIn(View v) {
-        EditText emailInput = findViewById(R.id.username);
-        EditText passwordInput = findViewById(R.id.password);
-        String email = emailInput.getText().toString().trim();
-        String password = passwordInput.getText().toString().trim();
-
-        if (email.isEmpty() || password.isEmpty()) {
-            Toast.makeText(MainActivity.this, "Please enter both email and password", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        if (DBHelper.checkUserCredentials(email, password)) {
-            Intent intent = new Intent(MainActivity.this, WelcomeScreen.class);
-            intent.putExtra("email", email); // Pass the email to the WelcomeScreen
-            startActivity(intent);
-            finish(); // Optional: Close the current activity to prevent back navigation
-        } else {
-            Toast.makeText(MainActivity.this, "Invalid email or password!", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    // Navigate to create new account screen
-    public void navCreateAccount(View v) {
-        Intent intent = new Intent(MainActivity.this, NewAccount.class);
-        startActivity(intent);
     }
 }
