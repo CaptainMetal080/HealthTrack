@@ -7,17 +7,16 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
-import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
+import com.google.firebase.auth.FirebaseAuth;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -32,7 +31,6 @@ public class PatientHealthData_nosensor extends AppCompatActivity {
     private LineDataSet heartRateDataSet;
     private LineDataSet oxygenDataSet;
 
-    private static final int REQUEST_CALL_PHONE_PERMISSION = 2;
     TextView heartRateView;
     TextView spo2View;
     private int heartRateIndex;
@@ -45,7 +43,11 @@ public class PatientHealthData_nosensor extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_overall_patient_health);  // Make sure this is correct
+        setContentView(R.layout.activity_overall_patient_health);
+
+        // Initialize DataUploader
+        uploader = new DataUploader(this);
+
         heartRateView = findViewById(R.id.heartRateTextView);
         spo2View = findViewById(R.id.OxiTextView);
         heartRateIndex = 0;
@@ -147,10 +149,12 @@ public class PatientHealthData_nosensor extends AppCompatActivity {
             LocalDateTime now = LocalDateTime.now();
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
             String formattedDate = now.format(formatter);
-            String pId = getIntent().getStringExtra("uid");
 
-            PatientData patientData = new PatientData(pId, formattedDate, heartRate, oxygenLevel);
-            uploader.uploadPatientData(patientData);
+            // Get UID from FirebaseAuth
+            String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+            PatientData patientData = new PatientData(formattedDate, heartRate, oxygenLevel);
+            uploader.uploadPatientData(uid, patientData);
         });
     }
 

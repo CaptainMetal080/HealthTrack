@@ -3,30 +3,22 @@ package com.example.healthtrack;
 import com.google.gson.annotations.SerializedName;
 
 public class PatientData {
-    private String patient_id;
     private String datetime_captured;
     private int heart_rate;
     private int spo2_level;
 
-    // Updated constructor to use time instead of email
-    public PatientData(String patient_id, String datetime_captured, int heart_rate, int spo2_level) {
-        this.patient_id = patient_id;
+    // Constructor
+    public PatientData(String datetime_captured, int heart_rate, int spo2_level) {
         this.datetime_captured = datetime_captured;
         this.heart_rate = heart_rate;
         this.spo2_level = spo2_level;
     }
 
     // Getters and setters
-    @SerializedName("patientId")
-    public String getpId() {
-        return patient_id;
-    }
-
     @SerializedName("timestamp")
     public String getTime() {
         return datetime_captured;
     }
-
 
     public void setTime(String datetime_captured) {
         this.datetime_captured = datetime_captured;
@@ -48,9 +40,5 @@ public class PatientData {
 
     public void setOxygenLevel(int spo2_level) {
         this.spo2_level = spo2_level;
-    }
-    
-    public PatientData getPatient(){
-        return this;
     }
 }

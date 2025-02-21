@@ -27,6 +27,7 @@ import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
+import com.google.firebase.auth.FirebaseAuth;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -275,11 +276,10 @@ public class PatientHealthData extends AppCompatActivity {
 
 
                         Intent intent = getIntent();
-                        String pId=intent.getStringExtra("uid");
 
-                        PatientData patientData = new PatientData(pId, formattedDate, heartRate, oxygenLevel);
-                        // Insert this data into the database
-                        uploader.uploadPatientData(patientData);
+                        String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                        PatientData patientData = new PatientData(formattedDate, heartRate, oxygenLevel);
+                        uploader.uploadPatientData(uid, patientData);
                        // if (dbHelper.getAllPatientData().getCount() % 10 == 0) {
                        //     DataUploader uploader = new DataUploader(PatientHealthData.this);
                        //     uploader.uploadPatientDataBatch();

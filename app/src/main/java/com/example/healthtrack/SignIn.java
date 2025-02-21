@@ -48,9 +48,8 @@ public class SignIn extends Activity {
                         if (task.isSuccessful()) {
                             FirebaseUser user = mAuth.getCurrentUser();
                             if (user != null) {
-                                // Pass the UID to WelcomeScreen
+                                // Redirect to WelcomeScreen
                                 Intent intent = new Intent(SignIn.this, WelcomeScreen.class);
-                                intent.putExtra("uid", user.getUid()); // Pass UID
                                 startActivity(intent);
                                 finish();
                             }
