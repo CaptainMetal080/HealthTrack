@@ -30,7 +30,7 @@ public class DataUploader {
         healthRecord.put("heartRate", patient.getHeartRate());
         healthRecord.put("oxygenLevel", patient.getOxygenLevel());
 
-        db_fb.collection("patient_collections").document(patient.getpId())//Must be changed
+        db_fb.collection("patient_collection").document(patient.getpId())//Must be changed
                 .collection("health_records").document(patient.getTime())
                 .set(healthRecord)
                 .addOnSuccessListener(aVoid -> Log.d("Firestore", "Health record added"))

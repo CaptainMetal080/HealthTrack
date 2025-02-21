@@ -37,9 +37,9 @@
 
         <activity android:name=".WelcomeScreen" />
         <activity android:name=".PatientHealthData" />
+        <activity android:name=".PatientHealthData_nosensor" />
+        <activity android:name=".SignIn" />
         <activity android:name=".DoctorHomeScreen" />
-
-        <activity android:name=".NewAccount" />
     </application>
     <uses-feature android:name="android.hardware.bluetooth" android:required="true"/>
 

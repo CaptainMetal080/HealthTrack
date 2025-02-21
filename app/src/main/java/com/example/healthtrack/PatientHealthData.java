@@ -275,7 +275,7 @@ public class PatientHealthData extends AppCompatActivity {
 
 
                         Intent intent = getIntent();
-                        String pId=intent.getStringExtra("id");
+                        String pId=intent.getStringExtra("uid");
 
                         PatientData patientData = new PatientData(pId, formattedDate, heartRate, oxygenLevel);
                         // Insert this data into the database

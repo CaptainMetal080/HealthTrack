@@ -43,7 +43,7 @@ public class WelcomeScreen extends AppCompatActivity {
                         DocumentSnapshot document = task.getResult();
                         if (document.exists()) {
                             // User is a patient, redirect to PatientHealthData
-                            Intent intent = new Intent(WelcomeScreen.this, PatientHealthData.class);
+                            Intent intent = new Intent(WelcomeScreen.this, PatientHealthData_nosensor.class);
                             intent.putExtra("uid", uid); // Pass UID
                             startActivity(intent);
                             finish();
