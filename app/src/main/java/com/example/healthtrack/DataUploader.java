@@ -19,6 +19,8 @@ public class DataUploader {
         Map<String, Object> healthRecord = new HashMap<>();
         healthRecord.put("heartRate", patient.getHeartRate());
         healthRecord.put("oxygenLevel", patient.getOxygenLevel());
+        healthRecord.put("temperature", patient.getTemperature()); // Add temperature
+        healthRecord.put("stressLevel", patient.getStressLevel()); // Add stress level
 
         firestore.collection("patient_collection").document(uid)
                 .collection("health_records").document(patient.getTime())

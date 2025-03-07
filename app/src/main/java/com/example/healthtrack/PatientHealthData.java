@@ -278,8 +278,8 @@ public class PatientHealthData extends AppCompatActivity {
                         Intent intent = getIntent();
 
                         String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-                        PatientData patientData = new PatientData(formattedDate, heartRate, oxygenLevel);
-                        uploader.uploadPatientData(uid, patientData);
+                        //PatientData patientData = new PatientData(formattedDate, heartRate, oxygenLevel);
+                        //uploader.uploadPatientData(uid, patientData);
                        // if (dbHelper.getAllPatientData().getCount() % 10 == 0) {
                        //     DataUploader uploader = new DataUploader(PatientHealthData.this);
                        //     uploader.uploadPatientDataBatch();

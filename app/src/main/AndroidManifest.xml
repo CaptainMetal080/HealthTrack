@@ -40,6 +40,8 @@
         <activity android:name=".PatientHealthData_nosensor" />
         <activity android:name=".SignIn" />
         <activity android:name=".DoctorHomeScreen" />
+        <activity android:name=".DoctorHomePage_WIP" />
+        <activity android:name=".PatientDetailActivity" />
     </application>
     <uses-feature android:name="android.hardware.bluetooth" android:required="true"/>
 

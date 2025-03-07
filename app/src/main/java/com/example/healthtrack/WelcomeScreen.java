@@ -56,8 +56,10 @@ public class WelcomeScreen extends AppCompatActivity {
                                             if (task1.isSuccessful()) {
                                                 DocumentSnapshot doc = task1.getResult();
                                                 if (doc.exists()) {
-                                                    // User is a doctor, leave function blank for further edits
-                                                    // You can add logic here later
+                                                    // User is a doctor, redirect to DoctorHomeScreen
+                                                    Intent intent = new Intent(WelcomeScreen.this, DoctorHomePage_WIP.class);
+                                                    startActivity(intent);
+                                                    finish();
                                                 } else {
                                                     // User not found in either collection
                                                     Log.w("WelcomeScreen", "User not found in any collection");

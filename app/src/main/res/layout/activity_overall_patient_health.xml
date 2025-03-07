@@ -12,47 +12,87 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="#E91E63"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.0"/>
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
 
-    <LinearLayout
+    <!-- Wrap the content in a ScrollView -->
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
+        android:layout_height="0dp"
         app:layout_constraintTop_toBottomOf="@+id/toolbar"
-        android:padding="5dp">
-        <TextView
-            android:id="@+id/heartRateTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:text="BPM: -- BPM"
-            android:textStyle="bold|italic"
-            android:textSize="24sp"
-            android:layout_gravity="center"/>
-        <com.github.mikephil.charting.charts.LineChart
-            android:layout_width="match_parent"
-            android:layout_height="250dp"
-            android:id="@+id/heartGraph"/>
-        <TextView
-            android:id="@+id/OxiTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:text="O2: -- spo2"
-            android:textStyle="bold|italic"
-            android:textSize="24sp"
-            android:layout_gravity="center"/>
-        <com.github.mikephil.charting.charts.LineChart
-            android:layout_width="match_parent"
-            android:layout_height="250dp"
-            android:id="@+id/spo2Graph"/>
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="5dp">
 
-    </LinearLayout>
+            <!-- Existing LinearLayout with heart rate, SpO2, and temperature views -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+                <TextView
+                    android:id="@+id/heartRateTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="BPM: -- BPM"
+                    android:textStyle="bold|italic"
+                    android:textSize="24sp"
+                    android:layout_gravity="center"/>
+                <com.github.mikephil.charting.charts.LineChart
+                    android:layout_width="match_parent"
+                    android:layout_height="250dp"
+                    android:id="@+id/heartGraph"/>
+                <TextView
+                    android:id="@+id/OxiTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="O2: -- spo2"
+                    android:textStyle="bold|italic"
+                    android:textSize="24sp"
+                    android:layout_gravity="center"/>
+                <com.github.mikephil.charting.charts.LineChart
+                    android:layout_width="match_parent"
+                    android:layout_height="250dp"
+                    android:id="@+id/spo2Graph"/>
+                <TextView
+                    android:id="@+id/TempTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="Temp: -- °C"
+                    android:textStyle="bold|italic"
+                    android:textSize="24sp"
+                    android:layout_gravity="center"/>
+                <com.github.mikephil.charting.charts.LineChart
+                    android:layout_width="match_parent"
+                    android:layout_height="250dp"
+                    android:id="@+id/tempGraph"/>
+            </LinearLayout>
+
+            <!-- Semi-circle stress meter -->
+            <TextView
+                android:id="@+id/stressTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="Stress:"
+                android:textStyle="bold|italic"
+                android:textSize="24sp"
+                android:layout_gravity="center"/>
+            <com.example.healthtrack.SemiCircleMeter
+                android:id="@+id/stressMeter"
+                android:layout_width="match_parent"
+                android:layout_height="150dp"
+                android:layout_marginTop="20dp"/>
+        </LinearLayout>
+    </ScrollView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

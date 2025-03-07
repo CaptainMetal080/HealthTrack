@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- Heart Rate -->
+    <com.github.mikephil.charting.charts.LineChart
+        android:id="@+id/heartChart"
+        android:layout_width="match_parent"
+        android:layout_height="200dp" />
+    <TextView
+        android:id="@+id/heartRateTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="BPM: --" />
+
+    <!-- Oxygen Level -->
+    <com.github.mikephil.charting.charts.LineChart
+        android:id="@+id/spo2Chart"
+        android:layout_width="match_parent"
+        android:layout_height="200dp" />
+    <TextView
+        android:id="@+id/OxiTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="O2: --%" />
+
+    <!-- Temperature -->
+    <com.github.mikephil.charting.charts.LineChart
+        android:id="@+id/tempChart"
+        android:layout_width="match_parent"
+        android:layout_height="200dp" />
+    <TextView
+        android:id="@+id/tempTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Temp: --°C" />
+
+    <!-- Stress Meter -->
+    <com.example.healthtrack.SemiCircleMeter
+        android:id="@+id/stressMeter"
+        android:layout_width="match_parent"
+        android:layout_height="150dp"
+        android:layout_marginTop="20dp"/>
+    <TextView
+        android:id="@+id/stressTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Stress: --" />
+</LinearLayout>

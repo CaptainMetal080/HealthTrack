@@ -27,18 +27,29 @@ public class PatientHealthData_nosensor extends AppCompatActivity {
 
     private LineChart heartChart;
     private LineChart spo2Chart;
+    private LineChart tempChart;
 
     private LineDataSet heartRateDataSet;
     private LineDataSet oxygenDataSet;
+    private LineDataSet tempDataSet; // Temperature data set
 
     TextView heartRateView;
     TextView spo2View;
+    TextView tempView; // Temperature text view
+    TextView stressTextView; // Stress text view
+
     private int heartRateIndex;
     private int oxygenIndex;
+    private int tempIndex; // Temperature index
 
     private int oxygenLevel;
     private int heartRate;
+    private float temperature; // Temperature value
+    private int stressLevel; // Stress level (0 to 100)
+
     private DataUploader uploader;
+
+    private SemiCircleMeter stressMeter; // Stress meter
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,34 +59,49 @@ public class PatientHealthData_nosensor extends AppCompatActivity {
         // Initialize DataUploader
         uploader = new DataUploader(this);
 
+        // Initialize views
         heartRateView = findViewById(R.id.heartRateTextView);
         spo2View = findViewById(R.id.OxiTextView);
+        tempView = findViewById(R.id.TempTextView); // Temperature text view
+        stressTextView = findViewById(R.id.stressTextView); // Stress text view
+        stressMeter = findViewById(R.id.stressMeter); // Stress meter
+
         heartRateIndex = 0;
         oxygenIndex = 0;
+        tempIndex = 0;
+
+        // Initialize charts
         heartChart = findViewById(R.id.heartGraph);
         spo2Chart = findViewById(R.id.spo2Graph);
+        tempChart = findViewById(R.id.tempGraph); // Temperature chart
 
-        // Initialize the data sets
+        // Initialize data sets
         heartRateDataSet = new LineDataSet(new ArrayList<>(), "Heart Rate");
         oxygenDataSet = new LineDataSet(new ArrayList<>(), "Oxygen Level");
+        tempDataSet = new LineDataSet(new ArrayList<>(), "Temperature"); // Temperature data set
 
         // Set line styles (optional)
         heartRateDataSet.setColor(getColor(R.color.healthy));
         heartRateDataSet.setCircleColor(getColor(R.color.healthy));
         oxygenDataSet.setColor(getColor(R.color.healthy));
         oxygenDataSet.setCircleColor(getColor(R.color.healthy));
+        tempDataSet.setColor(getColor(R.color.healthy)); // Temperature line color
+        tempDataSet.setCircleColor(getColor(R.color.healthy));
 
         // Create LineData objects
         LineData heartRateData = new LineData(heartRateDataSet);
         LineData oxygenData = new LineData(oxygenDataSet);
+        LineData tempData = new LineData(tempDataSet); // Temperature data
 
         // Set data to charts
         heartChart.setData(heartRateData);
         spo2Chart.setData(oxygenData);
+        tempChart.setData(tempData); // Set temperature data
 
         // Configure the charts
-        configureChart(heartChart, 200);
-        configureChart(spo2Chart, 100);
+        configureChart(heartChart, 200); // Heart rate chart
+        configureChart(spo2Chart, 100);  // Oxygen level chart
+        configureChart(tempChart, 50);   // Temperature chart (adjust max value as needed)
 
         // Simulate data updates for testing
         simulateDataUpdates();
@@ -86,12 +112,14 @@ public class PatientHealthData_nosensor extends AppCompatActivity {
         Runnable runnable = new Runnable() {
             @Override
             public void run() {
-                // Simulate heart rate and oxygen level data
+                // Simulate heart rate, oxygen level, temperature, and stress level data
                 heartRate = (int) (Math.random() * 100 + 60); // Random heart rate between 60-160
                 oxygenLevel = (int) (Math.random() * 20 + 80); // Random oxygen level between 80-100
+                temperature = (float) (Math.random() * 10 + 35); // Random temperature between 35-45°C
+                stressLevel = (int) (Math.random() * 100); // Random stress level between 0-100
 
                 // Update UI with simulated data
-                updateUI(heartRate, oxygenLevel);
+                updateUI(heartRate, oxygenLevel, temperature, stressLevel);
 
                 // Schedule the next update
                 handler.postDelayed(this, 2000); // Update every 2 seconds
@@ -100,7 +128,7 @@ public class PatientHealthData_nosensor extends AppCompatActivity {
         handler.post(runnable); // Start the simulation
     }
 
-    private void updateUI(int heartRate, int oxygenLevel) {
+    private void updateUI(int heartRate, int oxygenLevel, float temperature, int stressLevel) {
         runOnUiThread(() -> {
             // Update heart rate
             if (heartRate > 160) {
@@ -145,6 +173,30 @@ public class PatientHealthData_nosensor extends AppCompatActivity {
             updateChart(spo2Chart, oxygenDataSet, oxygenLevel, oxygenIndex);
             oxygenIndex++;
 
+            // Update temperature
+            if (temperature > 40) {
+                Toast.makeText(PatientHealthData_nosensor.this, "Critical: High Temperature!", Toast.LENGTH_SHORT).show();
+                tempView.setTextColor(getColor(R.color.emergency));
+                tempDataSet.setColor(getColor(R.color.emergency));
+                tempDataSet.setCircleColor(getColor(R.color.emergency));
+            } else if (temperature < 35) {
+                Toast.makeText(PatientHealthData_nosensor.this, "Critical: Low Temperature!", Toast.LENGTH_SHORT).show();
+                tempView.setTextColor(getColor(R.color.emergency));
+                tempDataSet.setColor(getColor(R.color.emergency));
+                tempDataSet.setCircleColor(getColor(R.color.emergency));
+            } else {
+                tempDataSet.setColor(getColor(R.color.healthy));
+                tempDataSet.setCircleColor(getColor(R.color.healthy));
+                tempView.setTextColor(getColor(R.color.healthy));
+            }
+            tempView.setText("Temp: " + temperature + " °C");
+            updateChart(tempChart, tempDataSet, temperature, tempIndex);
+            tempIndex++;
+
+            // Update stress level
+            stressTextView.setText("Stress: " + stressLevel);
+            stressMeter.setProgress(stressLevel); // Update the stress meter
+
             // Upload data to Firestore
             LocalDateTime now = LocalDateTime.now();
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -153,7 +205,8 @@ public class PatientHealthData_nosensor extends AppCompatActivity {
             // Get UID from FirebaseAuth
             String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
-            PatientData patientData = new PatientData(formattedDate, heartRate, oxygenLevel);
+            // Create PatientData object with all fields
+            PatientData patientData = new PatientData(formattedDate, heartRate, oxygenLevel, temperature, stressLevel);
             uploader.uploadPatientData(uid, patientData);
         });
     }
@@ -186,7 +239,7 @@ public class PatientHealthData_nosensor extends AppCompatActivity {
         try {
             // Make the call
             Intent phoneIntent = new Intent(Intent.ACTION_CALL);
-            phoneIntent.setData(Uri.parse("tel:1234567890"));  // Replace with actual number
+            phoneIntent.setData(Uri.parse("tel:1234123412"));  // Replace with actual number
             startActivity(phoneIntent);
         } catch (Exception e) {
             Toast.makeText(this, "Error making the call: " + e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -209,7 +262,7 @@ public class PatientHealthData_nosensor extends AppCompatActivity {
         chart.getAxisLeft().setGranularity(1f);  // Prevent duplicates on Y-axis
     }
 
-    private void updateChart(LineChart chart, LineDataSet dataSet, int value, int index) {
+    private void updateChart(LineChart chart, LineDataSet dataSet, float value, int index) {
         // Add a new data point to the dataset
         dataSet.addEntry(new Entry(index, value));
 
