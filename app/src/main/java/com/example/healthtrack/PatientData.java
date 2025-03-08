@@ -6,8 +6,8 @@ public class PatientData {
     private String datetime_captured;
     private int heart_rate;
     private int spo2_level;
-    private float temperature; // Temperature field
-    private int stress_level; // Stress level field
+    private float temperature;
+    private int stress_level;
 
     // Constructor
     public PatientData(String datetime_captured, int heart_rate, int spo2_level, float temperature, int stress_level) {

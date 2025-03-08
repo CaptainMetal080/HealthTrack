@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -31,6 +32,7 @@ public class DoctorHomePage extends AppCompatActivity {
     private LinearLayout patientListLayout;
     private String doctorId;
     private TextView drTitle;
+    private Button refreshButton;
 
     private static final int MAX_POINTS = 25; // Consistent with PatientHealthData_nosensor
 
@@ -43,8 +45,19 @@ public class DoctorHomePage extends AppCompatActivity {
         mAuth = FirebaseAuth.getInstance();
         patientListLayout = findViewById(R.id.patientListLayout);
         drTitle = findViewById(R.id.drTitle);
+        refreshButton = findViewById(R.id.refreshButton);
 
         doctorId = mAuth.getCurrentUser().getUid();
+        fetchDoctorLastName();
+        fetchAssignedPatients();
+
+        refreshButton.setOnClickListener(v -> refreshActivity());
+    }
+
+    private void refreshActivity() {
+        // Clear the existing patient views
+        patientListLayout.removeAllViews();
+        // Fetch the latest data
         fetchDoctorLastName();
         fetchAssignedPatients();
     }
@@ -120,7 +133,6 @@ public class DoctorHomePage extends AppCompatActivity {
             intent.putExtra("patientId", patientId); // Pass the patientId to the next activity
             startActivity(intent);
         });
-
         // Add the patient view to the layout
         patientListLayout.addView(patientView);
     }

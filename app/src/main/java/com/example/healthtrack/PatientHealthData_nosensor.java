@@ -26,6 +26,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 
+
 public class PatientHealthData_nosensor extends AppCompatActivity {
     private static final int MAX_POINTS = 25;
 
@@ -141,7 +142,7 @@ public class PatientHealthData_nosensor extends AppCompatActivity {
                 // Simulate heart rate, oxygen level, temperature, and stress level data
                 heartRate = (int) (Math.random() * 100 + 60); // Random heart rate between 60-160
                 oxygenLevel = (int) (Math.random() * 20 + 80); // Random oxygen level between 80-100
-                temperature = (float) (Math.random() * 10 + 35); // Random temperature between 35-45°C
+                temperature = (float) (Math.random() * 7 + 35); // Random temperature between 35-45°C
                 stressLevel = (int) (Math.random() * 100); // Random stress level between 0-100
 
                 // Update UI with simulated data
