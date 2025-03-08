@@ -1,7 +1,12 @@
 package com.example.healthtrack;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.XAxis;
@@ -10,14 +15,14 @@ import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
+import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FieldPath;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.Query;
-import java.util.ArrayList;
-import java.util.List;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 public class GraphDetailActivity extends AppCompatActivity {
@@ -26,6 +31,10 @@ public class GraphDetailActivity extends AppCompatActivity {
     private String patientId;
     private String graphType;
     private LineChart detailedChart;
+    private TextView patientNameView;
+    private TextView patientAgeView;
+    private Button callPatientButton;
+    private Button callEmergencyButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,10 +45,97 @@ public class GraphDetailActivity extends AppCompatActivity {
         patientId = getIntent().getStringExtra("patientId");
         graphType = getIntent().getStringExtra("graphType");
         detailedChart = findViewById(R.id.detailedChart);
+        patientNameView = findViewById(R.id.patientName);
+        patientAgeView = findViewById(R.id.patientAge);
+        callPatientButton = findViewById(R.id.callPatientButton);
+        callEmergencyButton = findViewById(R.id.callEmergencyButton);
 
+        // Fetch and display patient data
+        fetchPatientData();
+
+        // Fetch and plot graph data
         fetchGraphData();
+
+        // Set up button click listeners
+        callPatientButton.setOnClickListener(v -> callPatient());
+        callEmergencyButton.setOnClickListener(v -> callEmergency());
     }
 
+    private void fetchPatientData() {
+        db.collection("patient_collection").document(patientId).get()
+                .addOnSuccessListener(document -> {
+                    if (document.exists()) {
+                        // Fetch patient details
+                        String firstName = document.getString("first_name");
+                        String lastName = document.getString("last_name");
+                        String phoneNumber = document.getString("phone");
+
+                        // Display patient name
+                        patientNameView.setText("Name: " + firstName + " " + lastName);
+
+                        // Fetch and calculate age from date_of_birth
+                        Object dateOfBirthObj = document.get("date_of_birth");
+                        if (dateOfBirthObj != null) {
+                            String dateOfBirth;
+
+
+                            com.google.firebase.Timestamp timestamp = (com.google.firebase.Timestamp) dateOfBirthObj;
+                            Date birthDate = timestamp.toDate();
+                            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+                            dateOfBirth = sdf.format(birthDate);
+
+                            int age = calculateAge(dateOfBirth);
+                            patientAgeView.setText("Age: " + age);
+
+                        }
+
+                        // Store phone number for calling
+                        callPatientButton.setTag(phoneNumber); // Store phone number in the button's tag
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("GraphDetailActivity", "Error fetching patient data", e);
+                });
+    }
+
+    private int calculateAge(String dateOfBirth) {
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+            Date birthDate = sdf.parse(dateOfBirth);
+            if (birthDate != null) {
+                Calendar today = Calendar.getInstance();
+                Calendar dob = Calendar.getInstance();
+                dob.setTime(birthDate);
+
+                int age = today.get(Calendar.YEAR) - dob.get(Calendar.YEAR);
+                if (today.get(Calendar.DAY_OF_YEAR) < dob.get(Calendar.DAY_OF_YEAR)) {
+                    age--;
+                }
+                return age;
+            }
+        } catch (Exception e) {
+            Log.e("GraphDetailActivity", "Error calculating age", e);
+        }
+        return 0; // Default age if calculation fails
+    }
+
+    private void callPatient() {
+        String phoneNumber = (String) callPatientButton.getTag();
+        if (phoneNumber != null && !phoneNumber.isEmpty()) {
+            Intent intent = new Intent(Intent.ACTION_DIAL);
+            intent.setData(Uri.parse("tel:" + phoneNumber));
+            startActivity(intent);
+        } else {
+            Log.e("GraphDetailActivity", "No phone number found for the patient");
+        }
+    }
+
+    private void callEmergency() {
+        // No implementation needed for calling 911
+        Log.d("GraphDetailActivity", "Call 911 button clicked");
+    }
+
+    // Rest of the code (fetchGraphData, updateChart, etc.) remains unchanged
     private void fetchGraphData() {
         db.collection("patient_collection").document(patientId)
                 .collection("health_records")
@@ -93,11 +189,48 @@ public class GraphDetailActivity extends AppCompatActivity {
     }
 
     private void updateChart(List<Entry> entries, List<String> labels) {
+        if (entries.isEmpty()) {
+            Log.w("ChartUpdate", "No data to plot for " + graphType);
+            return;
+        }
+
         LineDataSet dataSet = new LineDataSet(entries, graphType);
-        dataSet.setColor(getColor(R.color.healthy));
-        dataSet.setCircleColor(getColor(R.color.healthy));
+
+        // Configure colors for each point based on its value
+        List<Integer> colors = new ArrayList<>();
+        for (Entry entry : entries) {
+            float value = entry.getY();
+            switch (graphType) {
+                case "heartRate":
+                    if (value > 160 || value < 50) {
+                        colors.add(getColor(R.color.emergency));
+                    } else {
+                        colors.add(getColor(R.color.healthy));
+                    }
+                    break;
+                case "oxygenLevel":
+                    if (value < 90) {
+                        colors.add(getColor(R.color.emergency));
+                    } else if (value <= 94) {
+                        colors.add(getColor(R.color.mild));
+                    } else {
+                        colors.add(getColor(R.color.healthy));
+                    }
+                    break;
+                case "temperature":
+                    if (value > 40 || value < 35) {
+                        colors.add(getColor(R.color.emergency));
+                    } else {
+                        colors.add(getColor(R.color.healthy));
+                    }
+                    break;
+            }
+        }
+        dataSet.setColor(getColor(R.color.baseline));
+        // Set the colors for each point
+        dataSet.setCircleColors(colors);
         dataSet.setLineWidth(2f);
-        dataSet.setCircleSize(4f);
+        dataSet.setCircleSize(3f);
         dataSet.setDrawValues(false);
 
         LineData lineData = new LineData(dataSet);
@@ -116,8 +249,12 @@ public class GraphDetailActivity extends AppCompatActivity {
         xAxis.setValueFormatter(new IndexAxisValueFormatter(labels));
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setDrawGridLines(true);
-        xAxis.setTextSize(6f);
+        xAxis.setTextSize(6f); // Adjust text size if needed
         xAxis.setLabelRotationAngle(-45); // Rotate labels for better readability
+
+        // Add extra space at the bottom for X-axis labels
+        xAxis.setYOffset(10f); // Move X-axis labels further down
+        xAxis.setAvoidFirstLastClipping(true); // Prevent clipping of first and last labels
 
         // Customize Y-axis
         YAxis yAxis = detailedChart.getAxisLeft();
@@ -128,8 +265,8 @@ public class GraphDetailActivity extends AppCompatActivity {
         // Disable right Y-axis
         detailedChart.getAxisRight().setEnabled(false);
 
-        // Add padding to the chart
-        detailedChart.setExtraOffsets(20f, 20f, 20f, 20f);
+        // Add padding to the chart (extra bottom offset for X-axis labels)
+        detailedChart.setExtraOffsets(20f, 20f, 20f, 40f); // Increase bottom offset to 40f
 
         // Refresh the chart
         detailedChart.invalidate();

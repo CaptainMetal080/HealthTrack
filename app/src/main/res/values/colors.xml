@@ -7,6 +7,7 @@
     <color name="orange">#FFFFFFFF</color>
 
     <color name="emergency">#E20000</color>
-    <color name="mild">#E6AB42</color>
-    <color name="healthy">#49E64D</color>
+    <color name="mild">#EF970E</color>
+    <color name="healthy">#1FE629</color>
+    <color name="baseline">#8FD9F4</color>
 </resources>

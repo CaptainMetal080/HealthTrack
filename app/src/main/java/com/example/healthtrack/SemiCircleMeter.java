@@ -33,13 +33,13 @@ public class SemiCircleMeter extends View {
         backgroundPaint = new Paint();
         backgroundPaint.setColor(Color.LTGRAY);
         backgroundPaint.setStyle(Paint.Style.STROKE);
-        backgroundPaint.setStrokeWidth(20);
+        backgroundPaint.setStrokeWidth(40);
         backgroundPaint.setAntiAlias(true);
 
         progressPaint = new Paint();
         progressPaint.setColor(Color.RED);
         progressPaint.setStyle(Paint.Style.STROKE);
-        progressPaint.setStrokeWidth(20);
+        progressPaint.setStrokeWidth(40);
         progressPaint.setAntiAlias(true);
 
         rectF = new RectF();

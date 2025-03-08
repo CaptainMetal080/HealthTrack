@@ -25,6 +25,7 @@ import com.google.firebase.firestore.Query;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.List;
 
 
 public class PatientHealthData_nosensor extends AppCompatActivity {
@@ -293,14 +294,45 @@ public class PatientHealthData_nosensor extends AppCompatActivity {
         // Add a new data point to the dataset
         dataSet.addEntry(new Entry(index, value));
 
+        // Configure colors for each point based on its value
+        List<Integer> colors = new ArrayList<>();
+        for (Entry entry : dataSet.getValues()) {
+            float entryValue = entry.getY();
+            if (dataSet.getLabel().contains("Heart")) {
+                if (entryValue > 160 || entryValue < 50) {
+                    colors.add(getColor(R.color.emergency));
+                } else {
+                    colors.add(getColor(R.color.healthy));
+                }
+            } else if (dataSet.getLabel().contains("Oxygen")) {
+                if (entryValue < 90) {
+                    colors.add(getColor(R.color.emergency));
+                } else if (entryValue <= 94) {
+                    colors.add(getColor(R.color.mild));
+                } else {
+                    colors.add(getColor(R.color.healthy));
+                }
+            } else if (dataSet.getLabel().contains("Temperature")) {
+                if (entryValue > 40 || entryValue < 35) {
+                    colors.add(getColor(R.color.emergency));
+                } else {
+                    colors.add(getColor(R.color.healthy));
+                }
+            }
+        }
+
+        // Set the colors for each point
+        dataSet.setCircleColors(colors);
+        dataSet.setColor(getColor(R.color.baseline)); // Set the line color to a baseline color
+        dataSet.setLineWidth(1f);
+        dataSet.setCircleSize(2f);
+        dataSet.setDrawValues(false);
+
         // Keep only the last MAX_POINTS points in the chart
         if (dataSet.getEntryCount() > MAX_POINTS) {
             chart.getXAxis().setAxisMinimum(index - MAX_POINTS + 1); // Shift the axis left
             chart.getXAxis().setAxisMaximum(index + 1);  // Remove the oldest point
         }
-        dataSet.setDrawCircles(true);
-        dataSet.setCircleSize(3f);
-        dataSet.setDrawValues(false);
 
         // Notify the dataset that the data has changed
         LineData data = chart.getData();

@@ -6,7 +6,7 @@
     android:orientation="vertical"
     android:padding="16dp"
     android:layout_marginBottom="16dp"
-    android:background="#FFF7F9"
+    android:background="#F8E4E8"
     android:elevation="8dp"
     android:clickable="true"
     android:focusable="true"
@@ -20,6 +20,7 @@
         android:textSize="18sp"
         android:textStyle="bold"
         android:padding="8dp"
+        android:background="#FFF7F9"
         android:textColor="#333333"
         android:gravity="center"
         android:text="Patient Name" />
@@ -31,7 +32,7 @@
         android:columnCount="2"
         android:rowCount="2"
         android:padding="8dp"
-        android:background="#EFC6D5">
+        android:background="#FFF7F9">
 
         <!-- Heart Rate -->
         <LinearLayout

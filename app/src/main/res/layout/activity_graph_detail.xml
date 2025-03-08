@@ -5,10 +5,47 @@
     android:orientation="vertical"
     android:padding="16dp">
 
+    <!-- LineChart for the graph -->
     <com.github.mikephil.charting.charts.LineChart
         android:id="@+id/detailedChart"
         android:layout_width="match_parent"
         android:layout_height="400dp"
         android:layout_marginTop="16dp"
         android:layout_marginBottom="16dp" />
+
+    <!-- Patient Information Section -->
+    <TextView
+        android:id="@+id/patientName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Name: "
+        android:textSize="18sp"
+        android:layout_marginTop="16dp" />
+
+    <TextView
+        android:id="@+id/patientAge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Age: "
+        android:textSize="18sp"
+        android:layout_marginTop="8dp" />
+
+    <!-- Buttons for calling -->
+    <Button
+        android:id="@+id/callPatientButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Call Patient"
+        android:layout_marginTop="16dp"
+        android:backgroundTint="@color/o2blue"
+        android:textColor="@color/white" />
+
+    <Button
+        android:id="@+id/callEmergencyButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Call 911"
+        android:layout_marginTop="8dp"
+        android:backgroundTint="@color/heartred"
+        android:textColor="@color/white" />
 </LinearLayout>

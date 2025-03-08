@@ -121,6 +121,7 @@ public class PatientDetailActivity extends AppCompatActivity {
                                         } else {
                                             heartText.setTextColor(getColor(R.color.healthy));
                                         }
+                                        heartText.setText("BPM: " + heartRate);
 
                                         if (oxygenLevel < 90) {
                                             spo2Text.setTextColor(getColor(R.color.emergency));
@@ -129,8 +130,16 @@ public class PatientDetailActivity extends AppCompatActivity {
                                         } else {
                                             spo2Text.setTextColor(getColor(R.color.healthy));
                                         }
+                                        spo2Text.setText("O2: " + oxygenLevel + "%");
 
                                         // Update temperature text
+                                        if (temperature > 40) {
+                                            tempText.setTextColor(getColor(R.color.emergency));
+                                        } else if (temperature < 35) {
+                                            tempText.setTextColor(getColor(R.color.emergency));
+                                        } else {
+                                            tempText.setTextColor(getColor(R.color.healthy));
+                                        }
                                         tempText.setText(String.format("Temp: %.1f°C", temperature));
 
                                         // Update stress meter
@@ -215,38 +224,39 @@ public class PatientDetailActivity extends AppCompatActivity {
 
         LineDataSet dataSet = new LineDataSet(entries, label);
 
-        // Configure colors based on latest value
-        if (!entries.isEmpty()) {
-            float lastValue = entries.get(entries.size() - 1).getY();
+        // Configure colors for each point based on its value
+        List<Integer> colors = new ArrayList<>();
+        for (Entry entry : entries) {
+            float value = entry.getY();
             if (label.contains("Heart")) {
-                if (lastValue > 160 || lastValue < 50) {
-                    dataSet.setColor(getColor(R.color.emergency));
-                    dataSet.setCircleColor(getColor(R.color.emergency));
+                if (value > 160 || value < 50) {
+                    colors.add(getColor(R.color.emergency));
                 } else {
-                    dataSet.setColor(getColor(R.color.healthy));
-                    dataSet.setCircleColor(getColor(R.color.healthy));
+                    colors.add(getColor(R.color.healthy));
                 }
-                textView.setText(String.format("BPM: %.0f", lastValue));
             } else if (label.contains("Oxygen")) {
-                if (lastValue < 90) {
-                    dataSet.setColor(getColor(R.color.emergency));
-                    dataSet.setCircleColor(getColor(R.color.emergency));
-                } else if (lastValue <= 94) {
-                    dataSet.setColor(getColor(R.color.mild));
-                    dataSet.setCircleColor(getColor(R.color.mild));
+                if (value < 90) {
+                    colors.add(getColor(R.color.emergency));
+                } else if (value <= 94) {
+                    colors.add(getColor(R.color.mild));
                 } else {
-                    dataSet.setColor(getColor(R.color.healthy));
-                    dataSet.setCircleColor(getColor(R.color.healthy));
+                    colors.add(getColor(R.color.healthy));
                 }
-                textView.setText(String.format("O2: %.0f%%", lastValue));
             } else if (label.contains("Temperature")) {
-                textView.setText(String.format("Temp: %.1f°C", lastValue));
+                if (value > 40 || value < 35) {
+                    colors.add(getColor(R.color.emergency));
+                } else {
+                    colors.add(getColor(R.color.healthy));
+                }
             }
         }
 
+        // Set the colors for each point
+        dataSet.setCircleColors(colors);
+        dataSet.setColor(getColor(R.color.baseline)); // Set the line color to a baseline color
+        dataSet.setLineWidth(1f);
+        dataSet.setCircleSize(2f);
         dataSet.setDrawValues(false);
-        dataSet.setCircleSize(3f);
-        dataSet.setLineWidth(2f);
 
         LineData data = new LineData(dataSet);
         chart.setData(data);
