@@ -17,6 +17,10 @@ import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldPath;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -41,6 +45,7 @@ public class PatientHealthData_nosensor extends AppCompatActivity {
     private int heartRateIndex;
     private int oxygenIndex;
     private int tempIndex; // Temperature index
+    private FirebaseFirestore db;
 
     private int oxygenLevel;
     private int heartRate;
@@ -58,7 +63,7 @@ public class PatientHealthData_nosensor extends AppCompatActivity {
 
         // Initialize DataUploader
         uploader = new DataUploader(this);
-
+        db = FirebaseFirestore.getInstance();
         // Initialize views
         heartRateView = findViewById(R.id.heartRateTextView);
         spo2View = findViewById(R.id.OxiTextView);
@@ -105,10 +110,31 @@ public class PatientHealthData_nosensor extends AppCompatActivity {
 
         // Simulate data updates for testing
         simulateDataUpdates();
-    }
 
+        heartChart.setOnClickListener(v -> {
+            Intent intent = new Intent(this, GraphDetailActivity.class);
+            intent.putExtra("patientId", FirebaseAuth.getInstance().getCurrentUser().getUid());
+            intent.putExtra("graphType", "heartRate");
+            startActivity(intent);
+        });
+
+        spo2Chart.setOnClickListener(v -> {
+            Intent intent = new Intent(this, GraphDetailActivity.class);
+            intent.putExtra("patientId", FirebaseAuth.getInstance().getCurrentUser().getUid());
+            intent.putExtra("graphType", "oxygenLevel");
+            startActivity(intent);
+        });
+
+        tempChart.setOnClickListener(v -> {
+            Intent intent = new Intent(this, GraphDetailActivity.class);
+            intent.putExtra("patientId", FirebaseAuth.getInstance().getCurrentUser().getUid());
+            intent.putExtra("graphType", "temperature");
+            startActivity(intent);
+        });
+    }
     private void simulateDataUpdates() {
         Handler handler = new Handler();
+
         Runnable runnable = new Runnable() {
             @Override
             public void run() {
@@ -212,27 +238,27 @@ public class PatientHealthData_nosensor extends AppCompatActivity {
     }
 
     private void callEmergency() {
-        // Show confirmation dialog
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Emergency Call");
-        builder.setMessage("Critical Health condition detected. Call emergency?");
-
-        // Positive button to call emergency
-        builder.setPositiveButton("Call", (dialog, id) -> Call());
-
-        // Negative button to cancel
-        builder.setNegativeButton("Cancel", (dialog, id) -> dialog.dismiss());
-
-        // Create and show the dialog
-        AlertDialog dialog = builder.create();
-        dialog.show();
-
-        // Automatically proceed with the call after 5 seconds if the user doesn't interact
-        new Handler().postDelayed(() -> {
-            if (dialog.isShowing()) {
-                Call();
-            }
-        }, 5000); // Delay of 5 seconds
+//        // Show confirmation dialog
+//        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+//        builder.setTitle("Emergency Call");
+//        builder.setMessage("Critical Health condition detected. Call emergency?");
+//
+//        // Positive button to call emergency
+//        builder.setPositiveButton("Call", (dialog, id) -> Call());
+//
+//        // Negative button to cancel
+//        builder.setNegativeButton("Cancel", (dialog, id) -> dialog.dismiss());
+//
+//        // Create and show the dialog
+//        AlertDialog dialog = builder.create();
+//        dialog.show();
+//
+//        // Automatically proceed with the call after 5 seconds if the user doesn't interact
+//        new Handler().postDelayed(() -> {
+//            if (dialog.isShowing()) {
+//                Call();
+//            }
+//        }, 5000); // Delay of 5 seconds
     }
 
     private void Call() {

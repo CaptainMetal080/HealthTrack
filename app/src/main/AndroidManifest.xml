@@ -26,7 +26,7 @@
         android:theme="@style/Theme.MyApp"
         tools:targetApi="31">
         <activity
-            android:name=".MainActivity"
+            android:name=".SignIn"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -38,9 +38,8 @@
         <activity android:name=".WelcomeScreen" />
         <activity android:name=".PatientHealthData" />
         <activity android:name=".PatientHealthData_nosensor" />
-        <activity android:name=".SignIn" />
-        <activity android:name=".DoctorHomeScreen" />
-        <activity android:name=".DoctorHomePage_WIP" />
+        <activity android:name=".GraphDetailActivity" />
+        <activity android:name=".DoctorHomePage" />
         <activity android:name=".PatientDetailActivity" />
     </application>
     <uses-feature android:name="android.hardware.bluetooth" android:required="true"/>

@@ -4,8 +4,13 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="8dp"
-    android:layout_marginBottom="16dp">
+    android:padding="16dp"
+    android:layout_marginBottom="16dp"
+    android:background="#FFF7F9"
+    android:elevation="8dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground">
 
     <!-- Patient Name -->
     <TextView
@@ -15,74 +20,124 @@
         android:textSize="18sp"
         android:textStyle="bold"
         android:padding="8dp"
-        android:textColor="@color/black"/>
+        android:textColor="#333333"
+        android:gravity="center"
+        android:text="Patient Name" />
 
-    <!-- Graphs Row -->
-    <LinearLayout
+    <!-- 2x2 Grid for Graphs -->
+    <GridLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:weightSum="2"
+        android:columnCount="2"
+        android:rowCount="2"
         android:padding="8dp">
 
         <!-- Heart Rate -->
-        <TextView
-            android:id="@+id/heartRateTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="BPM: --" />
-        <com.github.mikephil.charting.charts.LineChart
-            android:id="@+id/heartChart"
+        <LinearLayout
             android:layout_width="0dp"
-            android:layout_height="150dp"
-            android:layout_weight="1"
-            android:layout_marginEnd="4dp"/>
+            android:layout_height="wrap_content"
+            android:layout_columnWeight="1"
+            android:layout_rowWeight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="8dp">
+
+            <com.github.mikephil.charting.charts.LineChart
+                android:id="@+id/heartChart"
+                android:layout_width="match_parent"
+                android:layout_height="150dp"
+                android:background="#FFFFFF"
+                android:elevation="4dp"/>
+
+            <TextView
+                android:id="@+id/heartRateTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="BPM: --"
+                android:textSize="14sp"
+                android:textColor="#333333"
+                android:paddingTop="4dp" />
+        </LinearLayout>
 
         <!-- Oxygen Level -->
-        <TextView
-            android:id="@+id/OxiTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="O2: --%" />
-        <com.github.mikephil.charting.charts.LineChart
-            android:id="@+id/spo2Chart"
+        <LinearLayout
             android:layout_width="0dp"
-            android:layout_height="150dp"
-            android:layout_weight="1"
-            android:layout_marginStart="4dp"/>
-    </LinearLayout>
+            android:layout_height="wrap_content"
+            android:layout_columnWeight="1"
+            android:layout_rowWeight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="8dp">
 
-    <!-- Temperature and Stress Row -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="8dp"
-        android:weightSum="2">
+            <com.github.mikephil.charting.charts.LineChart
+                android:id="@+id/spo2Chart"
+                android:layout_width="match_parent"
+                android:layout_height="150dp"
+                android:background="#FFFFFF"
+                android:elevation="4dp"/>
+
+            <TextView
+                android:id="@+id/OxiTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="O2: --%"
+                android:textSize="14sp"
+                android:textColor="#333333"
+                android:paddingTop="4dp" />
+        </LinearLayout>
 
         <!-- Temperature -->
-        <TextView
-            android:id="@+id/tempTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Temp: --°C" />
-        <com.github.mikephil.charting.charts.LineChart
-            android:id="@+id/tempChart"
+        <LinearLayout
             android:layout_width="0dp"
-            android:layout_height="150dp"
-            android:layout_weight="2"
-            android:layout_marginStart="4dp"/>
+            android:layout_height="wrap_content"
+            android:layout_columnWeight="1"
+            android:layout_rowWeight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="8dp">
+
+            <com.github.mikephil.charting.charts.LineChart
+                android:id="@+id/tempChart"
+                android:layout_width="match_parent"
+                android:layout_height="150dp"
+                android:background="#FFFFFF"
+                android:elevation="4dp"/>
+
+            <TextView
+                android:id="@+id/tempTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Temp: °C"
+                android:textSize="14sp"
+                android:textColor="#333333"
+                android:paddingTop="4dp" />
+        </LinearLayout>
 
         <!-- Stress Meter -->
-        <TextView
-            android:id="@+id/stressTextView"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Stress: --" />
-        <com.example.healthtrack.SemiCircleMeter
-            android:id="@+id/stressMeter"
-            android:layout_width="150dp"
-            android:layout_height="70dp"
-            android:layout_marginStart="4dp"/>
-    </LinearLayout>
+            android:layout_columnWeight="1"
+            android:layout_rowWeight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="8dp">
+
+            <com.example.healthtrack.SemiCircleMeter
+                android:id="@+id/stressMeter"
+                android:layout_width="140dp"
+                android:layout_height="70dp"
+                android:background="#FFF7F9"
+                android:elevation="4dp"/>
+
+            <TextView
+                android:id="@+id/stressTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Stress: --"
+                android:textSize="14sp"
+                android:textColor="#333333"
+                android:paddingTop="4dp" />
+        </LinearLayout>
+    </GridLayout>
 </LinearLayout>

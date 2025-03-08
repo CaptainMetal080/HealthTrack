@@ -1,7 +1,6 @@
 package com.example.healthtrack;
 
 import android.content.Intent;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -12,8 +11,6 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.github.mikephil.charting.charts.LineChart;
-import com.github.mikephil.charting.components.XAxis;
-import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
@@ -25,10 +22,9 @@ import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
-public class DoctorHomePage_WIP extends AppCompatActivity {
+public class DoctorHomePage extends AppCompatActivity {
 
     private FirebaseFirestore db;
     private FirebaseAuth mAuth;
@@ -185,7 +181,6 @@ public class DoctorHomePage_WIP extends AppCompatActivity {
                                     } else {
                                         spo2Text.setTextColor(getColor(R.color.healthy));
                                     }
-
                                     // Update temperature text
                                     tempText.setText(String.format("Temp: %.1f°C", temperature));
 
@@ -270,6 +265,17 @@ public class DoctorHomePage_WIP extends AppCompatActivity {
                 textView.setText(String.format("O2: %.0f%%", lastValue));
             } else if (label.contains("Temperature")) {
                 textView.setText(String.format("Temp: %.1f°C", lastValue));
+                if (lastValue > 38) {
+                    dataSet.setColor(getColor(R.color.emergency));
+                    dataSet.setCircleColor(getColor(R.color.emergency));
+                } else if (lastValue < 34) {
+                    dataSet.setColor(getColor(R.color.emergency));
+                    dataSet.setCircleColor(getColor(R.color.emergency));
+                } else {
+                    dataSet.setColor(getColor(R.color.healthy));
+                    dataSet.setCircleColor(getColor(R.color.healthy));
+                }
+
             }
         }
 

@@ -1,5 +1,6 @@
 package com.example.healthtrack;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
@@ -160,6 +161,28 @@ public class PatientDetailActivity extends AppCompatActivity {
                         updateChart(heartChart, heartRateEntries, "Heart Rate", heartText);
                         updateChart(spo2Chart, oxygenLevelEntries, "Oxygen Level", spo2Text);
                         updateChart(tempChart, temperatureEntries, "Temperature", tempText); // Update temperature chart
+                        // In DoctorHomePage.java and PatientDetailActivity.java
+                        heartChart.setOnClickListener(v -> {
+                            Intent intent = new Intent(this, GraphDetailActivity.class);
+                            intent.putExtra("patientId", patientId);
+                            intent.putExtra("graphType", "heartRate");
+                            startActivity(intent);
+                        });
+
+                        spo2Chart.setOnClickListener(v -> {
+                            Intent intent = new Intent(this, GraphDetailActivity.class);
+                            intent.putExtra("patientId", patientId);
+                            intent.putExtra("graphType", "oxygenLevel");
+                            startActivity(intent);
+                        });
+
+                        tempChart.setOnClickListener(v -> {
+                            Intent intent = new Intent(this, GraphDetailActivity.class);
+                            intent.putExtra("patientId", patientId);
+                            intent.putExtra("graphType", "temperature");
+                            startActivity(intent);
+                        });
+
                     } else {
                         Log.w("PatientDetailActivity", "Error fetching health records", task.getException());
                     }

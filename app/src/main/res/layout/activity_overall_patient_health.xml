@@ -11,12 +11,11 @@
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#E91E63"
+        android:background="#FF6F61"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
-    <!-- Wrap the content in a ScrollView -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -29,13 +28,13 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="5dp">
+            android:padding="16dp">
 
-            <!-- Existing LinearLayout with heart rate, SpO2, and temperature views -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
+
                 <TextView
                     android:id="@+id/heartRateTextView"
                     android:layout_width="wrap_content"
@@ -44,11 +43,16 @@
                     android:text="BPM: -- BPM"
                     android:textStyle="bold|italic"
                     android:textSize="24sp"
+                    android:textColor="#333333"
                     android:layout_gravity="center"/>
+
                 <com.github.mikephil.charting.charts.LineChart
                     android:layout_width="match_parent"
                     android:layout_height="250dp"
-                    android:id="@+id/heartGraph"/>
+                    android:id="@+id/heartGraph"
+                    android:background="#FFFFFF"
+                    android:elevation="4dp"/>
+
                 <TextView
                     android:id="@+id/OxiTextView"
                     android:layout_width="wrap_content"
@@ -57,11 +61,16 @@
                     android:text="O2: -- spo2"
                     android:textStyle="bold|italic"
                     android:textSize="24sp"
+                    android:textColor="#333333"
                     android:layout_gravity="center"/>
+
                 <com.github.mikephil.charting.charts.LineChart
                     android:layout_width="match_parent"
                     android:layout_height="250dp"
-                    android:id="@+id/spo2Graph"/>
+                    android:id="@+id/spo2Graph"
+                    android:background="#FFFFFF"
+                    android:elevation="4dp"/>
+
                 <TextView
                     android:id="@+id/TempTextView"
                     android:layout_width="wrap_content"
@@ -70,14 +79,17 @@
                     android:text="Temp: -- °C"
                     android:textStyle="bold|italic"
                     android:textSize="24sp"
+                    android:textColor="#333333"
                     android:layout_gravity="center"/>
+
                 <com.github.mikephil.charting.charts.LineChart
                     android:layout_width="match_parent"
                     android:layout_height="250dp"
-                    android:id="@+id/tempGraph"/>
+                    android:id="@+id/tempGraph"
+                    android:background="#FFFFFF"
+                    android:elevation="4dp"/>
             </LinearLayout>
 
-            <!-- Semi-circle stress meter -->
             <TextView
                 android:id="@+id/stressTextView"
                 android:layout_width="wrap_content"
@@ -86,13 +98,16 @@
                 android:text="Stress:"
                 android:textStyle="bold|italic"
                 android:textSize="24sp"
+                android:textColor="#333333"
                 android:layout_gravity="center"/>
+
             <com.example.healthtrack.SemiCircleMeter
                 android:id="@+id/stressMeter"
                 android:layout_width="match_parent"
                 android:layout_height="150dp"
-                android:layout_marginTop="20dp"/>
+                android:layout_marginTop="20dp"
+                android:background="#FFFFFF"
+                android:elevation="4dp"/>
         </LinearLayout>
     </ScrollView>
-
 </androidx.constraintlayout.widget.ConstraintLayout>
