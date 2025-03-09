@@ -21,7 +21,10 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldPath;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -44,6 +47,10 @@ public class PatientHealthData_nosensor extends AppCompatActivity {
     TextView tempView; // Temperature text view
     TextView stressTextView; // Stress text view
 
+    private int healthyHeartRateCount = 0; // Counter for healthy heart rate readings
+    private int emergencyHeartRateCount = 0; // Counter for emergency heart rate readings
+    private int healthyTempCount = 0; // Counter for healthy temperature readings
+    private int emergencyTempCount = 0; // Counter for emergency temperature readings
     private int heartRateIndex;
     private int oxygenIndex;
     private int tempIndex; // Temperature index
@@ -57,7 +64,7 @@ public class PatientHealthData_nosensor extends AppCompatActivity {
     private DataUploader uploader;
 
     private SemiCircleMeter stressMeter; // Stress meter
-
+    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -76,6 +83,7 @@ public class PatientHealthData_nosensor extends AppCompatActivity {
         heartRateIndex = 0;
         oxygenIndex = 0;
         tempIndex = 0;
+
 
         // Initialize charts
         heartChart = findViewById(R.id.heartGraph);
@@ -140,21 +148,94 @@ public class PatientHealthData_nosensor extends AppCompatActivity {
         Runnable runnable = new Runnable() {
             @Override
             public void run() {
-                // Simulate heart rate, oxygen level, temperature, and stress level data
-                heartRate = (int) (Math.random() * 100 + 60); // Random heart rate between 60-160
-                oxygenLevel = (int) (Math.random() * 20 + 80); // Random oxygen level between 80-100
-                temperature = (float) (Math.random() * 7 + 35); // Random temperature between 35-45°C
-                stressLevel = (int) (Math.random() * 100); // Random stress level between 0-100
+                String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
-                // Update UI with simulated data
-                updateUI(heartRate, oxygenLevel, temperature, stressLevel);
+                db.collection("patient_collection").document(uid)
+                        .collection("health_records")
+                        .orderBy(FieldPath.documentId(), Query.Direction.DESCENDING) // Order by timestamp
+                        .limit(2) // Fetch last 2 records for rate of change calculation
+                        .get()
+                        .addOnCompleteListener(task -> {
+                            if (task.isSuccessful() && !task.getResult().isEmpty()) {
+                                List<DocumentSnapshot> records = task.getResult().getDocuments();
 
-                // Schedule the next update
-                handler.postDelayed(this, 2000); // Update every 2 seconds
+                                if (records.size() >= 2) {
+                                    // Get latest and previous heart rate readings
+                                    Double latestHeartRate = records.get(0).getDouble("heartRate");
+                                    Double previousHeartRate = records.get(1).getDouble("heartRate");
+
+                                    // Fetch stress level if stored in Firestore
+                                    Long fetchedStressLevel = records.get(0).getLong("stressLevel");
+
+                                    // Convert Firestore document IDs (timestamps) to long
+                                    long latestTimestamp;
+                                    long previousTimestamp;
+
+                                    try {
+                                        latestTimestamp = sdf.parse(records.get(0).getId()).getTime();
+                                        previousTimestamp = sdf.parse(records.get(1).getId()).getTime();
+                                    } catch (ParseException e) {
+                                        throw new RuntimeException(e);
+                                    }
+
+                                    if (latestHeartRate != null && previousHeartRate != null) {
+                                        // Calculate Rate of Change (BPM per minute)
+                                        double timeDiffMinutes = (latestTimestamp - previousTimestamp) / 60000.0;
+                                        double rateOfChange = (latestHeartRate - previousHeartRate) / timeDiffMinutes;
+
+                                        // Use stored stress level if available, otherwise compute dynamically
+                                        if (fetchedStressLevel != null) {
+                                            stressLevel = fetchedStressLevel.intValue();
+                                        } else {
+                                            // Infer stress level from rate of change
+                                            if (rateOfChange > 10) {
+                                                stressLevel = Math.min(100, stressLevel + 7); // High stress
+                                            } else if (rateOfChange < -5) {
+                                                stressLevel = Math.max(0, stressLevel - 4); // Low stress
+                                            }
+                                        }
+                                    } else {
+                                        Log.w("Firestore", "Heart rate data is missing in Firestore.");
+                                    }
+                                } else {
+                                    Log.w("Firestore", "Not enough historical data for rate of change calculation.");
+                                }
+                            } else {
+                                Log.e("Firestore", "Failed to fetch latest heart rate", task.getException());
+                            }
+
+                            // Continue simulation with updated stress level
+                            generateSimulatedData();
+                        });
             }
         };
         handler.post(runnable); // Start the simulation
     }
+
+
+
+    private void generateSimulatedData() {
+        // Generate random health metrics
+        heartRate = (int) (Math.random() * 100 + 60); // Random heart rate between 60-160
+        oxygenLevel = (int) (Math.random() * 20 + 80); // Random oxygen level between 80-100
+        temperature = (float) (Math.random() * 7 + 35); // Random temperature between 35-45°C
+
+        // Apply logic AFTER fetching the correct stress level
+        if (healthyHeartRateCount >= 2) {
+            stressLevel = Math.max(0, stressLevel - 4);
+            healthyHeartRateCount = 0;
+
+        } else if (emergencyHeartRateCount >= 2) {
+            stressLevel = Math.min(100, stressLevel + 7);
+            emergencyHeartRateCount = 0;
+
+        }
+
+        updateUI(heartRate, oxygenLevel, temperature, stressLevel);
+
+        new Handler().postDelayed(this::simulateDataUpdates, 2000); // Repeat every 2 seconds
+    }
+
 
     private void updateUI(int heartRate, int oxygenLevel, float temperature, int stressLevel) {
         runOnUiThread(() -> {
@@ -164,17 +245,28 @@ public class PatientHealthData_nosensor extends AppCompatActivity {
                 heartRateView.setTextColor(getColor(R.color.emergency));
                 heartRateDataSet.setColor(getColor(R.color.emergency));
                 heartRateDataSet.setCircleColor(getColor(R.color.emergency));
+
+                emergencyHeartRateCount++;
+                healthyHeartRateCount = 0;
+
                 callEmergency();
             } else if (heartRate < 50) {
                 Toast.makeText(PatientHealthData_nosensor.this, "Critical: Slow Heart Rate!", Toast.LENGTH_SHORT).show();
                 heartRateView.setTextColor(getColor(R.color.emergency));
                 heartRateDataSet.setColor(getColor(R.color.emergency));
                 heartRateDataSet.setCircleColor(getColor(R.color.emergency));
+
+                emergencyHeartRateCount++;
+                healthyHeartRateCount = 0;
+
                 callEmergency();
             } else {
                 heartRateDataSet.setColor(getColor(R.color.healthy));
                 heartRateDataSet.setCircleColor(getColor(R.color.healthy));
                 heartRateView.setTextColor(getColor(R.color.healthy));
+
+                emergencyHeartRateCount=0;
+                healthyHeartRateCount ++;
             }
             heartRateView.setText("BPM: " + heartRate + " bpm");
             updateChart(heartChart, heartRateDataSet, heartRate, heartRateIndex);
@@ -186,6 +278,10 @@ public class PatientHealthData_nosensor extends AppCompatActivity {
                 spo2View.setTextColor(getColor(R.color.emergency));
                 oxygenDataSet.setColor(getColor(R.color.emergency));
                 oxygenDataSet.setCircleColor(getColor(R.color.emergency));
+
+                emergencyHeartRateCount++;
+                healthyHeartRateCount = 0;
+
                 callEmergency();
             } else if (oxygenLevel <= 94) {
                 Toast.makeText(PatientHealthData_nosensor.this, "Warning: Mildly low SpO2 detected!", Toast.LENGTH_SHORT).show();
@@ -196,6 +292,9 @@ public class PatientHealthData_nosensor extends AppCompatActivity {
                 oxygenDataSet.setColor(getColor(R.color.healthy));
                 oxygenDataSet.setCircleColor(getColor(R.color.healthy));
                 spo2View.setTextColor(getColor(R.color.healthy));
+
+                emergencyHeartRateCount=0;
+                healthyHeartRateCount ++;
             }
             spo2View.setText("O2: " + oxygenLevel + "%");
             updateChart(spo2Chart, oxygenDataSet, oxygenLevel, oxygenIndex);
@@ -207,15 +306,23 @@ public class PatientHealthData_nosensor extends AppCompatActivity {
                 tempView.setTextColor(getColor(R.color.emergency));
                 tempDataSet.setColor(getColor(R.color.emergency));
                 tempDataSet.setCircleColor(getColor(R.color.emergency));
+                emergencyHeartRateCount++;
+                healthyHeartRateCount = 0;
+
             } else if (temperature < 35) {
                 Toast.makeText(PatientHealthData_nosensor.this, "Critical: Low Temperature!", Toast.LENGTH_SHORT).show();
                 tempView.setTextColor(getColor(R.color.emergency));
                 tempDataSet.setColor(getColor(R.color.emergency));
                 tempDataSet.setCircleColor(getColor(R.color.emergency));
+                emergencyHeartRateCount++;
+                healthyHeartRateCount = 0;
+
             } else {
                 tempDataSet.setColor(getColor(R.color.healthy));
                 tempDataSet.setCircleColor(getColor(R.color.healthy));
                 tempView.setTextColor(getColor(R.color.healthy));
+                emergencyHeartRateCount=0;
+                healthyHeartRateCount ++;
             }
             tempView.setText("Temp: " + temperature + " °C");
             updateChart(tempChart, tempDataSet, temperature, tempIndex);
