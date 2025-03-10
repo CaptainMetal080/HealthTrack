@@ -50,9 +50,7 @@ public class PatientHealthData_ extends AppCompatActivity {
     private final String DEVICE_ADDRESS = "BC:B5:A2:5B:02:16";
     private static final int MAX_POINTS = 25;
     private static final UUID SERVICE_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
-    private static final UUID HEARTRATE_CHAR_UUID = UUID.fromString("00002101-0000-1000-8000-00805F9B34FB");
-    private static final UUID OXI_CHAR_UUID = UUID.fromString("00002102-0000-1000-8000-00805F9B34FB");
-    private static final UUID TEMP_CHAR_UUID = UUID.fromString("00002103-0000-1000-8000-00805F9B34FB"); // New UUID for temperature
+    private static final UUID HEALTHDATA_CHAR_UUID = UUID.fromString("00002101-0000-1000-8000-00805F9B34FB");
 
     private BluetoothAdapter bluetoothAdapter;
     private BluetoothDevice device;
@@ -238,48 +236,38 @@ public class PatientHealthData_ extends AppCompatActivity {
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                // Get heart rate, oxygen, and temperature characteristics
-                BluetoothGattCharacteristic heartRateCharacteristic = gatt.getService(SERVICE_UUID).getCharacteristic(HEARTRATE_CHAR_UUID);
-                BluetoothGattCharacteristic oxygenCharacteristic = gatt.getService(SERVICE_UUID).getCharacteristic(OXI_CHAR_UUID);
-                BluetoothGattCharacteristic tempCharacteristic = gatt.getService(SERVICE_UUID).getCharacteristic(TEMP_CHAR_UUID); // New temperature characteristic
+                // Get the characteristic that contains the combined data (heart rate, oxygen, and temperature)
+                BluetoothGattCharacteristic healthDataCharacteristic = gatt.getService(SERVICE_UUID).getCharacteristic(HEALTHDATA_CHAR_UUID);
 
-                // Enable notifications for heart rate
-                gatt.setCharacteristicNotification(heartRateCharacteristic, true);
-                BluetoothGattDescriptor heartRateDescriptor = heartRateCharacteristic.getDescriptor(UUID.fromString("00002902-0000-1000-8000-00805f9b34fb"));
-                if (heartRateDescriptor != null) {
-                    heartRateDescriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-                    gatt.writeDescriptor(heartRateDescriptor);
+                // Enable notifications for this single characteristic (which contains all the data)
+                gatt.setCharacteristicNotification(healthDataCharacteristic, true);
+                BluetoothGattDescriptor descriptor = healthDataCharacteristic.getDescriptor(UUID.fromString("00002902-0000-1000-8000-00805f9b34fb"));
+                if (descriptor != null) {
+                    descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                    gatt.writeDescriptor(descriptor);
                 }
 
-                // Enable notifications for oxygen
-                gatt.setCharacteristicNotification(oxygenCharacteristic, true);
-                BluetoothGattDescriptor oxygenDescriptor = oxygenCharacteristic.getDescriptor(UUID.fromString("00002902-0000-1000-8000-00805f9b34fb"));
-                if (oxygenDescriptor != null) {
-                    oxygenDescriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-                    gatt.writeDescriptor(oxygenDescriptor);
-                }
-
-                // Enable notifications for temperature
-                gatt.setCharacteristicNotification(tempCharacteristic, true);
-                BluetoothGattDescriptor tempDescriptor = tempCharacteristic.getDescriptor(UUID.fromString("00002902-0000-1000-8000-00805f9b34fb"));
-                if (tempDescriptor != null) {
-                    tempDescriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-                    gatt.writeDescriptor(tempDescriptor);
-                }
             }
         }
 
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-            if (HEARTRATE_CHAR_UUID.equals(characteristic.getUuid())) {
-                heartRate = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
-                updateUI();
-            } else if (OXI_CHAR_UUID.equals(characteristic.getUuid())) {
-                oxygenLevel = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
-                updateUI();
-            } else if (TEMP_CHAR_UUID.equals(characteristic.getUuid())) {
-                temperature = characteristic.getFloatValue(BluetoothGattCharacteristic.FORMAT_FLOAT, 0);
-                updateUI();
+            super.onCharacteristicChanged(gatt, characteristic);
+            if (HEALTHDATA_CHAR_UUID.equals(characteristic.getUuid())) {
+                byte[] data = characteristic.getValue();
+
+                // Parse the received data package (assuming heart rate, oxygen, and temperature are packed in the array)
+                heartRate = data[0]; // First byte = heart rate (example)
+                oxygenLevel = data[1]; // Second byte = oxygen level (example)
+                temperature = ((data[2] & 0xFF) << 8 | (data[3] & 0xFF)) / 100.0f; // Example for temperature as 2-byte data
+
+                // Update UI and charts
+                runOnUiThread(() -> {
+                    heartRateView.setText("Heart Rate: " + heartRate + " bpm");
+                    spo2View.setText("Oxygen: " + oxygenLevel + " %");
+                    tempView.setText("Temperature: " + temperature + " °C");
+                    updateUI();
+                });
             }
         }
 
@@ -435,21 +423,21 @@ public class PatientHealthData_ extends AppCompatActivity {
 
 
     private void callEmergency() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Emergency Call");
-        builder.setMessage("Critical Health condition detected. Call emergency?");
-
-        builder.setPositiveButton("Call", (dialog, id) -> Call());
-        builder.setNegativeButton("Cancel", (dialog, id) -> dialog.dismiss());
-
-        AlertDialog dialog = builder.create();
-        dialog.show();
-
-        new Handler().postDelayed(() -> {
-            if (dialog.isShowing()) {
-                Call();
-            }
-        }, 5000); // Delay of 5 seconds
+//        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+//        builder.setTitle("Emergency Call");
+//        builder.setMessage("Critical Health condition detected. Call emergency?");
+//
+//        builder.setPositiveButton("Call", (dialog, id) -> Call());
+//        builder.setNegativeButton("Cancel", (dialog, id) -> dialog.dismiss());
+//
+//        AlertDialog dialog = builder.create();
+//        dialog.show();
+//
+//        new Handler().postDelayed(() -> {
+//            if (dialog.isShowing()) {
+//                Call();
+//            }
+//        }, 5000); // Delay of 5 seconds
     }
 
     private void Call() {
