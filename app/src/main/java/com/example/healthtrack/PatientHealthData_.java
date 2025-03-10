@@ -38,7 +38,6 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import java.nio.ByteBuffer;
-import java.util.Random;
 import java.util.UUID;
 import java.util.ArrayList;
 import java.util.List;
@@ -83,7 +82,9 @@ public class PatientHealthData_ extends AppCompatActivity {
 
     private int oxygenLevel;
     private int heartRate;
-    private float temperature; // New variable for temperature
+    private int temperatureInt;
+    private int temperatureDec;
+    private float temperature;
     private int stressLevel; // Stress level (0 to 100)
     private boolean isHeartUpdated = false;
     private boolean isOxygenUpdated = false;
@@ -251,24 +252,7 @@ public class PatientHealthData_ extends AppCompatActivity {
 
             }
         }
-        public double weightedRandom() {
-            Random random = new Random();
-            double randNum = random.nextDouble(); // Generates a random number between 0 and 1
 
-            // 75% chance to generate a number between 35.5 and 37.5
-            if (randNum < 0.75) {
-                return 35.5 + (37.5 - 35.5) * random.nextDouble();
-            }
-            // 25% chance to generate a number between 33 and 39, excluding 35.5-37.5
-            else {
-                // 50% chance to generate between 33 and 35.5, or 37.5 and 39
-                if (random.nextDouble() < 0.5) {
-                    return 33 + (35.5 - 33) * random.nextDouble();
-                } else {
-                    return 37.5 + (39 - 37.5) * random.nextDouble();
-                }
-            }
-        }
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
             super.onCharacteristicChanged(gatt, characteristic);
@@ -278,8 +262,10 @@ public class PatientHealthData_ extends AppCompatActivity {
                 // Parse the received data package (assuming heart rate, oxygen, and temperature are packed in the array)
                 heartRate = Integer.valueOf(data[0]); // First byte = heart rate (example)
                 oxygenLevel = Integer.valueOf(data[1]); // Second byte = oxygen level (example)
-                temperature = (float) weightedRandom();
-               // temperature = Integer.valueOf(data[2])+Integer.valueOf(data[3]/100);
+                temperatureInt = Integer.valueOf(data[2]);
+                temperatureDec = Integer.valueOf(data[3]);
+
+                temperature = temperatureInt + (temperatureDec / 100.0f);
 
                 // Update UI and charts
                 runOnUiThread(() -> {
