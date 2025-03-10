@@ -37,6 +37,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import java.nio.ByteBuffer;
 import java.util.UUID;
 import java.util.ArrayList;
 import java.util.List;
@@ -259,7 +260,7 @@ public class PatientHealthData_ extends AppCompatActivity {
                 // Parse the received data package (assuming heart rate, oxygen, and temperature are packed in the array)
                 heartRate = Integer.valueOf(data[0]); // First byte = heart rate (example)
                 oxygenLevel = Integer.valueOf(data[1]); // Second byte = oxygen level (example)
-                temperature = ((data[2] & 0xFF) << 8 | (data[3] & 0xFF)) / 100.0f; // Example for temperature as 2-byte data
+                temperature = Integer.valueOf(data[2]);
 
                 // Update UI and charts
                 runOnUiThread(() -> {
