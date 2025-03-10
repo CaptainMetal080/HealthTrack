@@ -142,6 +142,28 @@ public class PatientHealthData_ extends AppCompatActivity {
 
         // Initialize DataUploader
         uploader = new DataUploader(this);
+
+        heartChart.setOnClickListener(v -> {
+            Intent intent = new Intent(this, GraphDetailActivity.class);
+            intent.putExtra("patientId", FirebaseAuth.getInstance().getCurrentUser().getUid());
+            intent.putExtra("graphType", "heartRate");
+            startActivity(intent);
+        });
+
+        spo2Chart.setOnClickListener(v -> {
+            Intent intent = new Intent(this, GraphDetailActivity.class);
+            intent.putExtra("patientId", FirebaseAuth.getInstance().getCurrentUser().getUid());
+            intent.putExtra("graphType", "oxygenLevel");
+            startActivity(intent);
+        });
+
+        tempChart.setOnClickListener(v -> {
+            Intent intent = new Intent(this, GraphDetailActivity.class);
+            intent.putExtra("patientId", FirebaseAuth.getInstance().getCurrentUser().getUid());
+            intent.putExtra("graphType", "temperature");
+            startActivity(intent);
+        });
+
     }
 
     // Method to check and request Bluetooth permissions
@@ -350,9 +372,6 @@ public class PatientHealthData_ extends AppCompatActivity {
 
     private void showCriticalAlert(String message) {
         Toast.makeText(PatientHealthData_.this, message, Toast.LENGTH_SHORT).show();
-        setHealthStatus(heartRateDataSet, heartRateView, heartRate, R.color.emergency);
-        emergencyHeartRateCount++;
-        healthyHeartRateCount = 0;
         callEmergency();
     }
 
