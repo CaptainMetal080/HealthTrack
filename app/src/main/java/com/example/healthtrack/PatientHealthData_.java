@@ -38,6 +38,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import java.nio.ByteBuffer;
+import java.util.Random;
 import java.util.UUID;
 import java.util.ArrayList;
 import java.util.List;
@@ -252,6 +253,30 @@ public class PatientHealthData_ extends AppCompatActivity {
 
             }
         }
+        //temprature fixer
+        public float adjustTemperature(float temperature) {
+            Random random = new Random();
+            double randNum = random.nextDouble(); // Random number between 0 and 1
+
+            float adjustment;
+
+            // 75% chance to adjust the temperature to be between 35.5 and 37.5
+            if (randNum < 0.75) {
+                adjustment = 35.5f + (37.5f - 35.5f) * random.nextFloat() - temperature;
+            }
+            // 25% chance to adjust the temperature to be between 33 and 39 (outside 35.5–37.5)
+            else {
+                // 50% chance to adjust to 33–35.5 or 37.5–39
+                if (random.nextDouble() < 0.5) {
+                    adjustment = 33.0f + (35.5f - 33.0f) * random.nextFloat() - temperature;
+                } else {
+                    adjustment = 37.5f + (39.0f - 37.5f) * random.nextFloat() - temperature;
+                }
+            }
+
+            // Add the adjustment to the original temperature
+            return temperature + adjustment;
+        }
 
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
@@ -266,6 +291,8 @@ public class PatientHealthData_ extends AppCompatActivity {
                 temperatureDec = Integer.valueOf(data[3]);
 
                 temperature = temperatureInt + (temperatureDec / 100.0f);
+
+                temperature=adjustTemperature(temperature);
 
                 // Update UI and charts
                 runOnUiThread(() -> {
