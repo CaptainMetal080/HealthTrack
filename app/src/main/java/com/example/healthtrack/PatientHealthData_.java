@@ -257,8 +257,8 @@ public class PatientHealthData_ extends AppCompatActivity {
                 byte[] data = characteristic.getValue();
 
                 // Parse the received data package (assuming heart rate, oxygen, and temperature are packed in the array)
-                heartRate = data[0]; // First byte = heart rate (example)
-                oxygenLevel = data[1]; // Second byte = oxygen level (example)
+                heartRate = Integer.valueOf(data[0]); // First byte = heart rate (example)
+                oxygenLevel = Integer.valueOf(data[1]); // Second byte = oxygen level (example)
                 temperature = ((data[2] & 0xFF) << 8 | (data[3] & 0xFF)) / 100.0f; // Example for temperature as 2-byte data
 
                 // Update UI and charts
