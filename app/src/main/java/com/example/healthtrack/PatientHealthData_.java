@@ -2,7 +2,6 @@ package com.example.healthtrack;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
@@ -10,15 +9,11 @@ import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothProfile;
-import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
 import android.util.Log;
-import android.widget.Button;
 import android.widget.Toast;
 import android.widget.TextView;
 
@@ -28,20 +23,16 @@ import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FieldPath;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import java.nio.ByteBuffer;
 import java.util.Random;
 import java.util.UUID;
 import java.util.ArrayList;
-import java.util.List;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -65,8 +56,8 @@ public class PatientHealthData_ extends AppCompatActivity {
     private LineDataSet heartRateDataSet;
     private LineDataSet oxygenDataSet;
     private LineDataSet tempDataSet; // New data set for temperature
-    private int healthyHeartRateCount = 0; // Counter for healthy heart rate readings
-    private int emergencyHeartRateCount = 0; // Counter for emergency heart rate readings
+    private int healthyRateCount = 0; // Counter for healthy heart rate readings
+    private int emergencyRateCount = 0; // Counter for emergency heart rate readings
     private int healthyTempCount = 0; // Counter for healthy temperature readings
     private int emergencyTempCount = 0; // Counter for emergency temperature readings
 
@@ -341,17 +332,17 @@ public class PatientHealthData_ extends AppCompatActivity {
     private void handleHeartRate() {
         if (heartRate > 160) {
             showCriticalAlert("Critical: High Heart Rate!");
-            emergencyHeartRateCount++;
-            healthyHeartRateCount = 0;
+            emergencyRateCount++;
+            healthyRateCount = 0;
             callEmergency();
         } else if (heartRate < 50) {
             showCriticalAlert("Critical: Slow Heart Rate!");
-            emergencyHeartRateCount++;
-            healthyHeartRateCount = 0;
+            emergencyRateCount++;
+            healthyRateCount = 0;
             callEmergency();
         } else {
-            healthyHeartRateCount++;
-            emergencyHeartRateCount = 0;
+            healthyRateCount++;
+            emergencyRateCount = 0;
             setHealthStatus(heartRateDataSet, heartRateView, heartRate, R.color.healthy);
         }
         heartRateView.setText("BPM: " + heartRate + " bpm");
@@ -363,10 +354,14 @@ public class PatientHealthData_ extends AppCompatActivity {
         if (oxygenLevel < 90) {
             showCriticalAlert("Critical: Low SpO2 detected!");
             callEmergency();
+            emergencyRateCount++;
+            healthyRateCount = 0;
         } else if (oxygenLevel <= 94) {
             showMildAlert("Warning: Mildly low SpO2 detected!");
             setHealthStatus(oxygenDataSet, spo2View, oxygenLevel, R.color.mild);
         } else {
+            healthyRateCount++;
+            emergencyRateCount = 0;
             setHealthStatus(oxygenDataSet, spo2View, oxygenLevel, R.color.healthy);
         }
         spo2View.setText("O2: " + oxygenLevel + "%");
@@ -377,14 +372,16 @@ public class PatientHealthData_ extends AppCompatActivity {
     private void handleTemperature() {
         if (temperature > 40) {
             showCriticalAlert("Critical: High Temperature!");
-            emergencyTempCount++;
-            healthyTempCount = 0;
+            emergencyRateCount++;
+            healthyRateCount = 0;
         } else if (temperature < 35) {
             showCriticalAlert("Critical: Low Temperature!");
-            emergencyTempCount++;
-            healthyTempCount = 0;
+            emergencyRateCount++;
+            healthyRateCount = 0;
         } else {
             setHealthStatus(tempDataSet, tempView, (int) temperature, R.color.healthy);
+            healthyRateCount++;
+            emergencyRateCount = 0;
         }
         tempView.setText("Temp: " + temperature + " °C");
         updateChart(tempChart, tempDataSet, temperature, tempIndex);
@@ -431,12 +428,12 @@ public class PatientHealthData_ extends AppCompatActivity {
     }
 
     private void applyStressLevelChanges() {
-        if (healthyHeartRateCount >= 2) {
+        if (healthyRateCount >= 2) {
             stressLevel = Math.max(0, stressLevel - 4);
-            healthyHeartRateCount = 0;
-        } else if (emergencyHeartRateCount >= 2) {
+            healthyRateCount = 0;
+        } else if (emergencyRateCount >= 2) {
             stressLevel = Math.min(100, stressLevel + 7);
-            emergencyHeartRateCount = 0;
+            emergencyRateCount = 0;
         }
 
         // Ensure stress level stays within bounds (0 to 100)
