@@ -3,6 +3,7 @@ package com.example.healthtrack;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -18,6 +19,8 @@ public class SignIn extends Activity {
     private FirebaseAuth mAuth;
     private EditText emailField, passwordField;
     private Button signInButton;
+    DataUploader uploader = new DataUploader(this);
+    private HealthDataSimulator sim;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,6 +31,12 @@ public class SignIn extends Activity {
         emailField = findViewById(R.id.email);
         passwordField = findViewById(R.id.password);
         signInButton = findViewById(R.id.signInButton);
+        //sim = new HealthDataSimulator(uploader);
+        if (sim != null) {
+            //sim.startSimulation();
+        } else {
+            Log.e("SignIn", "HealthDataSimulator is null!");
+        }
 
         signInButton.setOnClickListener(new View.OnClickListener() {
             @Override
