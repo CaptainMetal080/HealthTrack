@@ -1,5 +1,3 @@
-import java.util.regex.Pattern.compile
-
 plugins {
     alias(libs.plugins.android.application)
     id("com.google.gms.google-services")
@@ -8,9 +6,10 @@ plugins {
 android {
     namespace = "com.example.healthtrack"
     compileSdk = 34
-
     packagingOptions {
-        exclude("META-INF/versions/9/OSGI-INF/MANIFEST.MF");
+        resources {
+            excludes += setOf("META-INF/versions/9/OSGI-INF/MANIFEST.MF")
+        }
     }
 
     defaultConfig {
@@ -60,7 +59,7 @@ dependencies {
     implementation("com.google.firebase:firebase-firestore:24.11.1") // For Firestore
     implementation ("com.google.firebase:firebase-storage:20.0.0")  // For Firebase Storage if you're uploading files
     implementation ("com.google.firebase:firebase-analytics:21.0.0")
-    
+    implementation ("com.google.firebase:firebase-messaging:23.1.1")
 }
 
 apply(plugin = "com.google.gms.google-services")

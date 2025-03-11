@@ -16,15 +16,20 @@ import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
+import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldPath;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.messaging.FirebaseMessaging;
+import com.google.firebase.messaging.RemoteMessage;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class DoctorHomePage extends AppCompatActivity {
 
@@ -49,6 +54,22 @@ public class DoctorHomePage extends AppCompatActivity {
         refreshButton = findViewById(R.id.refreshButton);
 
         doctorId = mAuth.getCurrentUser().getUid();
+
+        FirebaseMessaging.getInstance().getToken()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        String token = task.getResult();
+                        Log.d("FCM Token", "FCM Token: " + token);
+
+                        // Save the token to Firestore or Realtime Database
+                        FirebaseFirestore.getInstance().collection("doctor_collection")
+                                .document(doctorId) // Use the user ID to store the token
+                                .update("fcm_token", token);
+                    } else {
+                        Log.w("FCM Token", "Fetching FCM token failed", task.getException());
+                    }
+                });
+
         fetchDoctorLastName();
         fetchAssignedPatients();
 
@@ -233,7 +254,32 @@ public class DoctorHomePage extends AppCompatActivity {
                     }
                 });
     }
+    private void sendEmergencyNotification(String title, String message) {
+        // Fetch the doctor's FCM token
+        db.collection("doctor_collection").document(doctorId).get()
+                .addOnSuccessListener(document -> {
+                    if (document.exists()) {
+                        String doctorFcmToken = document.getString("fcm_token");
 
+                        if (doctorFcmToken != null) {
+                            // Prepare notification payload
+                            Map<String, String> notificationPayload = new HashMap<>();
+                            notificationPayload.put("title", title);
+                            notificationPayload.put("message", message);
+
+                            // Trigger Firebase Cloud Function to send the notification
+                            sendToFirebaseFunction(notificationPayload);
+                        } else {
+                            Log.e("FCM", "Doctor's FCM token is missing");
+                        }
+                    }
+                });
+    }
+    private void sendToFirebaseFunction(Map<String, String> notificationPayload) {
+        // Your Firebase Cloud Function code here to send the notification
+        // This function should use Firebase Admin SDK to trigger the push notification
+        // You can refer to the earlier Firebase Cloud Function setup for sending the notification to FCM
+    }
     private void configureChart(LineChart chart, float max) {
         chart.setDragEnabled(true);
         chart.setScaleEnabled(true);

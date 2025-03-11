@@ -16,8 +16,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
 import android.widget.TextView;
-
 import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
@@ -81,6 +81,7 @@ public class PatientHealthData_ extends AppCompatActivity {
     private boolean isHeartUpdated = false;
     private boolean isOxygenUpdated = false;
     private boolean isTempUpdated = false; // New flag for temperature
+    LocalDateTime previousJsonTime = null;
     private DataUploader uploader;
     private SemiCircleMeter stressMeter;
 
@@ -276,21 +277,46 @@ public class PatientHealthData_ extends AppCompatActivity {
                 byte[] data = characteristic.getValue();
 
                 // Parse the received data package (assuming heart rate, oxygen, and temperature are packed in the array)
-                heartRate = Integer.valueOf(data[0]); // First byte = heart rate (example)
+                int isJson = data[4];
+                    heartRate = Integer.valueOf(data[0]); // First byte = heart rate (example)
                 oxygenLevel = Integer.valueOf(data[1]); // Second byte = oxygen level (example)
                 temperatureInt = Integer.valueOf(data[2]);
                 temperatureDec = Integer.valueOf(data[3]);
-
                 temperature = temperatureInt + (temperatureDec / 100.0f);
+                temperature = adjustTemperature(temperature);
 
-                temperature=adjustTemperature(temperature);
+                LocalDateTime currentTime;
 
-                // Update UI and charts
+                if (data[4]==1){
+                    currentTime=LocalDateTime.now();
+                } else {
+                    currentTime = null;
+                }
+
+                if (isJson == 1) {
+                    // Start from current time and decrement by 10 seconds for each read
+                    if (previousJsonTime == null) {
+                        previousJsonTime = LocalDateTime.now();
+                    } else {
+                        previousJsonTime = previousJsonTime.minusSeconds(10);
+                    }
+                    currentTime = previousJsonTime;
+                } else {
+                    currentTime = LocalDateTime.now();
+                    previousJsonTime = null; // Reset tracking if not reading JSON
+                }
+
+                LocalDateTime finalCurrentTime = currentTime;
+
                 runOnUiThread(() -> {
                     heartRateView.setText("Heart Rate: " + heartRate + " bpm");
                     spo2View.setText("Oxygen: " + oxygenLevel + " %");
                     tempView.setText("Temperature: " + temperature + " °C");
                     updateUI();
+
+                    if (finalCurrentTime != null) {
+                        uploadPatientData(finalCurrentTime);
+                    }
                 });
             }
         }
@@ -323,9 +349,6 @@ public class PatientHealthData_ extends AppCompatActivity {
             // Ensure UI updates are consistent with the logic
             stressTextView.setText("Stress: " + stressLevel);
             stressMeter.setProgress(stressLevel);
-
-            // Upload data to Firestore
-            uploadPatientData();
         });
     }
 
@@ -440,12 +463,10 @@ public class PatientHealthData_ extends AppCompatActivity {
         stressLevel = Math.max(0, Math.min(100, stressLevel));
     }
 
-    private void uploadPatientData() {
+    private void uploadPatientData(LocalDateTime now) {
         String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        LocalDateTime now = LocalDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         String formattedDate = now.format(formatter);
-
         PatientData patientData = new PatientData(formattedDate, heartRate, oxygenLevel, temperature, stressLevel);
         uploader.uploadPatientData(uid, patientData);
     }
@@ -487,7 +508,7 @@ public class PatientHealthData_ extends AppCompatActivity {
         chart.getDescription().setEnabled(false);
         chart.setPinchZoom(true);
         chart.getAxisRight().setEnabled(false);  // Disable right axis
-        chart.getXAxis().setPosition(com.github.mikephil.charting.components.XAxis.XAxisPosition.BOTTOM);
+        chart.getXAxis().setPosition(XAxis.XAxisPosition.BOTTOM);
         chart.getXAxis().setAxisMinimum(0f);  // Set X-axis minimum to 0
         chart.getXAxis().setGranularity(1f);  // Prevent duplicates on X-axis
         chart.getXAxis().setAxisMaximum(MAX_POINTS);  // Set max points on X-axis
