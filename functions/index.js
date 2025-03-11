@@ -108,28 +108,66 @@ exports.detectAnomalies = onDocumentCreated(
 
       console.log(`Trained model found for ${patientId}, analyzing data...`);
 
-      // Call an external Python script to make predictions
-      exec(
-          `python3 predict_lstm.py ${patientId} ${newHeartRate}`,
-          (error, stdout, stderr) => {
-            if (error) {
-              console.error(`Error executing command: ${error.message}`);
-              return;
-            }
-            console.log(`Prediction result: ${stdout}`);
+      // Call the prediction script with absolute path
+      const scriptPath = `${process.cwd()}/machinelearning/predict_lstm.py`;
+      
+      return new Promise((resolve, reject) => {
+        exec(
+            `python3 ${scriptPath} ${patientId} ${newHeartRate}`,
+            async (error, stdout, stderr) => {
+              if (error) {
+                console.error(`Error executing prediction script: ${error.message}`);
+                reject(error);
+                return;
+              }
 
-            if (stdout.includes("ALERT")) {
-              console.log(`Anomaly detected for patient ${patientId}, sending alert.`);
-              db.collection("alerts").add({
-                patientId: patientId,
-                timestamp: new Date(),
-                message: "Abnormal heart rate detected!",
-              });
-            }
-          },
-      );
+              const output = stdout.trim();
+              console.log(`Prediction result: ${output}`);
 
-      return null;
+              // Handle different prediction outcomes
+              switch(output) {
+                case "INVALID_HR":
+                  console.warn(`Invalid heart rate detected for patient ${patientId}: ${newHeartRate}`);
+                  await db.collection("alerts").add({
+                    patientId: patientId,
+                    timestamp: new Date(),
+                    type: "error",
+                    message: "Invalid heart rate reading detected",
+                    value: newHeartRate
+                  });
+                  break;
+
+                case "NO_HISTORY":
+                  console.log(`Insufficient history for patient ${patientId}, skipping anomaly detection`);
+                  break;
+
+                case "NO_MODEL":
+                  console.log(`No model available for patient ${patientId}, skipping anomaly detection`);
+                  break;
+
+                case "ALERT":
+                  console.log(`Anomaly detected for patient ${patientId}, sending alert`);
+                  await db.collection("alerts").add({
+                    patientId: patientId,
+                    timestamp: new Date(),
+                    type: "anomaly",
+                    message: "Abnormal heart rate pattern detected",
+                    value: newHeartRate
+                  });
+                  break;
+
+                case "NORMAL":
+                  console.log(`Normal heart rate pattern for patient ${patientId}`);
+                  break;
+
+                default:
+                  console.warn(`Unexpected output from prediction script: ${output}`);
+              }
+
+              resolve();
+            }
+        );
+      });
     });
 
 /**
