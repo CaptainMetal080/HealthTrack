@@ -25,11 +25,15 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
+import com.google.firebase.functions.FirebaseFunctions;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 import java.util.ArrayList;
@@ -278,7 +282,7 @@ public class PatientHealthData_ extends AppCompatActivity {
 
                 // Parse the received data package (assuming heart rate, oxygen, and temperature are packed in the array)
                 int isJson = data[4];
-                    heartRate = Integer.valueOf(data[0]); // First byte = heart rate (example)
+                heartRate = Integer.valueOf(data[0]); // First byte = heart rate (example)
                 oxygenLevel = Integer.valueOf(data[1]); // Second byte = oxygen level (example)
                 temperatureInt = Integer.valueOf(data[2]);
                 temperatureDec = Integer.valueOf(data[3]);
@@ -287,14 +291,9 @@ public class PatientHealthData_ extends AppCompatActivity {
 
                 LocalDateTime currentTime;
 
-                if (data[4]==1){
-                    currentTime=LocalDateTime.now();
-                } else {
-                    currentTime = null;
-                }
-
                 if (isJson == 1) {
                     // Start from current time and decrement by 10 seconds for each read
+
                     if (previousJsonTime == null) {
                         previousJsonTime = LocalDateTime.now();
                     } else {
@@ -304,6 +303,7 @@ public class PatientHealthData_ extends AppCompatActivity {
                 } else {
                     currentTime = LocalDateTime.now();
                     previousJsonTime = null; // Reset tracking if not reading JSON
+
                 }
 
                 LocalDateTime finalCurrentTime = currentTime;
@@ -351,15 +351,74 @@ public class PatientHealthData_ extends AppCompatActivity {
             stressMeter.setProgress(stressLevel);
         });
     }
+    private void sendEmergencyNotification(String title, String message) {
+        String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        FirebaseFirestore.getInstance().collection("patient_collection").document(uid)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        // Fetch the single doctor_ID assigned to the patient
+                        String doctorId = documentSnapshot.getString("doctor_ID");
+                        if (doctorId != null) {
+                            // Fetch the doctor's document to get the FCM token
+                            FirebaseFirestore.getInstance().collection("doctor_collection").document(doctorId)
+                                    .get()
+                                    .addOnSuccessListener(doctorDocument -> {
+                                        if (doctorDocument.exists()) {
+                                            String doctorFcmToken = doctorDocument.getString("fcm_token");
+                                            if (doctorFcmToken != null) {
+                                                // Prepare notification payload
+                                                Map<String, String> notificationPayload = new HashMap<>();
+                                                notificationPayload.put("title", title);
+                                                notificationPayload.put("message", message);
+                                                notificationPayload.put("patientId", uid);
 
+                                                // Trigger Firebase Cloud Function to send the notification
+                                                sendToFirebaseFunction(doctorFcmToken, notificationPayload);
+                                            }
+                                        }
+                                    });
+                        } else {
+                            Log.e("EmergencyNotification", "No doctor assigned to this patient.");
+                        }
+                    } else {
+                        Log.e("EmergencyNotification", "Patient document does not exist.");
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("EmergencyNotification", "Error fetching patient document", e);
+                });
+    }
+
+    private void sendToFirebaseFunction(String doctorFcmToken, Map<String, String> notificationPayload) {
+        Log.d("FirebaseFunction", "Sending notification with payload: " + notificationPayload);
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("doctorFcmToken", doctorFcmToken);
+        data.put("title", notificationPayload.get("title"));
+        data.put("message", notificationPayload.get("message"));
+        data.put("patientId", notificationPayload.get("patientId"));
+
+        FirebaseFunctions.getInstance()
+                .getHttpsCallable("sendEmergencyNotification")
+                .call(data)
+                .addOnSuccessListener(result -> {
+                    Log.d("FirebaseFunction", "Notification sent successfully");
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("FirebaseFunction", "Error sending notification", e);
+                });
+    }
     private void handleHeartRate() {
-        if (heartRate > 160) {
+        if (heartRate > 60) {
             showCriticalAlert("Critical: High Heart Rate!");
+            sendEmergencyNotification("Emergency: High Heart Rate", "Patient has a High heart rate ");
             emergencyRateCount++;
             healthyRateCount = 0;
             callEmergency();
         } else if (heartRate < 50) {
             showCriticalAlert("Critical: Slow Heart Rate!");
+            sendEmergencyNotification("Emergency: Low Heart Rate", "Patient has a low heart rate ");
             emergencyRateCount++;
             healthyRateCount = 0;
             callEmergency();

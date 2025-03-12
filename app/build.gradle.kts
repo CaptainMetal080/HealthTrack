@@ -60,6 +60,7 @@ dependencies {
     implementation ("com.google.firebase:firebase-storage:20.0.0")  // For Firebase Storage if you're uploading files
     implementation ("com.google.firebase:firebase-analytics:21.0.0")
     implementation ("com.google.firebase:firebase-messaging:23.1.1")
+    implementation ("com.google.firebase:firebase-functions:20.3.1")
 }
 
 apply(plugin = "com.google.gms.google-services")
