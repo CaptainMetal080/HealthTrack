@@ -17,7 +17,10 @@ import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldPath;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -139,14 +142,19 @@ public class GraphDetailActivity extends AppCompatActivity {
     private void fetchGraphData() {
         db.collection("patient_collection").document(patientId)
                 .collection("health_records")
-                .get() // Remove the orderBy clause to get documents in ascending order by default
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
+                .orderBy(FieldPath.documentId(), Query.Direction.DESCENDING) // Newest first
+                .addSnapshotListener((snapshots, error) -> {
+                    if (error != null) {
+                        Log.e("GraphDetailActivity", "Error fetching graph data", error);
+                        return;
+                    }
+
+                    if (snapshots != null && !snapshots.isEmpty()) {
                         List<Entry> entries = new ArrayList<>();
                         List<String> labels = new ArrayList<>();
 
                         int index = 0;
-                        for (DocumentSnapshot document : task.getResult()) {
+                        for (DocumentSnapshot document : snapshots.getDocuments()) {
                             Long value = null;
                             switch (graphType) {
                                 case "heartRate":
@@ -172,7 +180,7 @@ public class GraphDetailActivity extends AppCompatActivity {
                                     String formattedDate = sdf.format(new Date(timeInMillis));
                                     labels.add(formattedDate);
                                 } catch (NumberFormatException e) {
-                                    Log.e("GraphDetailActivity", "Invalid timestamp format: " + timestamp);
+                                   // Log.e("GraphDetailActivity", "Invalid timestamp format: " + timestamp);
                                     labels.add(timestamp); // Fallback to raw timestamp if parsing fails
                                 }
 
@@ -183,7 +191,7 @@ public class GraphDetailActivity extends AppCompatActivity {
                         // Update the chart with the fetched data
                         updateChart(entries, labels);
                     } else {
-                        Log.e("GraphDetailActivity", "Error fetching graph data", task.getException());
+                        Log.w("GraphDetailActivity", "No data found for graph type: " + graphType);
                     }
                 });
     }

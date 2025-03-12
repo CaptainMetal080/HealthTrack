@@ -83,9 +83,8 @@ public class PatientDetailActivity extends AppCompatActivity {
                 .collection("health_records")
                 .orderBy(FieldPath.documentId(), Query.Direction.DESCENDING) // Newest first
                 .limit(MAX_POINTS)
-                .get()
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
+                .addSnapshotListener((snapshots, error) -> {
+                    if (snapshots != null && !snapshots.isEmpty()) {
                         List<Entry> heartRateEntries = new ArrayList<>();
                         List<Entry> oxygenLevelEntries = new ArrayList<>();
                         List<Entry> temperatureEntries = new ArrayList<>(); // Temperature entries
@@ -93,62 +92,51 @@ public class PatientDetailActivity extends AppCompatActivity {
 
                         // Iterate through the snapshots in reverse order (oldest first)
                         int index = 0;
-                        List<DocumentSnapshot> documents = task.getResult().getDocuments();
-                        for (int i = documents.size() - 1; i >= 0; i--) {
-                            DocumentSnapshot document = documents.get(i);
+                        for (DocumentSnapshot document : snapshots.getDocuments()) {
+                            Long heartRate = document.getLong("heartRate");
+                            Long oxygenLevel = document.getLong("oxygenLevel");
+                            Double temperature = document.getDouble("temperature");
+                            Long stressLevel = document.getLong("stressLevel");
 
-                            // Cast DocumentSnapshot to QueryDocumentSnapshot
-                            if (document instanceof QueryDocumentSnapshot) {
-                                QueryDocumentSnapshot queryDocument = (QueryDocumentSnapshot) document;
-
-                                // Validate data before adding to entries
-                                Long heartRate = queryDocument.getLong("heartRate");
-                                Long oxygenLevel = queryDocument.getLong("oxygenLevel");
-                                Double temperature = queryDocument.getDouble("temperature"); // Fetch temperature
-                                Long stressLevel = queryDocument.getLong("stressLevel"); // Fetch stress level
-
-                                if (heartRate != null && oxygenLevel != null && temperature != null && stressLevel != null) {
-                                    // Ensure valid values
-                                    if (heartRate >= 0 && oxygenLevel >= 0 && temperature >= 0 && stressLevel >= 0) {
-                                        heartRateEntries.add(new Entry(index, heartRate));
-                                        oxygenLevelEntries.add(new Entry(index, oxygenLevel));
-                                        temperatureEntries.add(new Entry(index, temperature.floatValue())); // Add temperature
-                                        stressLevelEntries.add(new Entry(index, stressLevel)); // Add stress level
-
-                                        // Check for irregularities
-                                        if (heartRate > 160 || heartRate < 50) {
-                                            heartText.setTextColor(getColor(R.color.emergency));
-                                        } else {
-                                            heartText.setTextColor(getColor(R.color.healthy));
-                                        }
-                                        heartText.setText("BPM: " + heartRate);
-
-                                        if (oxygenLevel < 90) {
-                                            spo2Text.setTextColor(getColor(R.color.emergency));
-                                        } else if (oxygenLevel <= 94) {
-                                            spo2Text.setTextColor(getColor(R.color.mild));
-                                        } else {
-                                            spo2Text.setTextColor(getColor(R.color.healthy));
-                                        }
-                                        spo2Text.setText("O2: " + oxygenLevel + "%");
-
-                                        // Update temperature text
-                                        if (temperature > 40) {
-                                            tempText.setTextColor(getColor(R.color.emergency));
-                                        } else if (temperature < 35) {
-                                            tempText.setTextColor(getColor(R.color.emergency));
-                                        } else {
-                                            tempText.setTextColor(getColor(R.color.healthy));
-                                        }
-                                        tempText.setText(String.format("Temp: %.1f°C", temperature));
-
-                                        // Update stress meter
-                                        stressMeter.setProgress(stressLevel.floatValue()); // Update stress meter
-                                        stressText.setText(String.format("Stress: %.0f", stressLevel.floatValue()));
-
-                                        index++;
-                                    }
+                            if (heartRate != null && oxygenLevel != null && temperature != null && stressLevel != null) {
+                                heartRateEntries.add(new Entry(index, heartRate));
+                                oxygenLevelEntries.add(new Entry(index, oxygenLevel));
+                                temperatureEntries.add(new Entry(index, temperature.floatValue()));
+                                stressLevelEntries.add(new Entry(index, stressLevel));
+                                // Check for irregularities
+                                if (heartRate > 160 || heartRate < 50) {
+                                    heartText.setTextColor(getColor(R.color.emergency));
+                                } else {
+                                    heartText.setTextColor(getColor(R.color.healthy));
                                 }
+                                heartText.setText("BPM: " + heartRate);
+
+                                if (oxygenLevel < 90) {
+                                    spo2Text.setTextColor(getColor(R.color.emergency));
+                                } else if (oxygenLevel <= 94) {
+                                    spo2Text.setTextColor(getColor(R.color.mild));
+                                } else {
+                                    spo2Text.setTextColor(getColor(R.color.healthy));
+                                }
+                                spo2Text.setText("O2: " + oxygenLevel + "%");
+
+                                // Update temperature text
+                                if (temperature > 40) {
+                                    tempText.setTextColor(getColor(R.color.emergency));
+                                } else if (temperature < 35) {
+                                    tempText.setTextColor(getColor(R.color.emergency));
+                                } else {
+                                    tempText.setTextColor(getColor(R.color.healthy));
+                                }
+                                tempText.setText(String.format("Temp: %.1f°C", temperature));
+
+                                // Update stress meter
+                                stressMeter.setProgress(stressLevel.floatValue()); // Update stress meter
+                                stressText.setText(String.format("Stress: %.0f", stressLevel.floatValue()));
+
+                                index++;
+
+
                             }
                         }
 
@@ -192,8 +180,6 @@ public class PatientDetailActivity extends AppCompatActivity {
                             startActivity(intent);
                         });
 
-                    } else {
-                        Log.w("PatientDetailActivity", "Error fetching health records", task.getException());
                     }
                 });
     }

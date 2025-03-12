@@ -23,12 +23,11 @@ exports.sendEmergencyNotification = functions.https.onCall((data, context) => {
     data: {
       patientId: patientId,
     },
-    token: doctorFcmToken,
   };
 
-  return admin
+return admin
     .messaging()
-    .send(payload)
+    .send({ token: doctorFcmToken, ...payload })
     .then((response) => {
       console.log("Notification sent successfully:", response);
       return { success: true };

@@ -111,7 +111,6 @@ public class PatientHealthData_ extends AppCompatActivity {
         heartRateDataSet = new LineDataSet(new ArrayList<>(), "Heart Rate");
         oxygenDataSet = new LineDataSet(new ArrayList<>(), "Oxygen Level");
         tempDataSet = new LineDataSet(new ArrayList<>(), "Temperature"); // Initialize temperature data set
-
         // Set line styles (optional)
         heartRateDataSet.setColor(getColor(R.color.healthy));
         heartRateDataSet.setCircleColor(getColor(R.color.healthy));
@@ -410,7 +409,7 @@ public class PatientHealthData_ extends AppCompatActivity {
                 });
     }
     private void handleHeartRate() {
-        if (heartRate > 60) {
+        if (heartRate > 140) {
             showCriticalAlert("Critical: High Heart Rate!");
             sendEmergencyNotification("Emergency: High Heart Rate", "Patient has a High heart rate ");
             emergencyRateCount++;
