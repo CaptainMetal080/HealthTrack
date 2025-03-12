@@ -106,7 +106,7 @@ public class PatientHealthData_ extends AppCompatActivity {
         spo2Chart = findViewById(R.id.spo2Graph);
         tempChart = findViewById(R.id.tempGraph); // Initialize temperature chart
         device = bluetoothAdapter.getRemoteDevice(DEVICE_ADDRESS);
-
+        sendEmergencyNotification("Test", "this is test hello");
         // Initialize the data sets
         heartRateDataSet = new LineDataSet(new ArrayList<>(), "Heart Rate");
         oxygenDataSet = new LineDataSet(new ArrayList<>(), "Oxygen Level");
@@ -391,7 +391,7 @@ public class PatientHealthData_ extends AppCompatActivity {
     }
 
     private void sendToFirebaseFunction(String doctorFcmToken, Map<String, String> notificationPayload) {
-        Log.d("FirebaseFunction", "Sending notification with payload: " + notificationPayload);
+        Log.d("FirebaseFunction", "Sending notification with payload: " + notificationPayload.toString());
 
         Map<String, Object> data = new HashMap<>();
         data.put("doctorFcmToken", doctorFcmToken);

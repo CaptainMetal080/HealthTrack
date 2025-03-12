@@ -3,11 +3,12 @@ const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 admin.initializeApp();
 exports.sendEmergencyNotification = functions.https.onCall((data, context) => {
-  console.log("Cloud Function triggered with data:", data);
+  console.log("Cloud Function triggered with data:", JSON.stringify(data, null, 2));
 
   const { doctorFcmToken, title, message, patientId } = data;
 
   if (!doctorFcmToken || !title || !message || !patientId) {
+    console.error("Missing required fields in data:", { doctorFcmToken, title, message, patientId });
     throw new functions.https.HttpsError(
       "invalid-argument",
       "Missing required fields"
