@@ -28,4 +28,16 @@ public class DataUploader {
                 .addOnSuccessListener(aVoid -> Log.d("Firestore", "Health record added"))
                 .addOnFailureListener(e -> Log.w("Firestore", "Error adding health record", e));
     }
+    public void uploadWarning(String uid, String message) {
+        long timestamp = System.currentTimeMillis(); // Use timestamp as document ID
+        Map<String, Object> warningData = new HashMap<>();
+        warningData.put("message", message);
+        warningData.put("timestamp", timestamp);
+
+        firestore.collection("patient_collection").document(uid)
+                .collection("warnings").document(String.valueOf(timestamp))
+                .set(warningData)
+                .addOnSuccessListener(aVoid -> Log.d("Firestore", "Warning uploaded successfully"))
+                .addOnFailureListener(e -> Log.e("Firestore", "Error uploading warning", e));
+    }
 }

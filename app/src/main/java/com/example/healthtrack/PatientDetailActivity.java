@@ -7,6 +7,8 @@ import android.util.Log;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.XAxis;
@@ -19,11 +21,13 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class PatientDetailActivity extends AppCompatActivity {
-
+    private RecyclerView warningRecyclerView;
+    private WarningAdapter warningAdapter;
     private FirebaseFirestore db;
     private String patientId;
     private static final int MAX_POINTS = 25; // Consistent with PatientHealthData_nosensor
@@ -61,6 +65,15 @@ public class PatientDetailActivity extends AppCompatActivity {
 
         // Fetch patient details and graphs
         fetchPatientDetails();
+
+        // Initialize RecyclerView for warnings
+        warningRecyclerView = findViewById(R.id.warningRecyclerView);
+        warningRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        warningAdapter = new WarningAdapter(new ArrayList<>());
+        warningRecyclerView.setAdapter(warningAdapter);
+
+        // Fetch and display warnings
+        fetchAndDisplayWarnings();
     }
 
     private void fetchPatientDetails() {
@@ -254,5 +267,29 @@ public class PatientDetailActivity extends AppCompatActivity {
         }
 
         chart.invalidate();
+    }
+    private void fetchAndDisplayWarnings() {
+        FirebaseFirestore.getInstance()
+                .collection("patient_collection")
+                .document(patientId)
+                .collection("warnings")
+                .orderBy("timestamp", Query.Direction.DESCENDING) // Sort by timestamp (newest first)
+                .addSnapshotListener((snapshots, error) -> {
+                    if (error != null) {
+                        Log.e("Warnings", "Error fetching warnings", error);
+                        return;
+                    }
+
+                    List<Warning> warnings = new ArrayList<>();
+                    for (DocumentSnapshot doc : snapshots.getDocuments()) {
+                        Warning warning = doc.toObject(Warning.class);
+                        if (warning != null) {
+                            warnings.add(warning);
+                        }
+                    }
+
+                    // Update RecyclerView adapter
+                    warningAdapter.setWarnings(warnings);
+                });
     }
 }

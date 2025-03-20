@@ -527,6 +527,34 @@ public class PatientHealthData_ extends AppCompatActivity {
         String formattedDate = now.format(formatter);
         PatientData patientData = new PatientData(formattedDate, heartRate, oxygenLevel, temperature, stressLevel);
         uploader.uploadPatientData(uid, patientData);
+
+        // Fetch recent health data for warning detection
+        FirebaseFirestore.getInstance()
+                .collection("patient_collection")
+                .document(uid)
+                .collection("health_records")
+                .orderBy("datetime_captured", Query.Direction.DESCENDING)
+                .limit(5) // Fetch last 5 readings for warning detection
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    List<PatientData> patientDataList = new ArrayList<>();
+                    for (DocumentSnapshot document : queryDocumentSnapshots.getDocuments()) {
+                        PatientData data = document.toObject(PatientData.class);
+                        if (data != null) {
+                            patientDataList.add(data);
+                        }
+                    }
+
+                    // Detect warnings
+                    List<String> warnings = WarningDetector.detectWarnings(patientDataList);
+
+                    // Upload warnings using DataUploader
+                    if (!warnings.isEmpty()) {
+                        for (String warning : warnings) {
+                            uploader.uploadWarning(uid, warning);
+                        }
+                    }
+                });
     }
 
 
