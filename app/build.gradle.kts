@@ -64,11 +64,11 @@ dependencies {
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
 
-    // PyTorch Mobile dependencies
     implementation("org.pytorch:pytorch_android:1.13.1")
     implementation("com.facebook.soloader:soloader:0.10.5")
 
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
+
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation(platform("com.google.firebase:firebase-bom:33.8.0"))
     implementation("com.google.firebase:firebase-auth:23.1.0")

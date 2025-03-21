@@ -67,9 +67,6 @@ public class PatientDetailActivity extends AppCompatActivity {
         // Initialize the predictor
         predictor = new HeartRatePredictor(this);
 
-        // Set up prediction button
-        predictButton.setOnClickListener(v -> predictHeartRate());
-
         // Initialize RecyclerView for warnings
         warningRecyclerView = findViewById(R.id.warningRecyclerView);
         warningRecyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -82,37 +79,22 @@ public class PatientDetailActivity extends AppCompatActivity {
         fetchAndDisplayWarnings();
     }
 
-    private void predictHeartRate() {
-        // Get the last 10 heart rate readings from the chart data
-        LineChart heartChart = findViewById(R.id.heartChart);
-        LineData lineData = heartChart.getData();
-        
-        if (lineData != null && lineData.getDataSetCount() > 0) {
-            LineDataSet dataSet = (LineDataSet) lineData.getDataSetByIndex(0);
-            List<Entry> entries = dataSet.getValues();
-            
-            if (entries.size() >= 10) {
-                List<Float> features = new ArrayList<>();
-                // Get the last 10 readings
-                for (int i = entries.size() - 10; i < entries.size(); i++) {
-                    features.add(entries.get(i).getY());
-                }
+    private void predictHeartRate(List<Float> PredictionEntries) {
+        if (PredictionEntries.size() != 10) {
+            Log.e("PredictHeartRate", "Insufficient data for prediction");
+            return;
+        }
 
-                try {
-                    float predictedHeartRate = predictor.predict(features);
-                    Toast.makeText(this, 
-                        String.format("Predicted next heart rate: %.1f BPM", predictedHeartRate), 
-                        Toast.LENGTH_LONG).show();
-                } catch (Exception e) {
-                    Toast.makeText(this, "Error making prediction: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                }
-            } else {
-                Toast.makeText(this, "Not enough historical data for prediction", Toast.LENGTH_SHORT).show();
-            }
-        } else {
-            Toast.makeText(this, "No heart rate data available", Toast.LENGTH_SHORT).show();
+        try {
+            float predictedHeartRate = predictor.predict(PredictionEntries);
+            Toast.makeText(this,
+                    String.format("Predicted next heart rate: %.1f BPM", predictedHeartRate),
+                    Toast.LENGTH_LONG).show();
+        } catch (Exception e) {
+            Toast.makeText(this, "Error making prediction: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
+
 
     @Override
     protected void onDestroy() {
@@ -148,7 +130,7 @@ public class PatientDetailActivity extends AppCompatActivity {
                         List<Entry> oxygenLevelEntries = new ArrayList<>();
                         List<Entry> temperatureEntries = new ArrayList<>(); // Temperature entries
                         List<Entry> stressLevelEntries = new ArrayList<>(); // Stress level entries
-
+                        List<Float> PredictionEntries = new ArrayList<>();
                         // Iterate through the snapshots in reverse order (oldest first)
                         int index = 0;
                         List<DocumentSnapshot> documents = snapshots.getDocuments();
@@ -166,7 +148,9 @@ public class PatientDetailActivity extends AppCompatActivity {
                                 temperatureEntries.add(new Entry(index, temperature.floatValue()));
                                 stressLevelEntries.add(new Entry(index, stressLevel));
 
-                                // Check for irregularities
+
+                                predictHeartRate(PredictionEntries);
+
                                 if (heartRate > 160 || heartRate < 50) {
                                     heartText.setTextColor(getColor(R.color.emergency));
                                 } else {
