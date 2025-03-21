@@ -568,7 +568,7 @@ public class PatientHealthData_ extends AppCompatActivity {
                     }
 
                     // Detect warnings locally based on the last 5 readings
-                    List<String> warnings = WarningDetector.detectWarnings(patientDataList);
+                    List<String> warnings = WarningDetector.detectWarnings(patientDataList,false);
 
                     // Display warnings (if any) instead of uploading them
                     if (!warnings.isEmpty()) {

@@ -32,7 +32,7 @@ public class PatientDetailActivity extends AppCompatActivity {
     private FirebaseFirestore db;
     private String patientId;
     private static final int MAX_POINTS = 25; // Consistent with PatientHealthData_nosensor
-
+    private boolean isAnomalyDetected = false;
     private TextView heartText;
     private TextView spo2Text;
     private TextView tempText;
@@ -40,6 +40,8 @@ public class PatientDetailActivity extends AppCompatActivity {
     private SemiCircleMeter stressMeter;
     private Button predictButton;
     private HeartRatePredictor predictor;
+    float HRthreshold;
+    float predictedROC;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,21 +81,46 @@ public class PatientDetailActivity extends AppCompatActivity {
         fetchAndDisplayWarnings();
     }
 
-    private void predictHeartRate(List<Float> PredictionEntries) {
-        if (PredictionEntries.size() != 10) {
+    private void predictHeartRate(List<Float> last10HeartRates) {
+        if (last10HeartRates.size() != 10) {
             Log.e("PredictHeartRate", "Insufficient data for prediction");
             return;
         }
 
         try {
-            float predictedHeartRate = predictor.predict(PredictionEntries);
-            Toast.makeText(this,
-                    String.format("Predicted next heart rate: %.1f BPM", predictedHeartRate),
-                    Toast.LENGTH_LONG).show();
+            predictedROC = predictor.predict(last10HeartRates); // Get predicted rate of change
+            float lastHR = last10HeartRates.get(9); // Most recent heart rate
+
+            // Calculate threshold: HR should not exceed lastHR * (1 + predictedROC)
+            HRthreshold = lastHR * (1 + predictedROC);
+            boolean anomalyDetected = false;
+
+            // Check if any recent HR reading exceeds the threshold
+            for (Float hr : last10HeartRates) {
+                if (hr > HRthreshold) {
+                    anomalyDetected = true;
+                    break;
+                }
+            }
+
+            // Update global anomaly status
+            isAnomalyDetected = anomalyDetected;
+
+            // Show results
+            if (isAnomalyDetected) {
+                Toast.makeText(this, "⚠️ Heart Rate Anomaly Detected!", Toast.LENGTH_LONG).show();
+                Log.w("AnomalyDetection", "Anomaly detected! Last HR: " + lastHR + " Threshold: " + HRthreshold);
+                heartText.setTextColor(getColor(R.color.emergency)); // Highlight HR text
+            } else {
+                heartText.setTextColor(getColor(R.color.healthy));
+            }
+
+            Log.w("Machine Learning Heart Rate", String.format("Predicted ROC: %.2f | Threshold: %.1f BPM", predictedROC, HRthreshold));
         } catch (Exception e) {
             Toast.makeText(this, "Error making prediction: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
+
 
 
     @Override
@@ -128,15 +155,16 @@ public class PatientDetailActivity extends AppCompatActivity {
                     if (snapshots != null && !snapshots.isEmpty()) {
                         List<Entry> heartRateEntries = new ArrayList<>();
                         List<Entry> oxygenLevelEntries = new ArrayList<>();
-                        List<Entry> temperatureEntries = new ArrayList<>(); // Temperature entries
-                        List<Entry> stressLevelEntries = new ArrayList<>(); // Stress level entries
-                        List<Float> PredictionEntries = new ArrayList<>();
+                        List<Entry> temperatureEntries = new ArrayList<>();
+                        List<Entry> stressLevelEntries = new ArrayList<>();
+                        List<Float> predictionEntries = new ArrayList<>(); // Store last 10 for prediction
+
+                        List<DocumentSnapshot> documents = snapshots.getDocuments();
+
                         // Iterate through the snapshots in reverse order (oldest first)
                         int index = 0;
-                        List<DocumentSnapshot> documents = snapshots.getDocuments();
                         for (int i = documents.size() - 1; i >= 0; i--) {
                             DocumentSnapshot document = documents.get(i);
-
                             Long heartRate = document.getLong("heartRate");
                             Long oxygenLevel = document.getLong("oxygenLevel");
                             Double temperature = document.getDouble("temperature");
@@ -148,44 +176,22 @@ public class PatientDetailActivity extends AppCompatActivity {
                                 temperatureEntries.add(new Entry(index, temperature.floatValue()));
                                 stressLevelEntries.add(new Entry(index, stressLevel));
 
-
-                                predictHeartRate(PredictionEntries);
-
-                                if (heartRate > 160 || heartRate < 50) {
-                                    heartText.setTextColor(getColor(R.color.emergency));
-                                } else {
-                                    heartText.setTextColor(getColor(R.color.healthy));
+                                // Collect last 10 readings for prediction
+                                predictionEntries.add(heartRate.floatValue());
+                                if (predictionEntries.size() > 10) {
+                                    predictionEntries.remove(0); // Keep only the last 10
                                 }
-                                heartText.setText("BPM: " + heartRate);
-
-                                if (oxygenLevel < 90) {
-                                    spo2Text.setTextColor(getColor(R.color.emergency));
-                                } else if (oxygenLevel <= 94) {
-                                    spo2Text.setTextColor(getColor(R.color.mild));
-                                } else {
-                                    spo2Text.setTextColor(getColor(R.color.healthy));
-                                }
-                                spo2Text.setText("O2: " + oxygenLevel + "%");
-
-                                // Update temperature text
-                                if (temperature > 40) {
-                                    tempText.setTextColor(getColor(R.color.emergency));
-                                } else if (temperature < 35) {
-                                    tempText.setTextColor(getColor(R.color.emergency));
-                                } else {
-                                    tempText.setTextColor(getColor(R.color.healthy));
-                                }
-                                tempText.setText(String.format("Temp: %.1f°C", temperature));
-
-                                // Update stress meter
-                                stressMeter.setProgress(stressLevel.floatValue()); // Update stress meter
-                                stressText.setText(String.format("Stress: %.0f", stressLevel.floatValue()));
 
                                 index++;
                             }
                         }
 
-                        // Log the final entries
+                        // Ensure we have exactly 10 readings before making a prediction
+                        if (predictionEntries.size() == 10) {
+                            predictHeartRate(predictionEntries);
+                        }
+
+                        // Log final entries
                         Log.d("ChartData", "Heart Entries: " + heartRateEntries);
                         Log.d("ChartData", "Oxygen Entries: " + oxygenLevelEntries);
                         Log.d("ChartData", "Temperature Entries: " + temperatureEntries);
@@ -260,7 +266,7 @@ public class PatientDetailActivity extends AppCompatActivity {
         for (Entry entry : entries) {
             float value = entry.getY();
             if (label.contains("Heart")) {
-                if (value > 160 || value < 50) {
+                if (value > HRthreshold) {
                     colors.add(getColor(R.color.emergency));
                 } else {
                     colors.add(getColor(R.color.healthy));
@@ -301,64 +307,53 @@ public class PatientDetailActivity extends AppCompatActivity {
         chart.invalidate();
     }
     private void fetchAndDisplayWarnings() {
-        FirebaseFirestore.getInstance()
-                .collection("patient_collection")
+        db.collection("patient_collection")
                 .document(patientId)
                 .collection("health_records")
-                .orderBy(FieldPath.documentId(), Query.Direction.DESCENDING) // Sort by document ID (timestamp) in descending order
-                .limit(5) // Fetch only the last 5 records
-                .get()
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
+                .orderBy(FieldPath.documentId(), Query.Direction.DESCENDING)
+                .limit(5) // Fetch last 5 records in real-time
+                .addSnapshotListener((snapshots, error) -> {
+                    if (snapshots != null && !snapshots.isEmpty()) {
                         List<PatientData> patientDataList = new ArrayList<>();
-                        for (DocumentSnapshot document : task.getResult().getDocuments()) {
-                            // Parse the raw data from Firestore
+
+                        for (DocumentSnapshot document : snapshots.getDocuments()) {
                             Long heartRate = document.getLong("heartRate");
                             Long oxygenLevel = document.getLong("oxygenLevel");
                             Double temperature = document.getDouble("temperature");
                             Long stressLevel = document.getLong("stressLevel");
-                            String datetimeCaptured = document.getId(); // Use document ID as timestamp
+                            String datetimeCaptured = document.getId(); // Document ID as timestamp
 
-                            // Validate the data
                             if (heartRate != null && oxygenLevel != null && temperature != null && stressLevel != null) {
-                                // Create a PatientData object manually
-                                PatientData data = new PatientData(
-                                        datetimeCaptured, // Use document ID as timestamp
-                                        heartRate.intValue(), // Convert Long to int
-                                        oxygenLevel.intValue(), // Convert Long to int
-                                        temperature.floatValue(), // Convert Double to float
-                                        stressLevel.intValue() // Convert Long to int
-                                );
-
-                                // Add the PatientData object to the list
-                                patientDataList.add(data);
+                                patientDataList.add(new PatientData(
+                                        datetimeCaptured,
+                                        heartRate.intValue(),
+                                        oxygenLevel.intValue(),
+                                        temperature.floatValue(),
+                                        stressLevel.intValue()
+                                ));
                             }
                         }
 
-                        // Calculate warnings locally based on the last 5 health records
-                        List<String> warnings = WarningDetector.detectWarnings(patientDataList);
+                        // Calculate warnings
+                        List<String> warnings = WarningDetector.detectWarnings(patientDataList, isAnomalyDetected);
 
-                        // Convert warnings to a list of Warning objects for the adapter
+                        // Convert to Warning objects for adapter
                         List<Warning> warningList = new ArrayList<>();
                         if (!patientDataList.isEmpty()) {
-                            // Use the timestamp of the last health record as the warning timestamp
-                            String lastTimestamp = patientDataList.get(patientDataList.size() - 1).getDatetime_captured();
-
-                            // Convert the date string to a timestamp (long)
-                            long timestamp = convertDateStringToTimestamp(lastTimestamp);
-
+                            long timestamp = System.currentTimeMillis();
                             for (String warningMessage : warnings) {
                                 warningList.add(new Warning(warningMessage, timestamp));
                             }
                         }
 
-                        // Update RecyclerView adapter with the calculated warnings
+                        // Update RecyclerView adapter
                         warningAdapter.setWarnings(warningList);
                     } else {
-                        Log.e("Warnings", "Error fetching health records for warnings", task.getException());
+                        Log.e("Warnings", "Error fetching real-time warnings", error);
                     }
                 });
     }
+
 
     // Helper method to convert a date string to a timestamp (long)
     private long convertDateStringToTimestamp(String dateString) {

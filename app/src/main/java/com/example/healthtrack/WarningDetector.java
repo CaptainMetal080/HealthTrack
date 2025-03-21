@@ -16,7 +16,7 @@ public class WarningDetector {
     private static final double LOW_TEMPERATURE = 35.0;       // Hypothermia threshold in Celsius
     private static final double TEMP_UPWARD_TREND = 0.5;        // Minimal upward trend to flag potential fever
 
-    public static List<String> detectWarnings(List<PatientData> patientData) {
+    public static List<String> detectWarnings(List<PatientData> patientData,boolean isHeartRateAnomaly) {
         List<String> warnings = new ArrayList<>();
         if (patientData.size() < WINDOW_SIZE) {
             return warnings; // Not enough data to analyze
@@ -38,6 +38,10 @@ public class WarningDetector {
         // Check for Temperature Anomalies (fever, hypothermia, or upward trend)
         if (isTemperatureAnomaly(lastReadings)) {
             warnings.add("Temperature anomaly detected.");
+        }
+
+        if(isHeartRateAnomaly){
+            warnings.add("Heart Rate anomaly detected.");
         }
 
         return warnings;
@@ -103,4 +107,5 @@ public class WarningDetector {
 
         return highTempDetected || lowTempDetected || upwardTrend;
     }
+
 }
