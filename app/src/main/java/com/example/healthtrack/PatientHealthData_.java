@@ -286,8 +286,10 @@ public class PatientHealthData_ extends AppCompatActivity {
                 oxygenLevel = Integer.valueOf(data[1]); // Second byte = oxygen level (example)
                 temperatureInt = Integer.valueOf(data[2]);
                 temperatureDec = Integer.valueOf(data[3]);
+
                 temperature = temperatureInt + (temperatureDec / 100.0f);
                 temperature = adjustTemperature(temperature);
+                temperature = (float) (Math.round(temperature * 100.0) / 100.0);
 
                 LocalDateTime currentTime;
 
@@ -311,7 +313,7 @@ public class PatientHealthData_ extends AppCompatActivity {
                 runOnUiThread(() -> {
                     heartRateView.setText("Heart Rate: " + heartRate + " bpm");
                     spo2View.setText("Oxygen: " + oxygenLevel + " %");
-                    tempView.setText("Temperature: " + temperature + " °C");
+                    tempView.setText("Temperature: " + String.format("%.2f", temperature) + " °C");
                     updateUI();
 
                     if (finalCurrentTime != null) {
