@@ -311,7 +311,9 @@ public class PatientDetailActivity extends AppCompatActivity {
                         if (!patientDataList.isEmpty()) {
                             // Use the timestamp of the last health record as the warning timestamp
                             String lastTimestamp = patientDataList.get(patientDataList.size() - 1).getDatetime_captured();
-                            long timestamp = Long.parseLong(lastTimestamp); // Convert the timestamp to long
+
+                            // Convert the date string to a timestamp (long)
+                            long timestamp = convertDateStringToTimestamp(lastTimestamp);
 
                             for (String warningMessage : warnings) {
                                 warningList.add(new Warning(warningMessage, timestamp));
@@ -324,5 +326,20 @@ public class PatientDetailActivity extends AppCompatActivity {
                         Log.e("Warnings", "Error fetching health records for warnings", task.getException());
                     }
                 });
+    }
+
+    // Helper method to convert a date string to a timestamp (long)
+    private long convertDateStringToTimestamp(String dateString) {
+        try {
+            // Define the date format (e.g., "yyyy-MM-dd HH:mm:ss")
+            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault());
+            // Parse the date string into a Date object
+            java.util.Date date = sdf.parse(dateString);
+            // Return the timestamp in milliseconds
+            return date.getTime();
+        } catch (java.text.ParseException e) {
+            Log.e("TimestampConversion", "Failed to parse date string: " + dateString, e);
+            return System.currentTimeMillis(); // Fallback to current time if parsing fails
+        }
     }
 }

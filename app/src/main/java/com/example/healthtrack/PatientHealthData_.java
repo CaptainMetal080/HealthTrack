@@ -510,11 +510,11 @@ public class PatientHealthData_ extends AppCompatActivity {
     }
 
     private void applyStressLevelChanges() {
-        if (healthyRateCount >= 2) {
-            stressLevel = Math.max(0, stressLevel - 4);
+        if (healthyRateCount >= 3) {
+            stressLevel = Math.max(0, stressLevel - 5);
             healthyRateCount = 0;
-        } else if (emergencyRateCount >= 2) {
-            stressLevel = Math.min(100, stressLevel + 7);
+        } else if (emergencyRateCount >= 3) {
+            stressLevel = Math.min(100, stressLevel + 25);
             emergencyRateCount = 0;
         }
 
