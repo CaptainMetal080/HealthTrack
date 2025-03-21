@@ -153,8 +153,12 @@ public class GraphDetailActivity extends AppCompatActivity {
                         List<Entry> entries = new ArrayList<>();
                         List<String> labels = new ArrayList<>();
 
+                        // Iterate through the snapshots in reverse order (oldest first)
                         int index = 0;
-                        for (DocumentSnapshot document : snapshots.getDocuments()) {
+                        List<DocumentSnapshot> documents = snapshots.getDocuments();
+                        for (int i = documents.size() - 1; i >= 0; i--) {
+                            DocumentSnapshot document = documents.get(i);
+
                             Long value = null;
                             switch (graphType) {
                                 case "heartRate":
@@ -180,7 +184,7 @@ public class GraphDetailActivity extends AppCompatActivity {
                                     String formattedDate = sdf.format(new Date(timeInMillis));
                                     labels.add(formattedDate);
                                 } catch (NumberFormatException e) {
-                                   // Log.e("GraphDetailActivity", "Invalid timestamp format: " + timestamp);
+                                    // Log.e("GraphDetailActivity", "Invalid timestamp format: " + timestamp);
                                     labels.add(timestamp); // Fallback to raw timestamp if parsing fails
                                 }
 

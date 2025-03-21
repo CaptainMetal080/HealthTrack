@@ -35,13 +35,13 @@ public class WelcomeScreen extends AppCompatActivity {
         // Update welcome text immediately
         updateWelcomeText();
 
-        // Wait for 3 seconds before checking the user role and redirecting
+        // Wait for 6 seconds before checking the user role and redirecting
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
                 checkUserRole();
             }
-        }, 3000); // Wait for 3 seconds before redirecting
+        }, 6000); // Wait for 6 seconds before redirecting
     }
 
     private void updateWelcomeText() {

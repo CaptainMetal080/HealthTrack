@@ -105,7 +105,10 @@ public class PatientDetailActivity extends AppCompatActivity {
 
                         // Iterate through the snapshots in reverse order (oldest first)
                         int index = 0;
-                        for (DocumentSnapshot document : snapshots.getDocuments()) {
+                        List<DocumentSnapshot> documents = snapshots.getDocuments();
+                        for (int i = documents.size() - 1; i >= 0; i--) {
+                            DocumentSnapshot document = documents.get(i);
+
                             Long heartRate = document.getLong("heartRate");
                             Long oxygenLevel = document.getLong("oxygenLevel");
                             Double temperature = document.getDouble("temperature");
@@ -116,6 +119,7 @@ public class PatientDetailActivity extends AppCompatActivity {
                                 oxygenLevelEntries.add(new Entry(index, oxygenLevel));
                                 temperatureEntries.add(new Entry(index, temperature.floatValue()));
                                 stressLevelEntries.add(new Entry(index, stressLevel));
+
                                 // Check for irregularities
                                 if (heartRate > 160 || heartRate < 50) {
                                     heartText.setTextColor(getColor(R.color.emergency));
@@ -148,8 +152,6 @@ public class PatientDetailActivity extends AppCompatActivity {
                                 stressText.setText(String.format("Stress: %.0f", stressLevel.floatValue()));
 
                                 index++;
-
-
                             }
                         }
 
@@ -171,7 +173,8 @@ public class PatientDetailActivity extends AppCompatActivity {
                         updateChart(heartChart, heartRateEntries, "Heart Rate", heartText);
                         updateChart(spo2Chart, oxygenLevelEntries, "Oxygen Level", spo2Text);
                         updateChart(tempChart, temperatureEntries, "Temperature", tempText); // Update temperature chart
-                        // In DoctorHomePage.java and PatientDetailActivity.java
+
+                        // Set click listeners for charts
                         heartChart.setOnClickListener(v -> {
                             Intent intent = new Intent(this, GraphDetailActivity.class);
                             intent.putExtra("patientId", patientId);
@@ -192,7 +195,6 @@ public class PatientDetailActivity extends AppCompatActivity {
                             intent.putExtra("graphType", "temperature");
                             startActivity(intent);
                         });
-
                     }
                 });
     }
