@@ -23,6 +23,7 @@ import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldPath;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.functions.FirebaseFunctions;
@@ -526,6 +527,8 @@ public class PatientHealthData_ extends AppCompatActivity {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         String formattedDate = now.format(formatter);
         PatientData patientData = new PatientData(formattedDate, heartRate, oxygenLevel, temperature, stressLevel);
+
+        // Upload health data to Firebase
         uploader.uploadPatientData(uid, patientData);
 
         // Fetch recent health data for warning detection
@@ -533,31 +536,50 @@ public class PatientHealthData_ extends AppCompatActivity {
                 .collection("patient_collection")
                 .document(uid)
                 .collection("health_records")
-                .orderBy("datetime_captured", Query.Direction.DESCENDING)
+                .orderBy(FieldPath.documentId(), Query.Direction.DESCENDING)
                 .limit(5) // Fetch last 5 readings for warning detection
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     List<PatientData> patientDataList = new ArrayList<>();
                     for (DocumentSnapshot document : queryDocumentSnapshots.getDocuments()) {
-                        PatientData data = document.toObject(PatientData.class);
-                        if (data != null) {
+                        // Parse the raw data from Firestore
+                        Long heartRate = document.getLong("heartRate");
+                        Long oxygenLevel = document.getLong("oxygenLevel");
+                        Double temperature = document.getDouble("temperature");
+                        Long stressLevel = document.getLong("stressLevel");
+                        String datetimeCaptured = document.getId(); // Use document ID as timestamp
+
+                        // Validate the data
+                        if (heartRate != null && oxygenLevel != null && temperature != null && stressLevel != null) {
+                            // Create a PatientData object manually
+                            PatientData data = new PatientData(
+                                    datetimeCaptured, // Use document ID as timestamp
+                                    heartRate.intValue(), // Convert Long to int
+                                    oxygenLevel.intValue(), // Convert Long to int
+                                    temperature.floatValue(), // Convert Double to float
+                                    stressLevel.intValue() // Convert Long to int
+                            );
+
+                            // Add the PatientData object to the list
                             patientDataList.add(data);
                         }
                     }
 
-                    // Detect warnings
+                    // Detect warnings locally based on the last 5 readings
                     List<String> warnings = WarningDetector.detectWarnings(patientDataList);
 
-                    // Upload warnings using DataUploader
+                    // Display warnings (if any) instead of uploading them
                     if (!warnings.isEmpty()) {
                         for (String warning : warnings) {
-                            uploader.uploadWarning(uid, warning);
+                            Log.d("WarningDetector", warning);
+                            Toast.makeText(this, warning, Toast.LENGTH_SHORT).show();
                         }
                     }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("Firestore", "Failed to fetch recent health data for warning detection", e);
                 });
     }
-
-
 
     private void callEmergency() {
 //        AlertDialog.Builder builder = new AlertDialog.Builder(this);

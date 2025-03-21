@@ -272,24 +272,57 @@ public class PatientDetailActivity extends AppCompatActivity {
         FirebaseFirestore.getInstance()
                 .collection("patient_collection")
                 .document(patientId)
-                .collection("warnings")
-                .orderBy("timestamp", Query.Direction.DESCENDING) // Sort by timestamp (newest first)
-                .addSnapshotListener((snapshots, error) -> {
-                    if (error != null) {
-                        Log.e("Warnings", "Error fetching warnings", error);
-                        return;
-                    }
+                .collection("health_records")
+                .orderBy(FieldPath.documentId(), Query.Direction.DESCENDING) // Sort by document ID (timestamp) in descending order
+                .limit(5) // Fetch only the last 5 records
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        List<PatientData> patientDataList = new ArrayList<>();
+                        for (DocumentSnapshot document : task.getResult().getDocuments()) {
+                            // Parse the raw data from Firestore
+                            Long heartRate = document.getLong("heartRate");
+                            Long oxygenLevel = document.getLong("oxygenLevel");
+                            Double temperature = document.getDouble("temperature");
+                            Long stressLevel = document.getLong("stressLevel");
+                            String datetimeCaptured = document.getId(); // Use document ID as timestamp
 
-                    List<Warning> warnings = new ArrayList<>();
-                    for (DocumentSnapshot doc : snapshots.getDocuments()) {
-                        Warning warning = doc.toObject(Warning.class);
-                        if (warning != null) {
-                            warnings.add(warning);
+                            // Validate the data
+                            if (heartRate != null && oxygenLevel != null && temperature != null && stressLevel != null) {
+                                // Create a PatientData object manually
+                                PatientData data = new PatientData(
+                                        datetimeCaptured, // Use document ID as timestamp
+                                        heartRate.intValue(), // Convert Long to int
+                                        oxygenLevel.intValue(), // Convert Long to int
+                                        temperature.floatValue(), // Convert Double to float
+                                        stressLevel.intValue() // Convert Long to int
+                                );
+
+                                // Add the PatientData object to the list
+                                patientDataList.add(data);
+                            }
                         }
-                    }
 
-                    // Update RecyclerView adapter
-                    warningAdapter.setWarnings(warnings);
+                        // Calculate warnings locally based on the last 5 health records
+                        List<String> warnings = WarningDetector.detectWarnings(patientDataList);
+
+                        // Convert warnings to a list of Warning objects for the adapter
+                        List<Warning> warningList = new ArrayList<>();
+                        if (!patientDataList.isEmpty()) {
+                            // Use the timestamp of the last health record as the warning timestamp
+                            String lastTimestamp = patientDataList.get(patientDataList.size() - 1).getDatetime_captured();
+                            long timestamp = Long.parseLong(lastTimestamp); // Convert the timestamp to long
+
+                            for (String warningMessage : warnings) {
+                                warningList.add(new Warning(warningMessage, timestamp));
+                            }
+                        }
+
+                        // Update RecyclerView adapter with the calculated warnings
+                        warningAdapter.setWarnings(warningList);
+                    } else {
+                        Log.e("Warnings", "Error fetching health records for warnings", task.getException());
+                    }
                 });
     }
 }

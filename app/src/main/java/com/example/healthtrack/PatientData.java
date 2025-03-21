@@ -18,6 +18,10 @@ public class PatientData {
         this.stress_level = stress_level;
     }
 
+    public String getDatetime_captured() {
+        return datetime_captured;
+    }
+
     // Getters and setters
     @SerializedName("timestamp")
     public String getTime() {

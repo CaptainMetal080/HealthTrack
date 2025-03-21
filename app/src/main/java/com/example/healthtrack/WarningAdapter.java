@@ -23,10 +23,22 @@ public class WarningAdapter extends RecyclerView.Adapter<WarningAdapter.WarningV
         return new WarningViewHolder(view);
     }
 
+
     @Override
     public void onBindViewHolder(@NonNull WarningViewHolder holder, int position) {
         Warning warning = warnings.get(position);
         holder.warningText.setText(warning.getMessage());
+
+        // Format the timestamp and set it in the timestampText view
+        String formattedTimestamp = formatTimestamp(warning.getTimestamp());
+        holder.timestampText.setText(formattedTimestamp);
+    }
+
+    // Helper method to format the timestamp
+    private String formatTimestamp(long timestamp) {
+        // Example: Convert timestamp to a readable date/time format
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault());
+        return sdf.format(new java.util.Date(timestamp));
     }
 
     @Override
@@ -41,10 +53,12 @@ public class WarningAdapter extends RecyclerView.Adapter<WarningAdapter.WarningV
 
     public static class WarningViewHolder extends RecyclerView.ViewHolder {
         TextView warningText;
+        TextView timestampText;
 
         public WarningViewHolder(@NonNull View itemView) {
             super(itemView);
             warningText = itemView.findViewById(R.id.warningText);
+            timestampText = itemView.findViewById(R.id.timestampText);
         }
     }
 }
