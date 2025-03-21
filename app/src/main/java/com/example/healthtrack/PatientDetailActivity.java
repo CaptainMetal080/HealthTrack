@@ -4,7 +4,9 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -21,7 +23,6 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,6 +38,8 @@ public class PatientDetailActivity extends AppCompatActivity {
     private TextView tempText;
     private TextView stressText;
     private SemiCircleMeter stressMeter;
+    private Button predictButton;
+    private HeartRatePredictor predictor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,23 +51,24 @@ public class PatientDetailActivity extends AppCompatActivity {
         // Retrieve the patientId from the Intent
         patientId = getIntent().getStringExtra("patientId");
         if (patientId == null) {
-            Log.e("PatientDetailActivity", "No patientId found in Intent");
-            finish(); // Close the activity if no patientId is found
+            Toast.makeText(this, "Error: Patient ID not found", Toast.LENGTH_SHORT).show();
+            finish();
             return;
         }
-
-        // Log the patientId for debugging
-        Log.d("PatientDetailActivity", "Received patientId: " + patientId);
 
         // Initialize views
         heartText = findViewById(R.id.heartRateTextView);
         spo2Text = findViewById(R.id.OxiTextView);
         tempText = findViewById(R.id.tempTextView);
         stressText = findViewById(R.id.stressTextView);
-        stressMeter = findViewById(R.id.stressMeter); // Stress meter
+        stressMeter = findViewById(R.id.stressMeter);
+        predictButton = findViewById(R.id.predictButton);
 
-        // Fetch patient details and graphs
-        fetchPatientDetails();
+        // Initialize the predictor
+        predictor = new HeartRatePredictor(this);
+
+        // Set up prediction button
+        predictButton.setOnClickListener(v -> predictHeartRate());
 
         // Initialize RecyclerView for warnings
         warningRecyclerView = findViewById(R.id.warningRecyclerView);
@@ -72,8 +76,50 @@ public class PatientDetailActivity extends AppCompatActivity {
         warningAdapter = new WarningAdapter(new ArrayList<>());
         warningRecyclerView.setAdapter(warningAdapter);
 
-        // Fetch and display warnings
+        // Fetch patient details and data
+        fetchPatientDetails();
+        fetchPatientGraphs();
         fetchAndDisplayWarnings();
+    }
+
+    private void predictHeartRate() {
+        // Get the last 10 heart rate readings from the chart data
+        LineChart heartChart = findViewById(R.id.heartChart);
+        LineData lineData = heartChart.getData();
+        
+        if (lineData != null && lineData.getDataSetCount() > 0) {
+            LineDataSet dataSet = (LineDataSet) lineData.getDataSetByIndex(0);
+            List<Entry> entries = dataSet.getValues();
+            
+            if (entries.size() >= 10) {
+                List<Float> features = new ArrayList<>();
+                // Get the last 10 readings
+                for (int i = entries.size() - 10; i < entries.size(); i++) {
+                    features.add(entries.get(i).getY());
+                }
+
+                try {
+                    float predictedHeartRate = predictor.predict(features);
+                    Toast.makeText(this, 
+                        String.format("Predicted next heart rate: %.1f BPM", predictedHeartRate), 
+                        Toast.LENGTH_LONG).show();
+                } catch (Exception e) {
+                    Toast.makeText(this, "Error making prediction: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                Toast.makeText(this, "Not enough historical data for prediction", Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            Toast.makeText(this, "No heart rate data available", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (predictor != null) {
+            predictor.close();
+        }
     }
 
     private void fetchPatientDetails() {

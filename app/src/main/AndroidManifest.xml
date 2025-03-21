@@ -44,6 +44,7 @@
         <activity android:name=".GraphDetailActivity" />
         <activity android:name=".DoctorHomePage" />
         <activity android:name=".PatientDetailActivity" />
+        <activity android:name=".HeartRatePredictionActivity" />
 
         <receiver
             android:name="com.google.firebase.iid.FirebaseInstanceIdReceiver"
