@@ -9,7 +9,7 @@ public class HealthDataSimulator {
     private Random random = new Random();
     private int healthyRateCount = 0;
     private int emergencyRateCount = 0;
-    private int currentStressLevel = 10; // Initialize stress level at a mid-point
+    private int currentStressLevel = 20; // Initialize stress level at a mid-point
 
     public HealthDataSimulator(DataUploader uploader) {
         this.uploader = uploader;
@@ -35,7 +35,7 @@ public class HealthDataSimulator {
         return 95 + random.nextInt(5); // Oxygen fluctuates between 95 and 99
     }
     private void simulatePatientData(String uid, int patientType) {
-        String timestamp = "2025-03-10 22:25:03"; // Start from last known timestamp
+        String timestamp = "2025-03-22 07:30:02"; // Start from last known timestamp
         int totalRecords = (1* 1 * 60 * 60) / 9; // 14 days, every 8-10 seconds (avg 9 sec)
         //int totalRecords = 30; // 14 days, every 8-10 seconds (avg 9 sec)
         for (int i = 0; i < totalRecords; i++) {
@@ -105,28 +105,28 @@ public class HealthDataSimulator {
     }
 
     private int generateStressLevel(int heartRate, int oxygenLevel, float temperature) {
-        if (heartRate > 160 || heartRate < 50 || oxygenLevel < 90 || temperature > 40 || temperature < 35) {
+        if (heartRate > 95 || heartRate < 50 || oxygenLevel < 94 || temperature > 38 || temperature < 35) {
             emergencyRateCount++;
-            healthyRateCount = 0;
+
         } else {
             healthyRateCount++;
-            emergencyRateCount = 0;
+
         }
 
-        if (healthyRateCount >= 2) {
+        if (healthyRateCount % 3 == 0 && healthyRateCount != 0) {
             healthyRateCount = 0;
-            currentStressLevel = Math.max(0, currentStressLevel - random.nextInt(4) - 2);
-        } else if (emergencyRateCount >= 2) {
+            currentStressLevel = Math.max(0, currentStressLevel - random.nextInt(3) - 5);
+        } else if (emergencyRateCount % 3 == 0 && emergencyRateCount != 0) {
             emergencyRateCount = 0;
-            currentStressLevel = Math.min(100, currentStressLevel + random.nextInt(7) + 5);
+            currentStressLevel = Math.min(100, currentStressLevel + random.nextInt(5) + 25);
         }
 
         return currentStressLevel;
     }
 public void startSimulation() {
         simulatePatientData("tuxUG8ANAHgpsTpYwgrTBiXgFbm1", 1);
-        simulatePatientData("UH5QR2MXyGO3PhkVGNORjM4dzT62", 2);
-        simulatePatientData("Ugdp4eTJqogQNLmkLEpbKEAr7Kr1", 3);
-        simulatePatientData("4Zb9phGcAbhZzWldh75sUwF1Rwg1", 4);
+       // simulatePatientData("UH5QR2MXyGO3PhkVGNORjM4dzT62", 2);
+        //simulatePatientData("Ugdp4eTJqogQNLmkLEpbKEAr7Kr1", 3);
+        //simulatePatientData("4Zb9phGcAbhZzWldh75sUwF1Rwg1", 4);
     }
 }

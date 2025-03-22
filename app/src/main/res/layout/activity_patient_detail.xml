@@ -28,16 +28,6 @@
             android:textSize="18sp"
             android:paddingTop="8dp"/>
 
-        <Button
-            android:id="@+id/predictButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Predict Next Heart Rate"
-            android:layout_gravity="center"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="16dp"
-            android:backgroundTint="#4CAF50"/>
-
         <!-- Oxygen Level -->
         <com.github.mikephil.charting.charts.LineChart
             android:id="@+id/spo2Chart"

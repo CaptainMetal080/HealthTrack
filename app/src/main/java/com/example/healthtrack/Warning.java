@@ -4,9 +4,6 @@ public class Warning {
     private String message;
     private long timestamp;
 
-    public Warning() {
-        // Default constructor required for Firestore
-    }
 
     public Warning(String message, long timestamp) {
         this.message = message;

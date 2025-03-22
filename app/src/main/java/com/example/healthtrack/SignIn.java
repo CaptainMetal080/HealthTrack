@@ -31,9 +31,12 @@ public class SignIn extends Activity {
         emailField = findViewById(R.id.email);
         passwordField = findViewById(R.id.password);
         signInButton = findViewById(R.id.signInButton);
-        //sim = new HealthDataSimulator(uploader);
+
+        //sim = new HealthDataSimulator(uploader); //simulate health data
+        //DeleteData.main(); //delete health data
+
         if (sim != null) {
-            //sim.startSimulation();
+           //sim.startSimulation();
         } else {
             Log.e("SignIn", "HealthDataSimulator is null!");
         }

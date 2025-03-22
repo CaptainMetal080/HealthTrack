@@ -1,5 +1,6 @@
 package com.example.healthtrack;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -64,7 +65,6 @@ public class PatientDetailActivity extends AppCompatActivity {
         tempText = findViewById(R.id.tempTextView);
         stressText = findViewById(R.id.stressTextView);
         stressMeter = findViewById(R.id.stressMeter);
-        predictButton = findViewById(R.id.predictButton);
 
         // Initialize the predictor
         predictor = new HeartRatePredictor(this);
@@ -78,6 +78,7 @@ public class PatientDetailActivity extends AppCompatActivity {
         // Fetch patient details and data
         fetchPatientDetails();
         fetchPatientGraphs();
+        fetchAndUpdateStressLevel(stressText, stressMeter);
         fetchAndDisplayWarnings();
     }
 
@@ -130,7 +131,28 @@ public class PatientDetailActivity extends AppCompatActivity {
             predictor.close();
         }
     }
+    private void fetchAndUpdateStressLevel(TextView stressTextView, SemiCircleMeter stressMeter) {
+        db.collection("patient_collection")
+                .document(patientId)
+                .collection("health_records")
+                .orderBy(FieldPath.documentId(), Query.Direction.DESCENDING)
+                .limit(1)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful() && !task.getResult().isEmpty()) {
+                        DocumentSnapshot latestRecord = task.getResult().getDocuments().get(0);
+                        Long stressLevel = latestRecord.getLong("stressLevel");
 
+                        if (stressLevel != null) {
+                            // Update the stress TextView and SemiCircleMeter
+                            stressTextView.setText("Stress: " + stressLevel + "%");
+                            stressMeter.setProgress(stressLevel.floatValue());
+                        }
+                    } else {
+                        Log.e("Firestore", "Failed to fetch latest stress level", task.getException());
+                    }
+                });
+    }
     private void fetchPatientDetails() {
         db.collection("patient_collection").document(patientId).get()
                 .addOnCompleteListener(task -> {
@@ -210,6 +232,22 @@ public class PatientDetailActivity extends AppCompatActivity {
                         updateChart(spo2Chart, oxygenLevelEntries, "Oxygen Level", spo2Text);
                         updateChart(tempChart, temperatureEntries, "Temperature", tempText); // Update temperature chart
 
+                        // Update the TextViews with the latest values
+                        if (!heartRateEntries.isEmpty()) {
+                            float latestHeartRate = heartRateEntries.get(heartRateEntries.size() - 1).getY();
+                            heartText.setText("BPM: " + (int) latestHeartRate);
+                        }
+
+                        if (!oxygenLevelEntries.isEmpty()) {
+                            float latestOxygenLevel = oxygenLevelEntries.get(oxygenLevelEntries.size() - 1).getY();
+                            spo2Text.setText("O2: " + (int) latestOxygenLevel + "%");
+                        }
+
+                        if (!temperatureEntries.isEmpty()) {
+                            float latestTemperature = temperatureEntries.get(temperatureEntries.size() - 1).getY();
+                            tempText.setText("Temp: " + String.format("%.1f", latestTemperature) + "°C");
+                        }
+
                         // Set click listeners for charts
                         heartChart.setOnClickListener(v -> {
                             Intent intent = new Intent(this, GraphDetailActivity.class);
@@ -250,6 +288,7 @@ public class PatientDetailActivity extends AppCompatActivity {
         chart.getAxisLeft().setGranularity(1f);  // Prevent duplicates on Y-axis
     }
 
+    @SuppressLint("ResourceAsColor")
     private void updateChart(LineChart chart, List<Entry> entries, String label, TextView textView) {
         if (entries.isEmpty()) {
             Log.w("ChartUpdate", "No data to plot for " + label);
@@ -268,22 +307,29 @@ public class PatientDetailActivity extends AppCompatActivity {
             if (label.contains("Heart")) {
                 if (value > HRthreshold) {
                     colors.add(getColor(R.color.emergency));
+                    heartText.setTextColor(R.color.emergency);
                 } else {
                     colors.add(getColor(R.color.healthy));
+                    heartText.setTextColor(R.color.healthy);
                 }
             } else if (label.contains("Oxygen")) {
                 if (value < 90) {
                     colors.add(getColor(R.color.emergency));
+                    spo2Text.setTextColor(R.color.emergency);
                 } else if (value <= 94) {
                     colors.add(getColor(R.color.mild));
+                    spo2Text.setTextColor(R.color.mild);
                 } else {
                     colors.add(getColor(R.color.healthy));
+                    spo2Text.setTextColor(R.color.healthy);
                 }
             } else if (label.contains("Temperature")) {
                 if (value > 40 || value < 35) {
                     colors.add(getColor(R.color.emergency));
+                    tempText.setTextColor(R.color.emergency);
                 } else {
                     colors.add(getColor(R.color.healthy));
+                    tempText.setTextColor(R.color.healthy);
                 }
             }
         }
@@ -340,7 +386,8 @@ public class PatientDetailActivity extends AppCompatActivity {
                         // Convert to Warning objects for adapter
                         List<Warning> warningList = new ArrayList<>();
                         if (!patientDataList.isEmpty()) {
-                            long timestamp = System.currentTimeMillis();
+                            String latestTimestamp = patientDataList.get(0).getDatetime_captured();
+                            long timestamp = convertDateStringToTimestamp(latestTimestamp);
                             for (String warningMessage : warnings) {
                                 warningList.add(new Warning(warningMessage, timestamp));
                             }

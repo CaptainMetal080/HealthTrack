@@ -416,17 +416,17 @@ public class PatientHealthData_ extends AppCompatActivity {
             showCriticalAlert("Critical: High Heart Rate!");
             sendEmergencyNotification("Emergency: High Heart Rate", "Patient has a High heart rate ");
             emergencyRateCount++;
-            healthyRateCount = 0;
+
             callEmergency();
         } else if (heartRate < 50) {
             showCriticalAlert("Critical: Slow Heart Rate!");
             sendEmergencyNotification("Emergency: Low Heart Rate", "Patient has a low heart rate ");
             emergencyRateCount++;
-            healthyRateCount = 0;
+
             callEmergency();
         } else {
             healthyRateCount++;
-            emergencyRateCount = 0;
+
             setHealthStatus(heartRateDataSet, heartRateView, heartRate, R.color.healthy);
         }
         heartRateView.setText("BPM: " + heartRate + " bpm");
@@ -439,13 +439,13 @@ public class PatientHealthData_ extends AppCompatActivity {
             showCriticalAlert("Critical: Low SpO2 detected!");
             callEmergency();
             emergencyRateCount++;
-            healthyRateCount = 0;
+
         } else if (oxygenLevel <= 94) {
             showMildAlert("Warning: Mildly low SpO2 detected!");
             setHealthStatus(oxygenDataSet, spo2View, oxygenLevel, R.color.mild);
         } else {
             healthyRateCount++;
-            emergencyRateCount = 0;
+
             setHealthStatus(oxygenDataSet, spo2View, oxygenLevel, R.color.healthy);
         }
         spo2View.setText("O2: " + oxygenLevel + "%");
@@ -457,15 +457,15 @@ public class PatientHealthData_ extends AppCompatActivity {
         if (temperature > 40) {
             showCriticalAlert("Critical: High Temperature!");
             emergencyRateCount++;
-            healthyRateCount = 0;
+
         } else if (temperature < 35) {
             showCriticalAlert("Critical: Low Temperature!");
             emergencyRateCount++;
-            healthyRateCount = 0;
+
         } else {
             setHealthStatus(tempDataSet, tempView, (int) temperature, R.color.healthy);
             healthyRateCount++;
-            emergencyRateCount = 0;
+
         }
         tempView.setText("Temp: " + temperature + " °C");
         updateChart(tempChart, tempDataSet, temperature, tempIndex);
@@ -492,7 +492,7 @@ public class PatientHealthData_ extends AppCompatActivity {
         FirebaseFirestore firestore = FirebaseFirestore.getInstance();
         firestore.collection("patient_collection").document(uid)
                 .collection("health_records")
-                .orderBy("datetime_captured", Query.Direction.DESCENDING)
+                .orderBy(FieldPath.documentId(), Query.Direction.DESCENDING)
                 .limit(1)
                 .get()
                 .addOnCompleteListener(task -> {
@@ -512,10 +512,10 @@ public class PatientHealthData_ extends AppCompatActivity {
     }
 
     private void applyStressLevelChanges() {
-        if (healthyRateCount >= 3) {
+        if (healthyRateCount % 3 == 0 && healthyRateCount != 0) {
             stressLevel = Math.max(0, stressLevel - 5);
             healthyRateCount = 0;
-        } else if (emergencyRateCount >= 3) {
+        } else if (emergencyRateCount % 3 == 0 && emergencyRateCount != 0) {
             stressLevel = Math.min(100, stressLevel + 25);
             emergencyRateCount = 0;
         }
