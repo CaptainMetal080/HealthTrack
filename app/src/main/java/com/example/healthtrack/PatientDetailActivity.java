@@ -41,7 +41,8 @@ public class PatientDetailActivity extends AppCompatActivity {
     private SemiCircleMeter stressMeter;
     private Button predictButton;
     private HeartRatePredictor predictor;
-    float HRthreshold;
+    float MaxHRthreshold;
+    float MinHRthreshold;
     float predictedROC;
 
     @Override
@@ -89,16 +90,17 @@ public class PatientDetailActivity extends AppCompatActivity {
         }
 
         try {
-            predictedROC = predictor.predict(last10HeartRates); // Get predicted rate of change
+            float predictedROC = predictor.predict(last10HeartRates); // Get predicted rate of change
             float lastHR = last10HeartRates.get(9); // Most recent heart rate
 
             // Calculate threshold: HR should not exceed lastHR * (1 + predictedROC)
-            HRthreshold = lastHR * (1 + predictedROC);
+            MaxHRthreshold = lastHR * (1 + predictedROC);
+            MinHRthreshold = lastHR * (1 - predictedROC);
             boolean anomalyDetected = false;
 
             // Check if any recent HR reading exceeds the threshold
             for (Float hr : last10HeartRates) {
-                if (hr > HRthreshold) {
+                if (hr > MaxHRthreshold || hr<MinHRthreshold) {
                     anomalyDetected = true;
                     break;
                 }
@@ -110,13 +112,13 @@ public class PatientDetailActivity extends AppCompatActivity {
             // Show results
             if (isAnomalyDetected) {
                 Toast.makeText(this, "⚠️ Heart Rate Anomaly Detected!", Toast.LENGTH_LONG).show();
-                Log.w("AnomalyDetection", "Anomaly detected! Last HR: " + lastHR + " Threshold: " + HRthreshold);
+                Log.w("AnomalyDetection", "Anomaly detected! Last HR: " + lastHR + " Threshold: " + MaxHRthreshold);
                 heartText.setTextColor(getColor(R.color.emergency)); // Highlight HR text
             } else {
                 heartText.setTextColor(getColor(R.color.healthy));
             }
 
-            Log.w("Machine Learning Heart Rate", String.format("Predicted ROC: %.2f | Threshold: %.1f BPM", predictedROC, HRthreshold));
+            Log.w("Machine Learning Heart Rate", String.format("Predicted ROC: %.2f | Threshold: %.1f BPM", predictedROC, MaxHRthreshold));
         } catch (Exception e) {
             Toast.makeText(this, "Error making prediction: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
@@ -305,7 +307,7 @@ public class PatientDetailActivity extends AppCompatActivity {
         for (Entry entry : entries) {
             float value = entry.getY();
             if (label.contains("Heart")) {
-                if (value > HRthreshold) {
+                if (value > MaxHRthreshold||value<MinHRthreshold) {
                     colors.add(getColor(R.color.emergency));
                     heartText.setTextColor(R.color.emergency);
                 } else {

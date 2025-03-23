@@ -20,13 +20,11 @@ import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
-import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldPath;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.messaging.FirebaseMessaging;
-import com.google.firebase.messaging.RemoteMessage;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
@@ -43,7 +41,9 @@ public class DoctorHomePage extends AppCompatActivity {
     private String doctorId;
     private TextView drTitle;
     private Button refreshButton;
-
+    private HeartRatePredictor predictor;
+    private float MaxHRthreshold;
+    private float MinHRthreshold;
     private static final int MAX_POINTS = 25; // Consistent with PatientHealthData_nosensor
 
     @Override
@@ -166,6 +166,7 @@ public class DoctorHomePage extends AppCompatActivity {
         configureChart(spo2Chart, 100f);
         configureChart(tempChart, 50f); // Configure temperature chart
 
+        predictor = new HeartRatePredictor(this);
         // Fetch and plot patient data
         fetchPatientGraphs(patientId, heartChart, spo2Chart, tempChart, heartText, spo2Text, tempText, stressMeter, stressText);
 
@@ -200,6 +201,7 @@ public class DoctorHomePage extends AppCompatActivity {
                     List<Entry> spo2Entries = new ArrayList<>();
                     List<Entry> tempEntries = new ArrayList<>(); // Temperature entries
                     List<Entry> stressEntries = new ArrayList<>(); // Stress level entries
+                    List<Float> last10HeartRates = new ArrayList<>();
 
                     // Iterate through the snapshots in reverse order (oldest first)
                     int index = 0;
@@ -213,6 +215,17 @@ public class DoctorHomePage extends AppCompatActivity {
 
                             // Validate data before adding to entries
                             Long heartRate = queryDocument.getLong("heartRate");
+                            if (heartRate != null) {
+                                heartEntries.add(new Entry(index, heartRate));
+                                last10HeartRates.add(heartRate.floatValue());
+                                if (last10HeartRates.size() > 10) {
+                                    last10HeartRates.remove(0); // Keep only the last 10 readings
+                                }
+                                index++;
+                            }
+                            if (last10HeartRates.size() == 10) {
+                                predictHeartRate(last10HeartRates, heartText);
+                            }
                             Long oxygenLevel = queryDocument.getLong("oxygenLevel");
                             Double temperature = queryDocument.getDouble("temperature"); // Fetch temperature
                             Long stressLevel = queryDocument.getLong("stressLevel"); // Fetch stress level
@@ -299,6 +312,31 @@ public class DoctorHomePage extends AppCompatActivity {
                     }
                 });
     }
+    private void predictHeartRate(List<Float> last10HeartRates, TextView heartText) {
+        try {
+            float predictedROC = predictor.predict(last10HeartRates);
+            float lastHR = last10HeartRates.get(9); // Most recent heart rate
+            MaxHRthreshold = lastHR * (1 + predictedROC); // Calculate threshold
+            MinHRthreshold= lastHR * (1 - predictedROC);
+            // Check if any recent HR reading exceeds the threshold
+            boolean anomalyDetected = false;
+            for (Float hr : last10HeartRates) {
+                if (hr > MaxHRthreshold||hr < MinHRthreshold) {
+                    anomalyDetected = true;
+                    break;
+                }
+            }
+            // Update UI based on anomaly detection
+            if (anomalyDetected) {
+                heartText.setTextColor(getColor(R.color.emergency));
+            } else {
+                heartText.setTextColor(getColor(R.color.healthy));
+            }
+
+        } catch (Exception e) {
+            Log.e("HeartRatePrediction", "Error predicting heart rate", e);
+        }
+    }
     private void sendToFirebaseFunction(Map<String, String> notificationPayload) {
         // Your Firebase Cloud Function code here to send the notification
         // This function should use Firebase Admin SDK to trigger the push notification
@@ -337,7 +375,7 @@ public class DoctorHomePage extends AppCompatActivity {
         for (Entry entry : entries) {
             float value = entry.getY();
             if (label.contains("Heart")) {
-                if (value > 160 || value < 50) {
+                if (value > MaxHRthreshold|| value<MinHRthreshold) {
                     colors.add(getColor(R.color.emergency));
                 } else {
                     colors.add(getColor(R.color.healthy));

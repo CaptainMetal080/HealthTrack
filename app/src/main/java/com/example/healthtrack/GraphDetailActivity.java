@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
@@ -15,7 +14,7 @@ import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
-import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldPath;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -36,8 +35,14 @@ public class GraphDetailActivity extends AppCompatActivity {
     private LineChart detailedChart;
     private TextView patientNameView;
     private TextView patientAgeView;
-    private Button callPatientButton;
+    private Button callButton;
     private Button callEmergencyButton;
+    private String currentUserId;
+    private boolean isDoctor;
+    private HeartRatePredictor predictor;
+    private float MaxHRthreshold;
+    private float MinHRthreshold;
+    private float predictedROC;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,18 +55,40 @@ public class GraphDetailActivity extends AppCompatActivity {
         detailedChart = findViewById(R.id.detailedChart);
         patientNameView = findViewById(R.id.patientName);
         patientAgeView = findViewById(R.id.patientAge);
-        callPatientButton = findViewById(R.id.callPatientButton);
+        callButton = findViewById(R.id.callPatientButton);
         callEmergencyButton = findViewById(R.id.callEmergencyButton);
+        currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+        // Determine if the current user is a doctor or a patient
+        checkUserRole();
 
         // Fetch and display patient data
         fetchPatientData();
 
+        // Initialize the predictor
+        predictor = new HeartRatePredictor(this);
         // Fetch and plot graph data
         fetchGraphData();
 
         // Set up button click listeners
-        callPatientButton.setOnClickListener(v -> callPatient());
+        callButton.setOnClickListener(v -> callContact());
         callEmergencyButton.setOnClickListener(v -> callEmergency());
+    }
+
+    private void checkUserRole() {
+        db.collection("doctor_collection").document(currentUserId).get()
+                .addOnSuccessListener(document -> {
+                    if (document.exists()) {
+                        isDoctor = true;
+                        callButton.setText("Call Patient");
+                    } else {
+                        isDoctor = false;
+                        callButton.setText("Call Doctor");
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("GraphDetailActivity", "Error checking user role", e);
+                });
     }
 
     private void fetchPatientData() {
@@ -72,6 +99,7 @@ public class GraphDetailActivity extends AppCompatActivity {
                         String firstName = document.getString("first_name");
                         String lastName = document.getString("last_name");
                         String phoneNumber = document.getString("phone");
+                        String doctorId = document.getString("doctor_ID");
 
                         // Display patient name
                         patientNameView.setText("Name: " + firstName + " " + lastName);
@@ -80,8 +108,6 @@ public class GraphDetailActivity extends AppCompatActivity {
                         Object dateOfBirthObj = document.get("date_of_birth");
                         if (dateOfBirthObj != null) {
                             String dateOfBirth;
-
-
                             com.google.firebase.Timestamp timestamp = (com.google.firebase.Timestamp) dateOfBirthObj;
                             Date birthDate = timestamp.toDate();
                             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
@@ -89,16 +115,61 @@ public class GraphDetailActivity extends AppCompatActivity {
 
                             int age = calculateAge(dateOfBirth);
                             patientAgeView.setText("Age: " + age);
-
                         }
 
-                        // Store phone number for calling
-                        callPatientButton.setTag(phoneNumber); // Store phone number in the button's tag
+                        // Store phone number or doctor ID for calling
+                        if (isDoctor) {
+                            callButton.setTag(phoneNumber); // Store patient's phone number
+                        } else {
+                            callButton.setTag(doctorId); // Store doctor's ID
+                        }
                     }
                 })
                 .addOnFailureListener(e -> {
                     Log.e("GraphDetailActivity", "Error fetching patient data", e);
                 });
+    }
+
+    private void callContact() {
+        if (isDoctor) {
+            String phoneNumber = (String) callButton.getTag();
+            if (phoneNumber != null && !phoneNumber.isEmpty()) {
+                Intent intent = new Intent(Intent.ACTION_DIAL);
+                intent.setData(Uri.parse("tel:" + phoneNumber));
+                startActivity(intent);
+            } else {
+                Log.e("GraphDetailActivity", "No phone number found for the patient");
+            }
+        } else {
+            String doctorId = (String) callButton.getTag();
+            if (doctorId != null) {
+                db.collection("doctor_collection").document(doctorId).get()
+                        .addOnSuccessListener(document -> {
+                            if (document.exists()) {
+                                String doctorPhoneNumber = document.getString("phone");
+                                if (doctorPhoneNumber != null && !doctorPhoneNumber.isEmpty()) {
+                                    Intent intent = new Intent(Intent.ACTION_DIAL);
+                                    intent.setData(Uri.parse("tel:" + doctorPhoneNumber));
+                                    startActivity(intent);
+                                } else {
+                                    Log.e("GraphDetailActivity", "No phone number found for the doctor");
+                                }
+                            } else {
+                                Log.e("GraphDetailActivity", "Doctor document does not exist");
+                            }
+                        })
+                        .addOnFailureListener(e -> {
+                            Log.e("GraphDetailActivity", "Error fetching doctor's phone number", e);
+                        });
+            } else {
+                Log.e("GraphDetailActivity", "No doctor ID found for the patient");
+            }
+        }
+    }
+
+    private void callEmergency() {
+        // No implementation needed for calling 911
+        Log.d("GraphDetailActivity", "Call 911 button clicked");
     }
 
     private int calculateAge(String dateOfBirth) {
@@ -121,23 +192,6 @@ public class GraphDetailActivity extends AppCompatActivity {
         }
         return 0; // Default age if calculation fails
     }
-
-    private void callPatient() {
-        String phoneNumber = (String) callPatientButton.getTag();
-        if (phoneNumber != null && !phoneNumber.isEmpty()) {
-            Intent intent = new Intent(Intent.ACTION_DIAL);
-            intent.setData(Uri.parse("tel:" + phoneNumber));
-            startActivity(intent);
-        } else {
-            Log.e("GraphDetailActivity", "No phone number found for the patient");
-        }
-    }
-
-    private void callEmergency() {
-        // No implementation needed for calling 911
-        Log.d("GraphDetailActivity", "Call 911 button clicked");
-    }
-
     // Rest of the code (fetchGraphData, updateChart, etc.) remains unchanged
     private void fetchGraphData() {
         db.collection("patient_collection").document(patientId)
@@ -152,7 +206,7 @@ public class GraphDetailActivity extends AppCompatActivity {
                     if (snapshots != null && !snapshots.isEmpty()) {
                         List<Entry> entries = new ArrayList<>();
                         List<String> labels = new ArrayList<>();
-
+                        List<Float> last10HeartRates = new ArrayList<>();
                         // Iterate through the snapshots in reverse order (oldest first)
                         int index = 0;
                         List<DocumentSnapshot> documents = snapshots.getDocuments();
@@ -163,6 +217,12 @@ public class GraphDetailActivity extends AppCompatActivity {
                             switch (graphType) {
                                 case "heartRate":
                                     value = document.getLong("heartRate");
+                                    if (value != null) {
+                                        last10HeartRates.add(value.floatValue());
+                                        if (last10HeartRates.size() > 10) {
+                                            last10HeartRates.remove(0); // Keep only the last 10 readings
+                                        }
+                                    }
                                     break;
                                 case "oxygenLevel":
                                     value = document.getLong("oxygenLevel");
@@ -191,6 +251,10 @@ public class GraphDetailActivity extends AppCompatActivity {
                                 index++;
                             }
                         }
+                        // Predict heart rate threshold if we have 10 readings
+                        if (graphType.equals("heartRate") && last10HeartRates.size() == 10) {
+                            predictHeartRate(last10HeartRates);
+                        }
 
                         // Update the chart with the fetched data
                         updateChart(entries, labels);
@@ -200,6 +264,18 @@ public class GraphDetailActivity extends AppCompatActivity {
                 });
     }
 
+    private void predictHeartRate(List<Float> last10HeartRates) {
+        try {
+            predictedROC = predictor.predict(last10HeartRates);
+            float lastHR = last10HeartRates.get(9); // Most recent heart rate
+            MaxHRthreshold = lastHR * (1 + predictedROC); // Calculate threshold
+            MinHRthreshold = lastHR * (1 - predictedROC);
+
+            Log.d("HeartRatePrediction", "Predicted Threshold: " + MaxHRthreshold);
+        } catch (Exception e) {
+            Log.e("HeartRatePrediction", "Error predicting heart rate", e);
+        }
+    }
     private void updateChart(List<Entry> entries, List<String> labels) {
         if (entries.isEmpty()) {
             Log.w("ChartUpdate", "No data to plot for " + graphType);
@@ -214,7 +290,7 @@ public class GraphDetailActivity extends AppCompatActivity {
             float value = entry.getY();
             switch (graphType) {
                 case "heartRate":
-                    if (value > 160 || value < 50) {
+                    if (value > MaxHRthreshold||value<MinHRthreshold) {
                         colors.add(getColor(R.color.emergency));
                     } else {
                         colors.add(getColor(R.color.healthy));

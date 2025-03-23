@@ -13,6 +13,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.widget.Toast;
 import android.widget.TextView;
@@ -28,6 +29,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.functions.FirebaseFunctions;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -412,18 +414,15 @@ public class PatientHealthData_ extends AppCompatActivity {
                 });
     }
     private void handleHeartRate() {
-        if (heartRate > 140) {
+        if (heartRate > 100) {
             showCriticalAlert("Critical: High Heart Rate!");
             sendEmergencyNotification("Emergency: High Heart Rate", "Patient has a High heart rate ");
             emergencyRateCount++;
-
-            callEmergency();
         } else if (heartRate < 50) {
             showCriticalAlert("Critical: Slow Heart Rate!");
             sendEmergencyNotification("Emergency: Low Heart Rate", "Patient has a low heart rate ");
             emergencyRateCount++;
 
-            callEmergency();
         } else {
             healthyRateCount++;
 
@@ -437,7 +436,6 @@ public class PatientHealthData_ extends AppCompatActivity {
     private void handleOxygenLevel() {
         if (oxygenLevel < 90) {
             showCriticalAlert("Critical: Low SpO2 detected!");
-            callEmergency();
             emergencyRateCount++;
 
         } else if (oxygenLevel <= 94) {
@@ -474,7 +472,7 @@ public class PatientHealthData_ extends AppCompatActivity {
 
     private void showCriticalAlert(String message) {
         Toast.makeText(PatientHealthData_.this, message, Toast.LENGTH_SHORT).show();
-        callEmergency();
+
     }
 
     private void showMildAlert(String message) {
@@ -518,6 +516,9 @@ public class PatientHealthData_ extends AppCompatActivity {
         } else if (emergencyRateCount % 3 == 0 && emergencyRateCount != 0) {
             stressLevel = Math.min(100, stressLevel + 25);
             emergencyRateCount = 0;
+            if(emergencyRateCount%10==0) {
+                callEmergency();
+            }
         }
 
         // Ensure stress level stays within bounds (0 to 100)
@@ -584,31 +585,70 @@ public class PatientHealthData_ extends AppCompatActivity {
     }
 
     private void callEmergency() {
-//        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-//        builder.setTitle("Emergency Call");
-//        builder.setMessage("Critical Health condition detected. Call emergency?");
-//
-//        builder.setPositiveButton("Call", (dialog, id) -> Call());
-//        builder.setNegativeButton("Cancel", (dialog, id) -> dialog.dismiss());
-//
-//        AlertDialog dialog = builder.create();
-//        dialog.show();
-//
-//        new Handler().postDelayed(() -> {
-//            if (dialog.isShowing()) {
-//                Call();
-//            }
-//        }, 5000); // Delay of 5 seconds
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Emergency Call");
+        builder.setMessage("Critical Health condition detected. Call Doctor? (Automatically calling in 10 seconds)");
+
+        builder.setPositiveButton("Call", (dialog, id) -> Call());
+        builder.setNegativeButton("Cancel", (dialog, id) -> dialog.dismiss());
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+
+        new Handler().postDelayed(() -> {
+            if (dialog.isShowing()) {
+                Call();
+            }
+        }, 10000); // Delay of 10 seconds
     }
 
+    //call patients doctor
     private void Call() {
-        try {
-            Intent phoneIntent = new Intent(Intent.ACTION_CALL);
-            phoneIntent.setData(Uri.parse("tel:1234123412"));  // Replace with actual number
-            startActivity(phoneIntent);
-        } catch (Exception e) {
-            Toast.makeText(this, "Error making the call: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
+        String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        FirebaseFirestore.getInstance().collection("patient_collection").document(uid)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        // Fetch the doctor_ID from the patient's document
+                        String doctorId = documentSnapshot.getString("doctor_ID");
+                        if (doctorId != null) {
+                            // Fetch the doctor's document to get the phone number
+                            FirebaseFirestore.getInstance().collection("doctor_collection").document(doctorId)
+                                    .get()
+                                    .addOnSuccessListener(doctorDocument -> {
+                                        if (doctorDocument.exists()) {
+                                            String doctorPhoneNumber = doctorDocument.getString("phone");
+                                            if (doctorPhoneNumber != null) {
+                                                // Initiate the call
+                                                try {
+
+                                                    Intent phoneIntent = new Intent(Intent.ACTION_CALL);
+                                                    phoneIntent.setData(Uri.parse("tel:" + doctorPhoneNumber));
+                                                    startActivity(phoneIntent);
+
+                                                } catch (Exception e) {
+                                                    Toast.makeText(this, "Error making the call: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                                }
+                                            } else {
+                                                Toast.makeText(this, "Doctor's phone number not found.", Toast.LENGTH_SHORT).show();
+                                            }
+                                        } else {
+                                            Toast.makeText(this, "Doctor document does not exist.", Toast.LENGTH_SHORT).show();
+                                        }
+                                    })
+                                    .addOnFailureListener(e -> {
+                                        Toast.makeText(this, "Failed to fetch doctor's document: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                    });
+                        } else {
+                            Toast.makeText(this, "No doctor assigned to this patient.", Toast.LENGTH_SHORT).show();
+                        }
+                    } else {
+                        Toast.makeText(this, "Patient document does not exist.", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Failed to fetch patient document: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
     }
 
     // Configure the chart's appearance and properties
