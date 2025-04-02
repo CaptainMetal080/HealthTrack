@@ -208,87 +208,78 @@ public class DoctorHomePage extends AppCompatActivity {
                     List<DocumentSnapshot> documents = snapshots.getDocuments();
                     for (int i = documents.size() - 1; i >= 0; i--) {
                         DocumentSnapshot document = documents.get(i);
+                        Long heartRate = document.getLong("heartRate");
+                        Long oxygenLevel = document.getLong("oxygenLevel");
+                        Double temperature = document.getDouble("temperature");
+                        Long stressLevel = document.getLong("stressLevel");
 
-                        // Cast DocumentSnapshot to QueryDocumentSnapshot
-                        if (document instanceof QueryDocumentSnapshot) {
-                            QueryDocumentSnapshot queryDocument = (QueryDocumentSnapshot) document;
+                        if (heartRate != null && oxygenLevel != null && temperature != null && stressLevel != null) {
+                            // Add data to entries
+                            heartEntries.add(new Entry(i, heartRate));
+                            spo2Entries.add(new Entry(i, oxygenLevel));
+                            tempEntries.add(new Entry(i, temperature.floatValue()));
+                            stressEntries.add(new Entry(i, stressLevel));
 
-                            // Validate data before adding to entries
-                            Long heartRate = queryDocument.getLong("heartRate");
-                            if (heartRate != null) {
-                                heartEntries.add(new Entry(index, heartRate));
-                                last10HeartRates.add(heartRate.floatValue());
-                                if (last10HeartRates.size() > 10) {
-                                    last10HeartRates.remove(0); // Keep only the last 10 readings
-                                }
-                                index++;
-                            }
-                            if (last10HeartRates.size() == 10) {
-                                predictHeartRate(last10HeartRates, heartText);
-                            }
-                            Long oxygenLevel = queryDocument.getLong("oxygenLevel");
-                            Double temperature = queryDocument.getDouble("temperature"); // Fetch temperature
-                            Long stressLevel = queryDocument.getLong("stressLevel"); // Fetch stress level
-
-                            if (heartRate != null && oxygenLevel != null && temperature != null && stressLevel != null) {
-                                // Ensure valid values
-                                if (heartRate >= 0 && oxygenLevel >= 0 && temperature >= 0 && stressLevel >= 0) {
-                                    heartEntries.add(new Entry(index, heartRate));
-                                    spo2Entries.add(new Entry(index, oxygenLevel));
-                                    tempEntries.add(new Entry(index, temperature.floatValue())); // Add temperature
-                                    stressEntries.add(new Entry(index, stressLevel)); // Add stress level
-
-                                    // Check for irregularities
-                                    if (heartRate > 160 || heartRate < 50) {
-                                        heartText.setTextColor(getColor(R.color.emergency));
-                                    } else {
-                                        heartText.setTextColor(getColor(R.color.healthy));
-                                    }
-                                    heartText.setText("BPM: " + heartRate);
-
-                                    if (oxygenLevel < 90) {
-                                        spo2Text.setTextColor(getColor(R.color.emergency));
-                                    } else if (oxygenLevel <= 94) {
-                                        spo2Text.setTextColor(getColor(R.color.mild));
-                                    } else {
-                                        spo2Text.setTextColor(getColor(R.color.healthy));
-                                    }
-                                    spo2Text.setText("O2: " + oxygenLevel + "%");
-
-                                    // Update temperature text
-                                    if (temperature > 40) {
-                                        tempText.setTextColor(getColor(R.color.emergency));
-                                    } else if (temperature < 35) {
-                                        tempText.setTextColor(getColor(R.color.emergency));
-                                    } else {
-                                        tempText.setTextColor(getColor(R.color.healthy));
-                                    }
-                                    tempText.setText(String.format("Temp: %.1f°C", temperature));
-
-                                    // Update stress meter
-                                    stressMeter.setProgress(stressLevel.floatValue()); // Update stress meter
-                                    stressText.setText(String.format("Stress: %.0f", stressLevel.floatValue()));
-
-                                    index++;
-                                }
+                            // Collect last 10 heart rates for prediction
+                            last10HeartRates.add(heartRate.floatValue());
+                            if (last10HeartRates.size() > 10) {
+                                last10HeartRates.remove(0);
                             }
                         }
                     }
 
-                    // Log the final entries
-                    Log.d("ChartData", "Heart Entries: " + heartEntries);
-                    Log.d("ChartData", "Oxygen Entries: " + spo2Entries);
-                    Log.d("ChartData", "Temperature Entries: " + tempEntries);
-                    Log.d("ChartData", "Stress Entries: " + stressEntries);
+                    // Update UI with latest values if available
+                    if (!heartEntries.isEmpty()) {
+                        float latestHeartRate = heartEntries.get(heartEntries.size() - 1).getY();
+                        heartText.setText("BPM: " + (int) latestHeartRate);
 
-                    // Update charts only if data is valid
-                    if (!heartEntries.isEmpty() && !spo2Entries.isEmpty() && !tempEntries.isEmpty() && !stressEntries.isEmpty()) {
-                        updateChart(heartChart, heartEntries, "Heart Rate", heartText);
-                        updateChart(spo2Chart, spo2Entries, "Oxygen Level", spo2Text);
-                        updateChart(tempChart, tempEntries, "Temperature", tempText); // Update temperature chart
-                    } else {
-                        Log.w("Firestore", "No valid data to plot.");
+                        // Check for irregularities
+                        if (latestHeartRate > 160 || latestHeartRate < 50) {
+                            heartText.setTextColor(getColor(R.color.emergency));
+                        } else {
+                            heartText.setTextColor(getColor(R.color.healthy));
+                        }
                     }
+
+                    if (!spo2Entries.isEmpty()) {
+                        float latestOxygenLevel = spo2Entries.get(spo2Entries.size() - 1).getY();
+                        spo2Text.setText("O2: " + (int) latestOxygenLevel + "%");
+
+                        if (latestOxygenLevel < 90) {
+                            spo2Text.setTextColor(getColor(R.color.emergency));
+                        } else if (latestOxygenLevel <= 94) {
+                            spo2Text.setTextColor(getColor(R.color.mild));
+                        } else {
+                            spo2Text.setTextColor(getColor(R.color.healthy));
+                        }
+                    }
+
+                    if (!tempEntries.isEmpty()) {
+                        float latestTemperature = tempEntries.get(tempEntries.size() - 1).getY();
+                        tempText.setText(String.format("Temp: %.1f°C", latestTemperature));
+
+                        if (latestTemperature > 40 || latestTemperature < 35) {
+                            tempText.setTextColor(getColor(R.color.emergency));
+                        } else {
+                            tempText.setTextColor(getColor(R.color.healthy));
+                        }
+                    }
+
+                    if (!stressEntries.isEmpty()) {
+                        float latestStressLevel = stressEntries.get(stressEntries.size() - 1).getY();
+                        stressMeter.setProgress(latestStressLevel);
+                        stressText.setText(String.format("Stress: %.0f%%", latestStressLevel));
+                    }
+
+                    // Make prediction if we have enough data
+                    if (last10HeartRates.size() == 10) {
+                        predictHeartRate(last10HeartRates, heartText);
+                    }
+
+                    // Update charts
+                    updateChart(heartChart, heartEntries, "Heart Rate", heartText);
+                    updateChart(spo2Chart, spo2Entries, "Oxygen Level", spo2Text);
+                    updateChart(tempChart, tempEntries, "Temperature", tempText);
                 });
     }
     private void sendEmergencyNotification(String title, String message) {

@@ -200,18 +200,14 @@ public class PatientDetailActivity extends AppCompatActivity {
                                 temperatureEntries.add(new Entry(index, temperature.floatValue()));
                                 stressLevelEntries.add(new Entry(index, stressLevel));
 
-                                // Collect last 10 readings for prediction
-                                predictionEntries.add(heartRate.floatValue());
-                                if (predictionEntries.size() > 10) {
-                                    predictionEntries.remove(0); // Keep only the last 10
-                                }
-
                                 index++;
                             }
                         }
 
-                        // Ensure we have exactly 10 readings before making a prediction
-                        if (predictionEntries.size() == 10) {
+                        if (heartRateEntries.size() >= 10) {
+                            for (int i = heartRateEntries.size() - 10; i < heartRateEntries.size(); i++) {
+                                predictionEntries.add(heartRateEntries.get(i).getY());
+                            }
                             predictHeartRate(predictionEntries);
                         }
 
@@ -299,7 +295,6 @@ public class PatientDetailActivity extends AppCompatActivity {
 
         // Clear existing data
         chart.clear();
-
         LineDataSet dataSet = new LineDataSet(entries, label);
 
         // Configure colors for each point based on its value
