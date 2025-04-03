@@ -15,6 +15,7 @@ import android.Manifest;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
@@ -25,9 +26,9 @@ import com.google.firebase.firestore.FieldPath;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,12 +41,9 @@ public class DoctorHomePage extends AppCompatActivity {
     private String doctorId;
     private TextView drTitle;
     private Button refreshButton;
-    private boolean isAnomalyDetected = false;
     private HeartRatePredictor predictor;
-    float MaxHRthreshold;
-    float MinHRthreshold;
-    private AnomalyTracker heartRateAnomalyTracker = new AnomalyTracker();
-    private int currentDataIndex = 0; // To track the position of new data
+    private float MaxHRthreshold;
+    private float MinHRthreshold;
     private static final int MAX_POINTS = 25; // Consistent with PatientHealthData_nosensor
 
     @Override
@@ -191,7 +189,7 @@ public class DoctorHomePage extends AppCompatActivity {
                                     SemiCircleMeter stressMeter, TextView stressText) {
         db.collection("patient_collection").document(patientId)
                 .collection("health_records")
-                .orderBy(FieldPath.documentId(), Query.Direction.DESCENDING)
+                .orderBy(FieldPath.documentId(), Query.Direction.DESCENDING) // Newest first
                 .limit(MAX_POINTS)
                 .addSnapshotListener((snapshots, error) -> {
                     if (error != null) {
@@ -199,63 +197,68 @@ public class DoctorHomePage extends AppCompatActivity {
                         return;
                     }
 
-                    if (snapshots == null || snapshots.isEmpty()) {
-                        Log.w("Firestore", "No data available for patient: " + patientId);
-                        return;
-                    }
+                    List<Entry> heartEntries = new ArrayList<>();
+                    List<Entry> spo2Entries = new ArrayList<>();
+                    List<Entry> tempEntries = new ArrayList<>(); // Temperature entries
+                    List<Entry> stressEntries = new ArrayList<>(); // Stress level entries
+                    List<Float> last10HeartRates = new ArrayList<>();
 
-                    // Process data in background thread
-                    new Thread(() -> {
-                        List<Entry> heartEntries = new ArrayList<>();
-                        List<Entry> spo2Entries = new ArrayList<>();
-                        List<Entry> tempEntries = new ArrayList<>();
-                        List<Entry> stressEntries = new ArrayList<>();
-                        List<Float> predictionEntries = new ArrayList<>();
+                    // Iterate through the snapshots in reverse order (oldest first)
+                    int index = 0;
+                    List<DocumentSnapshot> documents = snapshots.getDocuments();
+                    for (int i = documents.size() - 1; i >= 0; i--) {
+                        DocumentSnapshot document = documents.get(i);
+                        Long heartRate = document.getLong("heartRate");
+                        Long oxygenLevel = document.getLong("oxygenLevel");
+                        Double temperature = document.getDouble("temperature");
+                        Long stressLevel = document.getLong("stressLevel");
 
-                        // Get documents in chronological order (oldest first)
-                        List<DocumentSnapshot> documents = new ArrayList<>(snapshots.getDocuments());
-                        Collections.reverse(documents);
-                        currentDataIndex = 0; // Reset counter on new data
-                        for (DocumentSnapshot document : documents) {
+                        if (heartRate != null && oxygenLevel != null && temperature != null && stressLevel != null) {
+                            // Add data to entries
+                            heartEntries.add(new Entry(i, heartRate));
+                            spo2Entries.add(new Entry(i, oxygenLevel));
+                            tempEntries.add(new Entry(i, temperature.floatValue()));
+                            stressEntries.add(new Entry(i, stressLevel));
 
-                            Long heartRate = document.getLong("heartRate");
-                            Long oxygenLevel = document.getLong("oxygenLevel");
-                            Double temperature = document.getDouble("temperature");
-                            Long stressLevel = document.getLong("stressLevel");
-
-                            if (heartRate != null && oxygenLevel != null && temperature != null && stressLevel != null) {
-                                heartEntries.add(new Entry(currentDataIndex, heartRate));
-                                spo2Entries.add(new Entry(currentDataIndex, oxygenLevel));
-                                tempEntries.add(new Entry(currentDataIndex, temperature.floatValue()));
-                                stressEntries.add(new Entry(currentDataIndex, stressLevel));
-
-                                if (predictionEntries.size() < 10) {
-                                    predictionEntries.add(0, heartRate.floatValue());
-                                }
-
-                                currentDataIndex++;
+                            // Collect last 10 heart rates for prediction
+                            last10HeartRates.add(heartRate.floatValue());
+                            if (last10HeartRates.size() > 10) {
+                                last10HeartRates.remove(0);
                             }
                         }
+                    }
 
-                        // Update UI on main thread
-                        runOnUiThread(() -> {
-                            if (!stressEntries.isEmpty()) {
-                                float latestStressLevel = stressEntries.get(stressEntries.size() - 1).getY();
-                                stressMeter.setProgress(latestStressLevel);
-                                stressText.setText(String.format("Stress: %.0f%%", latestStressLevel));
-                            }
+                    // Update UI with latest values if available
+                    if (!heartEntries.isEmpty()) {
+                        float latestHeartRate = heartEntries.get(heartEntries.size() - 1).getY();
+                        heartText.setText("BPM: " + (int) latestHeartRate);
+                    }
 
-                            // Make prediction if we have enough data
-                            if (predictionEntries.size() == 10) {
-                                predictHeartRate(predictionEntries);
-                            }
+                    if (!spo2Entries.isEmpty()) {
+                        float latestOxygenLevel = spo2Entries.get(spo2Entries.size() - 1).getY();
+                        spo2Text.setText("O2: " + (int) latestOxygenLevel + "%");
+                    }
 
-                            // Update charts
-                            updateChart(heartChart, heartEntries, "Heart Rate", heartText);
-                            updateChart(spo2Chart, spo2Entries, "Oxygen Level", spo2Text);
-                            updateChart(tempChart, tempEntries, "Temperature", tempText);
-                        });
-                    }).start();
+                    if (!tempEntries.isEmpty()) {
+                        float latestTemperature = tempEntries.get(tempEntries.size() - 1).getY();
+                        tempText.setText("Temp: " + String.format("%.1f", latestTemperature) + "°C");
+                    }
+
+                    if (!stressEntries.isEmpty()) {
+                        float latestStressLevel = stressEntries.get(stressEntries.size() - 1).getY();
+                        stressMeter.setProgress(latestStressLevel);
+                        stressText.setText(String.format("Stress: %.0f%%", latestStressLevel));
+                    }
+
+                    // Make prediction if we have enough data
+                    if (last10HeartRates.size() == 10) {
+                        predictHeartRate(last10HeartRates, heartText);
+                    }
+
+                    // Update charts
+                    updateChart(heartChart, heartEntries, "Heart Rate", heartText);
+                    updateChart(spo2Chart, spo2Entries, "Oxygen Level", spo2Text);
+                    updateChart(tempChart, tempEntries, "Temperature", tempText);
                 });
     }
     private void sendEmergencyNotification(String title, String message) {
@@ -279,29 +282,31 @@ public class DoctorHomePage extends AppCompatActivity {
                     }
                 });
     }
-    private void predictHeartRate(List<Float> last10HeartRates) {
-        if (last10HeartRates.size() != 10) return;
-
+    private void predictHeartRate(List<Float> last10HeartRates, TextView heartText) {
         try {
             float predictedROC = predictor.predict(last10HeartRates);
-            float lastHR = last10HeartRates.get(9);
-
-            MaxHRthreshold = lastHR * (1 + predictedROC);
-            MinHRthreshold = lastHR * (1 - predictedROC);
-
-            // Only check the newest point (currentDataIndex-1)
-            boolean isAnomaly = (lastHR > MaxHRthreshold || lastHR < MinHRthreshold);
-            isAnomalyDetected = isAnomaly;
-
-            if (isAnomaly) {
-                heartRateAnomalyTracker.markAnomaly(currentDataIndex - 1);
-                Toast.makeText(this, "⚠️ Heart Rate Anomaly Detected!", Toast.LENGTH_LONG).show();
+            float lastHR = last10HeartRates.get(9); // Most recent heart rate
+            MaxHRthreshold = lastHR * (1 + predictedROC); // Calculate threshold
+            MinHRthreshold= lastHR * (1 - predictedROC);
+            // Check if any recent HR reading exceeds the threshold
+            boolean anomalyDetected = false;
+            for (Float hr : last10HeartRates) {
+                if (hr > MaxHRthreshold||hr < MinHRthreshold) {
+                    anomalyDetected = true;
+                    break;
+                }
             }
+            // Update UI based on anomaly detection
+            if (anomalyDetected) {
+                heartText.setTextColor(getColor(R.color.emergency));
+            } else {
+                heartText.setTextColor(getColor(R.color.healthy));
+            }
+
         } catch (Exception e) {
-            Toast.makeText(this, "Prediction error", Toast.LENGTH_SHORT).show();
+            Log.e("HeartRatePrediction", "Error predicting heart rate", e);
         }
     }
-
     private void sendToFirebaseFunction(Map<String, String> notificationPayload) {
         // Your Firebase Cloud Function code here to send the notification
         // This function should use Firebase Admin SDK to trigger the push notification
@@ -325,45 +330,38 @@ public class DoctorHomePage extends AppCompatActivity {
     }
 
     private void updateChart(LineChart chart, List<Entry> entries, String label, TextView textView) {
-
-        // Add validation at start of method
         if (entries == null || entries.isEmpty()) {
             chart.clear();
             chart.invalidate();
-            Log.w("ChartUpdate", "Empty data for " + label);
             return;
         }
 
-        // Check for invalid entries
-        for (Entry entry : entries) {
-            if (Float.isNaN(entry.getX())){
-                entry.setX(0);
-            }
-            if (Float.isNaN(entry.getY())) {
-                entry.setY(0);
-            }
-        }
-        if (entries.isEmpty()) {
-            Log.w("ChartUpdate", "No data to plot for " + label);
-            return;
-        }
-
-        // Clear existing data
-        chart.clear();
-
-        LineDataSet dataSet = new LineDataSet(entries, label);
-
-        // Configure colors for each point based on its value
-        List<Integer> colors = new ArrayList<>();
+        // Reindex entries properly
+        List<Entry> validEntries = new ArrayList<>();
         for (int i = 0; i < entries.size(); i++) {
             Entry entry = entries.get(i);
-            float value = entry.getY();
+            if (!Float.isNaN(entry.getY()) && !Float.isInfinite(entry.getY())) {
+                validEntries.add(new Entry(i, entry.getY()));
+            }
+        }
 
-            boolean isAnomaly = (i == entries.size() - 1) &&
-                    (value > MaxHRthreshold || value < MinHRthreshold);
+        if (validEntries.isEmpty()) {
+            chart.clear();
+            chart.invalidate();
+            return;
+        }
+
+        LineDataSet dataSet = new LineDataSet(validEntries, label);
+
+        // Configure colors
+        List<Integer> colors = new ArrayList<>();
+        int textColor = R.color.healthy;
+
+        for (int i = 0; i < validEntries.size(); i++) {
+            float value = validEntries.get(i).getY();
 
             if (label.contains("Heart")) {
-                if (heartRateAnomalyTracker.isAnomaly(i) || ((value > MaxHRthreshold || value < MinHRthreshold))) {
+                if (value > MaxHRthreshold || value < MinHRthreshold) {
                     colors.add(getColor(R.color.emergency));
                     textView.setTextColor(getColor(R.color.emergency));
                 } else {

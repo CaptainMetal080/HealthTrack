@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -23,6 +24,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldPath;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,12 +42,12 @@ public class PatientDetailActivity extends AppCompatActivity {
     private TextView tempText;
     private TextView stressText;
     private SemiCircleMeter stressMeter;
+    private Button predictButton;
     private HeartRatePredictor predictor;
     float MaxHRthreshold;
     float MinHRthreshold;
-    private AnomalyTracker heartRateAnomalyTracker = new AnomalyTracker();
-    private int currentDataIndex = 0; // To track the position of new data
-
+    float predictedROC;
+    private int currentDataIndex = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,25 +88,43 @@ public class PatientDetailActivity extends AppCompatActivity {
     }
 
     private void predictHeartRate(List<Float> last10HeartRates) {
-        if (last10HeartRates.size() != 10) return;
+        if (last10HeartRates.size() != 10) {
+            Log.e("PredictHeartRate", "Insufficient data for prediction");
+            return;
+        }
 
         try {
-            float predictedROC = predictor.predict(last10HeartRates);
-            float lastHR = last10HeartRates.get(9);
+            float predictedROC = predictor.predict(last10HeartRates); // Get predicted rate of change
+            float lastHR = last10HeartRates.get(9); // Most recent heart rate
 
+            // Calculate threshold: HR should not exceed lastHR * (1 + predictedROC)
             MaxHRthreshold = lastHR * (1 + predictedROC);
             MinHRthreshold = lastHR * (1 - predictedROC);
+            boolean anomalyDetected = false;
 
-            // Only check the newest point (currentDataIndex-1)
-            boolean isAnomaly = (lastHR > MaxHRthreshold || lastHR < MinHRthreshold);
-            isAnomalyDetected = isAnomaly;
-
-            if (isAnomaly) {
-                heartRateAnomalyTracker.markAnomaly(currentDataIndex - 1);
-                Toast.makeText(this, "⚠️ Heart Rate Anomaly Detected!", Toast.LENGTH_LONG).show();
+            // Check if any recent HR reading exceeds the threshold
+            for (Float hr : last10HeartRates) {
+                if (hr > MaxHRthreshold || hr<MinHRthreshold) {
+                    anomalyDetected = true;
+                    break;
+                }
             }
+
+            // Update global anomaly status
+            isAnomalyDetected = anomalyDetected;
+
+            // Show results
+            if (isAnomalyDetected) {
+                Toast.makeText(this, "⚠️ Heart Rate Anomaly Detected!", Toast.LENGTH_LONG).show();
+                Log.w("AnomalyDetection", "Anomaly detected! Last HR: " + lastHR + " Threshold: " + MaxHRthreshold);
+                heartText.setTextColor(getColor(R.color.emergency)); // Highlight HR text
+            } else {
+                heartText.setTextColor(getColor(R.color.healthy));
+            }
+
+            Log.w("Machine Learning Heart Rate", String.format("Predicted ROC: %.2f | Threshold: %.1f BPM", predictedROC, MaxHRthreshold));
         } catch (Exception e) {
-            Toast.makeText(this, "Prediction error", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Error making prediction: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -281,6 +301,7 @@ public class PatientDetailActivity extends AppCompatActivity {
         chart.getAxisLeft().setAxisMaximum(max); // Maximum Y-axis value
         chart.getAxisLeft().setGranularity(1f);  // Prevent duplicates on Y-axis
 
+
         if (chart.getId() == R.id.heartChart) {
             LimitLine upperLimit = new LimitLine(MaxHRthreshold, "Upper Threshold");
             upperLimit.setLineColor(Color.RED);
@@ -298,52 +319,68 @@ public class PatientDetailActivity extends AppCompatActivity {
             leftAxis.addLimitLine(upperLimit);
             leftAxis.addLimitLine(lowerLimit);
         }
+
     }
 
     @SuppressLint("ResourceAsColor")
     private void updateChart(LineChart chart, List<Entry> entries, String label, TextView textView) {
-        if (entries.isEmpty()) {
+        if (entries == null || entries.isEmpty()) {
+            chart.clear();
+            chart.invalidate();
             Log.w("ChartUpdate", "No data to plot for " + label);
             return;
         }
 
-        // Clear existing data
-        chart.clear();
-        LineDataSet dataSet = new LineDataSet(entries, label);
-
-        // Configure colors for each point based on its value
-        List<Integer> colors = new ArrayList<>();
+        // Create new list with properly indexed entries
+        List<Entry> validEntries = new ArrayList<>();
         for (int i = 0; i < entries.size(); i++) {
             Entry entry = entries.get(i);
-            float value = entry.getY();
+            if (!Float.isNaN(entry.getY()) && !Float.isInfinite(entry.getY())) {
+                validEntries.add(new Entry(i, entry.getY())); // Reindex properly
+            }
+        }
 
-            boolean isAnomaly = (i == entries.size() - 1) &&
-                    (value > MaxHRthreshold || value < MinHRthreshold);
+        if (validEntries.isEmpty()) {
+            chart.clear();
+            chart.invalidate();
+            return;
+        }
+
+        LineDataSet dataSet = new LineDataSet(validEntries, label);
+
+        // Configure colors
+        List<Integer> colors = new ArrayList<>();
+        int textColor = R.color.healthy;
+
+        for (int i = 0; i < validEntries.size(); i++) {
+            float value = validEntries.get(i).getY();
 
             if (label.contains("Heart")) {
-                if (heartRateAnomalyTracker.isAnomaly(i) || ((value > MaxHRthreshold || value < MinHRthreshold))) {
+                if (value > MaxHRthreshold || value < MinHRthreshold) {
                     colors.add(getColor(R.color.emergency));
+                    textView.setTextColor(R.color.emergency);
                 } else {
                     colors.add(getColor(R.color.healthy));
+                    textView.setTextColor(R.color.healthy);
                 }
-            }  else if (label.contains("Oxygen")) {
+            } else if (label.contains("Oxygen")) {
                 if (value < 90) {
                     colors.add(getColor(R.color.emergency));
-                    spo2Text.setTextColor(R.color.emergency);
+                    textView.setTextColor(R.color.emergency);
                 } else if (value <= 94) {
                     colors.add(getColor(R.color.mild));
-                    spo2Text.setTextColor(R.color.mild);
+                    textView.setTextColor(R.color.mild);
                 } else {
                     colors.add(getColor(R.color.healthy));
-                    spo2Text.setTextColor(R.color.healthy);
+                    textView.setTextColor(R.color.healthy);
                 }
             } else if (label.contains("Temperature")) {
                 if (value > 40 || value < 35) {
                     colors.add(getColor(R.color.emergency));
-                    tempText.setTextColor(R.color.emergency);
+                    textView.setTextColor(R.color.emergency);
                 } else {
                     colors.add(getColor(R.color.healthy));
-                    tempText.setTextColor(R.color.healthy);
+                    textView.setTextColor(R.color.healthy);
                 }
             }
         }
