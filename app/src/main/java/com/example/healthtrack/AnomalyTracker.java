@@ -3,7 +3,7 @@ package com.example.healthtrack;
 import java.util.HashMap;
 import java.util.Map;
 
-class AnomalyTracker {
+public class AnomalyTracker {
     private Map<Integer, Boolean> anomalyMap = new HashMap<>();
 
     public void markAnomaly(int index) {
