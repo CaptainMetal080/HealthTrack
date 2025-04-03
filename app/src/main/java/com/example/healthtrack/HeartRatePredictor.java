@@ -2,6 +2,8 @@ package com.example.healthtrack;
 
 import android.content.Context;
 import android.util.Log;
+import android.widget.Toast;
+
 import org.pytorch.IValue;
 import org.pytorch.Module;
 import org.pytorch.Tensor;

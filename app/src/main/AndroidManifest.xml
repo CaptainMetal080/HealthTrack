@@ -38,13 +38,11 @@
         </activity>
 
         <activity android:name=".WelcomeScreen" />
-        <activity android:name=".PatientHealthData" />
         <activity android:name=".PatientHealthData_" />
         <activity android:name=".PatientHealthData_nosensor" />
         <activity android:name=".GraphDetailActivity" />
         <activity android:name=".DoctorHomePage" />
         <activity android:name=".PatientDetailActivity" />
-        <activity android:name=".HeartRatePredictionActivity" />
 
         <receiver
             android:name="com.google.firebase.iid.FirebaseInstanceIdReceiver"

@@ -14,7 +14,9 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.LimitLine;
 import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
@@ -25,6 +27,7 @@ import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class PatientDetailActivity extends AppCompatActivity {
@@ -39,11 +42,12 @@ public class PatientDetailActivity extends AppCompatActivity {
     private TextView tempText;
     private TextView stressText;
     private SemiCircleMeter stressMeter;
-    private Button predictButton;
     private HeartRatePredictor predictor;
     float MaxHRthreshold;
     float MinHRthreshold;
-    float predictedROC;
+    private AnomalyTracker heartRateAnomalyTracker = new AnomalyTracker();
+    private int currentDataIndex = 0; // To track the position of new data
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,43 +88,25 @@ public class PatientDetailActivity extends AppCompatActivity {
     }
 
     private void predictHeartRate(List<Float> last10HeartRates) {
-        if (last10HeartRates.size() != 10) {
-            Log.e("PredictHeartRate", "Insufficient data for prediction");
-            return;
-        }
+        if (last10HeartRates.size() != 10) return;
 
         try {
-            float predictedROC = predictor.predict(last10HeartRates); // Get predicted rate of change
-            float lastHR = last10HeartRates.get(9); // Most recent heart rate
+            float predictedROC = predictor.predict(last10HeartRates);
+            float lastHR = last10HeartRates.get(9);
 
-            // Calculate threshold: HR should not exceed lastHR * (1 + predictedROC)
             MaxHRthreshold = lastHR * (1 + predictedROC);
             MinHRthreshold = lastHR * (1 - predictedROC);
-            boolean anomalyDetected = false;
 
-            // Check if any recent HR reading exceeds the threshold
-            for (Float hr : last10HeartRates) {
-                if (hr > MaxHRthreshold || hr<MinHRthreshold) {
-                    anomalyDetected = true;
-                    break;
-                }
-            }
+            // Only check the newest point (currentDataIndex-1)
+            boolean isAnomaly = (lastHR > MaxHRthreshold || lastHR < MinHRthreshold);
+            isAnomalyDetected = isAnomaly;
 
-            // Update global anomaly status
-            isAnomalyDetected = anomalyDetected;
-
-            // Show results
-            if (isAnomalyDetected) {
+            if (isAnomaly) {
+                heartRateAnomalyTracker.markAnomaly(currentDataIndex - 1);
                 Toast.makeText(this, "⚠️ Heart Rate Anomaly Detected!", Toast.LENGTH_LONG).show();
-                Log.w("AnomalyDetection", "Anomaly detected! Last HR: " + lastHR + " Threshold: " + MaxHRthreshold);
-                heartText.setTextColor(getColor(R.color.emergency)); // Highlight HR text
-            } else {
-                heartText.setTextColor(getColor(R.color.healthy));
             }
-
-            Log.w("Machine Learning Heart Rate", String.format("Predicted ROC: %.2f | Threshold: %.1f BPM", predictedROC, MaxHRthreshold));
         } catch (Exception e) {
-            Toast.makeText(this, "Error making prediction: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Prediction error", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -173,101 +159,113 @@ public class PatientDetailActivity extends AppCompatActivity {
     private void fetchPatientGraphs() {
         db.collection("patient_collection").document(patientId)
                 .collection("health_records")
-                .orderBy(FieldPath.documentId(), Query.Direction.DESCENDING) // Newest first
+                .orderBy(FieldPath.documentId(), Query.Direction.DESCENDING)
                 .limit(MAX_POINTS)
                 .addSnapshotListener((snapshots, error) -> {
-                    if (snapshots != null && !snapshots.isEmpty()) {
+                    if (error != null) {
+                        Log.e("Firestore", "Error fetching data", error);
+                        return;
+                    }
+
+                    if (snapshots == null || snapshots.isEmpty()) {
+                        Log.w("Firestore", "No data available for patient: " + patientId);
+                        return;
+                    }
+
+                    // Process data in background thread
+                    new Thread(() -> {
                         List<Entry> heartRateEntries = new ArrayList<>();
                         List<Entry> oxygenLevelEntries = new ArrayList<>();
                         List<Entry> temperatureEntries = new ArrayList<>();
                         List<Entry> stressLevelEntries = new ArrayList<>();
-                        List<Float> predictionEntries = new ArrayList<>(); // Store last 10 for prediction
+                        List<Float> predictionEntries = new ArrayList<>();
 
-                        List<DocumentSnapshot> documents = snapshots.getDocuments();
+                        // Get documents in chronological order (oldest first)
+                        List<DocumentSnapshot> documents = new ArrayList<>(snapshots.getDocuments());
+                        Collections.reverse(documents);
+                        currentDataIndex = 0; // Reset counter on new data
+                        for (DocumentSnapshot document : documents) {
 
-                        // Iterate through the snapshots in reverse order (oldest first)
-                        int index = 0;
-                        for (int i = documents.size() - 1; i >= 0; i--) {
-                            DocumentSnapshot document = documents.get(i);
                             Long heartRate = document.getLong("heartRate");
                             Long oxygenLevel = document.getLong("oxygenLevel");
                             Double temperature = document.getDouble("temperature");
                             Long stressLevel = document.getLong("stressLevel");
 
                             if (heartRate != null && oxygenLevel != null && temperature != null && stressLevel != null) {
-                                heartRateEntries.add(new Entry(index, heartRate));
-                                oxygenLevelEntries.add(new Entry(index, oxygenLevel));
-                                temperatureEntries.add(new Entry(index, temperature.floatValue()));
-                                stressLevelEntries.add(new Entry(index, stressLevel));
+                                heartRateEntries.add(new Entry(currentDataIndex, heartRate));
+                                oxygenLevelEntries.add(new Entry(currentDataIndex, oxygenLevel));
+                                temperatureEntries.add(new Entry(currentDataIndex, temperature.floatValue()));
+                                stressLevelEntries.add(new Entry(currentDataIndex, stressLevel));
 
-                                index++;
+                                if (predictionEntries.size() < 10) {
+                                    predictionEntries.add(0, heartRate.floatValue());
+                                }
+
+                                currentDataIndex++;
                             }
                         }
 
-                        if (heartRateEntries.size() >= 10) {
-                            for (int i = heartRateEntries.size() - 10; i < heartRateEntries.size(); i++) {
-                                predictionEntries.add(heartRateEntries.get(i).getY());
+
+                        // Update UI on main thread
+                        runOnUiThread(() -> {
+                            // Make prediction if we have enough data
+                            if (predictionEntries.size() == 10) {
+                                predictHeartRate(predictionEntries);
                             }
-                            predictHeartRate(predictionEntries);
-                        }
 
-                        // Log final entries
-                        Log.d("ChartData", "Heart Entries: " + heartRateEntries);
-                        Log.d("ChartData", "Oxygen Entries: " + oxygenLevelEntries);
-                        Log.d("ChartData", "Temperature Entries: " + temperatureEntries);
-                        Log.d("ChartData", "Stress Entries: " + stressLevelEntries);
+                            // Update text views with latest values
+                            if (!heartRateEntries.isEmpty()) {
+                                float latestHeartRate = heartRateEntries.get(heartRateEntries.size() - 1).getY();
+                                heartText.setText("BPM: " + (int) latestHeartRate);
+                            }
 
-                        // Display graphs
-                        LineChart heartChart = findViewById(R.id.heartChart);
-                        LineChart spo2Chart = findViewById(R.id.spo2Chart);
-                        LineChart tempChart = findViewById(R.id.tempChart); // Temperature chart
+                            if (!oxygenLevelEntries.isEmpty()) {
+                                float latestOxygenLevel = oxygenLevelEntries.get(oxygenLevelEntries.size() - 1).getY();
+                                spo2Text.setText("O2: " + (int) latestOxygenLevel + "%");
+                            }
 
-                        configureChart(heartChart, 200f); // Heart rate chart
-                        configureChart(spo2Chart, 100f);  // Oxygen level chart
-                        configureChart(tempChart, 50f);   // Temperature chart
+                            if (!temperatureEntries.isEmpty()) {
+                                float latestTemperature = temperatureEntries.get(temperatureEntries.size() - 1).getY();
+                                tempText.setText("Temp: " + String.format("%.1f", latestTemperature) + "°C");
+                            }
 
-                        updateChart(heartChart, heartRateEntries, "Heart Rate", heartText);
-                        updateChart(spo2Chart, oxygenLevelEntries, "Oxygen Level", spo2Text);
-                        updateChart(tempChart, temperatureEntries, "Temperature", tempText); // Update temperature chart
+                            // Get chart references and configure them
+                            LineChart heartChart = findViewById(R.id.heartChart);
+                            LineChart spo2Chart = findViewById(R.id.spo2Chart);
+                            LineChart tempChart = findViewById(R.id.tempChart);
 
-                        // Update the TextViews with the latest values
-                        if (!heartRateEntries.isEmpty()) {
-                            float latestHeartRate = heartRateEntries.get(heartRateEntries.size() - 1).getY();
-                            heartText.setText("BPM: " + (int) latestHeartRate);
-                        }
+                            configureChart(heartChart, 200f);
+                            configureChart(spo2Chart, 100f);
+                            configureChart(tempChart, 50f);
 
-                        if (!oxygenLevelEntries.isEmpty()) {
-                            float latestOxygenLevel = oxygenLevelEntries.get(oxygenLevelEntries.size() - 1).getY();
-                            spo2Text.setText("O2: " + (int) latestOxygenLevel + "%");
-                        }
+                            // Update charts
+                            updateChart(heartChart, heartRateEntries, "Heart Rate", heartText);
+                            updateChart(spo2Chart, oxygenLevelEntries, "Oxygen Level", spo2Text);
+                            updateChart(tempChart, temperatureEntries, "Temperature", tempText);
 
-                        if (!temperatureEntries.isEmpty()) {
-                            float latestTemperature = temperatureEntries.get(temperatureEntries.size() - 1).getY();
-                            tempText.setText("Temp: " + String.format("%.1f", latestTemperature) + "°C");
-                        }
+                            // Set click listeners (unchanged from original)
+                            heartChart.setOnClickListener(v -> {
+                                Intent intent = new Intent(this, GraphDetailActivity.class);
+                                intent.putExtra("patientId", patientId);
+                                intent.putExtra("graphType", "heartRate");
+                                startActivity(intent);
+                            });
 
-                        // Set click listeners for charts
-                        heartChart.setOnClickListener(v -> {
-                            Intent intent = new Intent(this, GraphDetailActivity.class);
-                            intent.putExtra("patientId", patientId);
-                            intent.putExtra("graphType", "heartRate");
-                            startActivity(intent);
+                            spo2Chart.setOnClickListener(v -> {
+                                Intent intent = new Intent(this, GraphDetailActivity.class);
+                                intent.putExtra("patientId", patientId);
+                                intent.putExtra("graphType", "oxygenLevel");
+                                startActivity(intent);
+                            });
+
+                            tempChart.setOnClickListener(v -> {
+                                Intent intent = new Intent(this, GraphDetailActivity.class);
+                                intent.putExtra("patientId", patientId);
+                                intent.putExtra("graphType", "temperature");
+                                startActivity(intent);
+                            });
                         });
-
-                        spo2Chart.setOnClickListener(v -> {
-                            Intent intent = new Intent(this, GraphDetailActivity.class);
-                            intent.putExtra("patientId", patientId);
-                            intent.putExtra("graphType", "oxygenLevel");
-                            startActivity(intent);
-                        });
-
-                        tempChart.setOnClickListener(v -> {
-                            Intent intent = new Intent(this, GraphDetailActivity.class);
-                            intent.putExtra("patientId", patientId);
-                            intent.putExtra("graphType", "temperature");
-                            startActivity(intent);
-                        });
-                    }
+                    }).start();
                 });
     }
 
@@ -284,6 +282,24 @@ public class PatientDetailActivity extends AppCompatActivity {
         chart.getAxisLeft().setAxisMinimum(0f); // Minimum Y-axis value
         chart.getAxisLeft().setAxisMaximum(max); // Maximum Y-axis value
         chart.getAxisLeft().setGranularity(1f);  // Prevent duplicates on Y-axis
+
+        if (chart.getId() == R.id.heartChart) {
+            LimitLine upperLimit = new LimitLine(MaxHRthreshold, "Upper Threshold");
+            upperLimit.setLineColor(Color.RED);
+            upperLimit.setLineWidth(1f);
+            upperLimit.setTextColor(Color.BLACK);
+            upperLimit.setTextSize(10f);
+
+            LimitLine lowerLimit = new LimitLine(MinHRthreshold, "Lower Threshold");
+            lowerLimit.setLineColor(Color.RED);
+            lowerLimit.setLineWidth(1f);
+            lowerLimit.setTextColor(Color.BLACK);
+            lowerLimit.setTextSize(10f);
+
+            YAxis leftAxis = chart.getAxisLeft();
+            leftAxis.addLimitLine(upperLimit);
+            leftAxis.addLimitLine(lowerLimit);
+        }
     }
 
     @SuppressLint("ResourceAsColor")
@@ -299,17 +315,20 @@ public class PatientDetailActivity extends AppCompatActivity {
 
         // Configure colors for each point based on its value
         List<Integer> colors = new ArrayList<>();
-        for (Entry entry : entries) {
+        for (int i = 0; i < entries.size(); i++) {
+            Entry entry = entries.get(i);
             float value = entry.getY();
+
+            boolean isAnomaly = (i == entries.size() - 1) &&
+                    (value > MaxHRthreshold || value < MinHRthreshold);
+
             if (label.contains("Heart")) {
-                if (value > MaxHRthreshold||value<MinHRthreshold) {
+                if (heartRateAnomalyTracker.isAnomaly(i) || ((value > MaxHRthreshold || value < MinHRthreshold))) {
                     colors.add(getColor(R.color.emergency));
-                    heartText.setTextColor(R.color.emergency);
                 } else {
                     colors.add(getColor(R.color.healthy));
-                    heartText.setTextColor(R.color.healthy);
                 }
-            } else if (label.contains("Oxygen")) {
+            }  else if (label.contains("Oxygen")) {
                 if (value < 90) {
                     colors.add(getColor(R.color.emergency));
                     spo2Text.setTextColor(R.color.emergency);

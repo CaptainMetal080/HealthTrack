@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context="com.example.healthtrack.PatientHealthData"
+    tools:context="com.example.healthtrack.PatientHealthData_"
     android:background="#FFF7F9">
 
     <androidx.appcompat.widget.Toolbar
