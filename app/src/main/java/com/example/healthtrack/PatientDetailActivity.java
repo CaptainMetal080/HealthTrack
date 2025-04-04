@@ -48,6 +48,8 @@ public class PatientDetailActivity extends AppCompatActivity {
     float MinHRthreshold;
     float predictedROC;
     private int currentDataIndex = 0;
+    private LimitLine upperLimit;
+    private LimitLine lowerLimit;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,7 +95,6 @@ public class PatientDetailActivity extends AppCompatActivity {
             return;
         }
 
-        try {
             float predictedROC = predictor.predict(last10HeartRates); // Get predicted rate of change
             float lastHR = last10HeartRates.get(9); // Most recent heart rate
 
@@ -123,9 +124,7 @@ public class PatientDetailActivity extends AppCompatActivity {
             }
 
             Log.w("Machine Learning Heart Rate", String.format("Predicted ROC: %.2f | Threshold: %.1f BPM", predictedROC, MaxHRthreshold));
-        } catch (Exception e) {
-            Toast.makeText(this, "Error making prediction: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
+
     }
 
 
@@ -303,19 +302,20 @@ public class PatientDetailActivity extends AppCompatActivity {
 
 
         if (chart.getId() == R.id.heartChart) {
-            LimitLine upperLimit = new LimitLine(MaxHRthreshold, "Upper Threshold");
+            YAxis leftAxis = chart.getAxisLeft();
+            leftAxis.removeAllLimitLines();
+
+            upperLimit = new LimitLine(MaxHRthreshold, "Upper Threshold");
             upperLimit.setLineColor(Color.RED);
             upperLimit.setLineWidth(1f);
             upperLimit.setTextColor(Color.BLACK);
             upperLimit.setTextSize(10f);
 
-            LimitLine lowerLimit = new LimitLine(MinHRthreshold, "Lower Threshold");
+            lowerLimit = new LimitLine(MinHRthreshold, "Lower Threshold");
             lowerLimit.setLineColor(Color.RED);
             lowerLimit.setLineWidth(1f);
             lowerLimit.setTextColor(Color.BLACK);
             lowerLimit.setTextSize(10f);
-
-            YAxis leftAxis = chart.getAxisLeft();
             leftAxis.addLimitLine(upperLimit);
             leftAxis.addLimitLine(lowerLimit);
         }

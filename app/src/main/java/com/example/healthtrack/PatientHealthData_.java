@@ -92,6 +92,13 @@ public class PatientHealthData_ extends AppCompatActivity {
     private DataUploader uploader;
     private SemiCircleMeter stressMeter;
 
+    // Add these member variables at the top of PatientHealthData_
+    private List<PatientData> recentPatientData = new ArrayList<>();
+    private boolean isAnomalyDetected = false;
+    private Handler warningHandler = new Handler();
+    private static final long WARNING_COOLDOWN_MS = 10000; // 10 seconds between same warnings
+    private Map<String, Long> lastWarningTimeMap = new HashMap<>(); // Track last shown time for each warning type
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -347,6 +354,9 @@ public class PatientHealthData_ extends AppCompatActivity {
             // Update temperature
             handleTemperature();
 
+            //Feth and update Warnings
+            fetchAndDisplayWarnings();
+
             // Fetch and update the stress level
             fetchAndUpdateStressLevel();
 
@@ -413,6 +423,7 @@ public class PatientHealthData_ extends AppCompatActivity {
                     Log.e("FirebaseFunction", "Error sending notification", e);
                 });
     }
+
     private void handleHeartRate() {
         if (heartRate > 100) {
             showCriticalAlert("Critical: High Heart Rate!");
@@ -533,54 +544,52 @@ public class PatientHealthData_ extends AppCompatActivity {
 
         // Upload health data to Firebase
         uploader.uploadPatientData(uid, patientData);
+    }
+    private void fetchAndDisplayWarnings() {
+        String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
-        // Fetch recent health data for warning detection
-        FirebaseFirestore.getInstance()
-                .collection("patient_collection")
+        FirebaseFirestore.getInstance().collection("patient_collection")
                 .document(uid)
                 .collection("health_records")
                 .orderBy(FieldPath.documentId(), Query.Direction.DESCENDING)
-                .limit(5) // Fetch last 5 readings for warning detection
-                .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    List<PatientData> patientDataList = new ArrayList<>();
-                    for (DocumentSnapshot document : queryDocumentSnapshots.getDocuments()) {
-                        // Parse the raw data from Firestore
-                        Long heartRate = document.getLong("heartRate");
-                        Long oxygenLevel = document.getLong("oxygenLevel");
-                        Double temperature = document.getDouble("temperature");
-                        Long stressLevel = document.getLong("stressLevel");
-                        String datetimeCaptured = document.getId(); // Use document ID as timestamp
+                .limit(5) // Fetch last 5 records in real-time
+                .addSnapshotListener((snapshots, error) -> {
+                    if (snapshots != null && !snapshots.isEmpty()) {
+                        List<PatientData> patientDataList = new ArrayList<>();
 
-                        // Validate the data
-                        if (heartRate != null && oxygenLevel != null && temperature != null && stressLevel != null) {
-                            // Create a PatientData object manually
-                            PatientData data = new PatientData(
-                                    datetimeCaptured, // Use document ID as timestamp
-                                    heartRate.intValue(), // Convert Long to int
-                                    oxygenLevel.intValue(), // Convert Long to int
-                                    temperature.floatValue(), // Convert Double to float
-                                    stressLevel.intValue() // Convert Long to int
-                            );
+                        for (DocumentSnapshot document : snapshots.getDocuments()) {
+                            Long heartRate = document.getLong("heartRate");
+                            Long oxygenLevel = document.getLong("oxygenLevel");
+                            Double temperature = document.getDouble("temperature");
+                            Long stressLevel = document.getLong("stressLevel");
+                            String datetimeCaptured = document.getId(); // Document ID as timestamp
 
-                            // Add the PatientData object to the list
-                            patientDataList.add(data);
+                            if (heartRate != null && oxygenLevel != null && temperature != null && stressLevel != null) {
+                                patientDataList.add(new PatientData(
+                                        datetimeCaptured,
+                                        heartRate.intValue(),
+                                        oxygenLevel.intValue(),
+                                        temperature.floatValue(),
+                                        stressLevel.intValue()
+                                ));
+                            }
                         }
-                    }
 
-                    // Detect warnings locally based on the last 5 readings
-                    List<String> warnings = WarningDetector.detectWarnings(patientDataList,false);
+                        // Calculate warnings
+                        List<String> warnings = WarningDetector.detectWarnings(patientDataList, isAnomalyDetected);
 
-                    // Display warnings (if any) instead of uploading them
-                    if (!warnings.isEmpty()) {
-                        for (String warning : warnings) {
-                            Log.d("WarningDetector", warning);
-                            Toast.makeText(this, warning, Toast.LENGTH_SHORT).show();
+                        // Convert to Warning objects for adapter
+                        List<Warning> warningList = new ArrayList<>();
+                        if (!patientDataList.isEmpty()) {
+                            String latestTimestamp = patientDataList.get(0).getDatetime_captured();
+                            long timestamp = convertDateStringToTimestamp(latestTimestamp);
+                            for (String warningMessage : warnings) {
+                                warningList.add(new Warning(warningMessage, timestamp));
+                            }
                         }
+                    } else {
+                        Log.e("Warnings", "Error fetching real-time warnings", error);
                     }
-                })
-                .addOnFailureListener(e -> {
-                    Log.e("Firestore", "Failed to fetch recent health data for warning detection", e);
                 });
     }
 
@@ -686,5 +695,20 @@ public class PatientHealthData_ extends AppCompatActivity {
         chart.notifyDataSetChanged();
         chart.moveViewToX(data.getEntryCount());
         chart.invalidate();
+    }
+
+    // Helper method to convert a date string to a timestamp (long)
+    private long convertDateStringToTimestamp(String dateString) {
+        try {
+            // Define the date format (e.g., "yyyy-MM-dd HH:mm:ss")
+            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault());
+            // Parse the date string into a Date object
+            java.util.Date date = sdf.parse(dateString);
+            // Return the timestamp in milliseconds
+            return date.getTime();
+        } catch (java.text.ParseException e) {
+            Log.e("TimestampConversion", "Failed to parse date string: " + dateString, e);
+            return System.currentTimeMillis(); // Fallback to current time if parsing fails
+        }
     }
 }

@@ -1,11 +1,14 @@
 package com.example.healthtrack;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.XAxis;
@@ -19,13 +22,16 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldPath;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
+import com.github.mikephil.charting.components.LimitLine;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 public class GraphDetailActivity extends AppCompatActivity {
 
@@ -43,6 +49,7 @@ public class GraphDetailActivity extends AppCompatActivity {
     private float MaxHRthreshold;
     private float MinHRthreshold;
     private float predictedROC;
+    private boolean isAnomalyDetected = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,7 +64,7 @@ public class GraphDetailActivity extends AppCompatActivity {
         patientAgeView = findViewById(R.id.patientAge);
         callButton = findViewById(R.id.callPatientButton);
         callEmergencyButton = findViewById(R.id.callEmergencyButton);
-        currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        currentUserId = Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getUid();
 
         // Determine if the current user is a doctor or a patient
         checkUserRole();
@@ -192,7 +199,7 @@ public class GraphDetailActivity extends AppCompatActivity {
         }
         return 0; // Default age if calculation fails
     }
-    // Rest of the code (fetchGraphData, updateChart, etc.) remains unchanged
+
     private void fetchGraphData() {
         db.collection("patient_collection").document(patientId)
                 .collection("health_records")
@@ -208,19 +215,23 @@ public class GraphDetailActivity extends AppCompatActivity {
                         List<String> labels = new ArrayList<>();
                         List<Float> last10HeartRates = new ArrayList<>();
                         // Iterate through the snapshots in reverse order (oldest first)
-                        int index = 0;
-                        List<DocumentSnapshot> documents = snapshots.getDocuments();
-                        for (int i = documents.size() - 1; i >= 0; i--) {
-                            DocumentSnapshot document = documents.get(i);
+                        List<DocumentSnapshot> documents = new ArrayList<>(snapshots.getDocuments());
+                        Collections.reverse(documents);
 
+                        for (int i = 0; i < documents.size(); i++) {
+                            DocumentSnapshot document = documents.get(i);
                             Long value = null;
+
                             switch (graphType) {
                                 case "heartRate":
                                     value = document.getLong("heartRate");
                                     if (value != null) {
-                                        last10HeartRates.add(value.floatValue());
-                                        if (last10HeartRates.size() > 10) {
-                                            last10HeartRates.remove(0); // Keep only the last 10 readings
+                                        // Maintain last 10 readings for prediction
+                                        if (last10HeartRates.size() < 10) {
+                                            last10HeartRates.add(value.floatValue());
+                                        } else {
+                                            last10HeartRates.remove(0);
+                                            last10HeartRates.add(value.floatValue());
                                         }
                                     }
                                     break;
@@ -234,7 +245,7 @@ public class GraphDetailActivity extends AppCompatActivity {
                             }
 
                             if (value != null) {
-                                entries.add(new Entry(index, value));
+                                entries.add(new Entry(i, value));
 
                                 // Convert Firestore document ID (timestamp) to a short date format
                                 String timestamp = document.getId();
@@ -248,16 +259,15 @@ public class GraphDetailActivity extends AppCompatActivity {
                                     labels.add(timestamp); // Fallback to raw timestamp if parsing fails
                                 }
 
-                                index++;
                             }
                         }
+
                         // Predict heart rate threshold if we have 10 readings
                         if (graphType.equals("heartRate") && last10HeartRates.size() == 10) {
                             predictHeartRate(last10HeartRates);
                         }
-
-                        // Update the chart with the fetched data
                         updateChart(entries, labels);
+
                     } else {
                         Log.w("GraphDetailActivity", "No data found for graph type: " + graphType);
                     }
@@ -265,16 +275,38 @@ public class GraphDetailActivity extends AppCompatActivity {
     }
 
     private void predictHeartRate(List<Float> last10HeartRates) {
-        try {
-            predictedROC = predictor.predict(last10HeartRates);
-            float lastHR = last10HeartRates.get(9); // Most recent heart rate
-            MaxHRthreshold = lastHR * (1 + predictedROC); // Calculate threshold
-            MinHRthreshold = lastHR * (1 - predictedROC);
-
-            Log.d("HeartRatePrediction", "Predicted Threshold: " + MaxHRthreshold);
-        } catch (Exception e) {
-            Log.e("HeartRatePrediction", "Error predicting heart rate", e);
+        if (last10HeartRates.size() != 10) {
+            Log.e("PredictHeartRate", "Insufficient data for prediction");
+            return;
         }
+
+        float predictedROC = predictor.predict(last10HeartRates); // Get predicted rate of change
+        float lastHR = last10HeartRates.get(9); // Most recent heart rate
+
+        // Calculate threshold: HR should not exceed lastHR * (1 + predictedROC)
+        MaxHRthreshold = lastHR * (1 + predictedROC);
+        MinHRthreshold = lastHR * (1 - predictedROC);
+        boolean anomalyDetected = false;
+
+        // Check if any recent HR reading exceeds the threshold
+        for (Float hr : last10HeartRates) {
+            if (hr > MaxHRthreshold || hr<MinHRthreshold) {
+                anomalyDetected = true;
+                break;
+            }
+        }
+
+        // Update global anomaly status
+        isAnomalyDetected = anomalyDetected;
+
+        // Show results
+        if (isAnomalyDetected) {
+            Toast.makeText(this, "⚠️ Heart Rate Anomaly Detected!", Toast.LENGTH_LONG).show();
+            Log.w("AnomalyDetection", "Anomaly detected! Last HR: " + lastHR + " Threshold: " + MaxHRthreshold);
+        }
+
+        Log.w("Machine Learning Heart Rate", String.format("Predicted ROC: %.2f | Threshold: %.1f BPM", predictedROC, MaxHRthreshold));
+
     }
     private void updateChart(List<Entry> entries, List<String> labels) {
         if (entries.isEmpty()) {
@@ -349,6 +381,26 @@ public class GraphDetailActivity extends AppCompatActivity {
         yAxis.setGranularity(1f);
         yAxis.setDrawGridLines(true);
         yAxis.setTextSize(10f);
+
+        if (graphType.equals("heartRate")) {
+            YAxis leftAxis = detailedChart.getAxisLeft();
+            leftAxis.removeAllLimitLines();
+
+            LimitLine upperLimit = new LimitLine(MaxHRthreshold, "Upper Threshold");
+            upperLimit.setLineColor(Color.RED);
+            upperLimit.setLineWidth(1f);
+            upperLimit.setTextColor(Color.BLACK);
+            upperLimit.setTextSize(10f);
+
+            LimitLine lowerLimit = new LimitLine(MinHRthreshold, "Lower Threshold");
+            lowerLimit.setLineColor(Color.RED);
+            lowerLimit.setLineWidth(1f);
+            lowerLimit.setTextColor(Color.BLACK);
+            lowerLimit.setTextSize(10f);
+
+            leftAxis.addLimitLine(upperLimit);
+            leftAxis.addLimitLine(lowerLimit);
+        }
 
         // Disable right Y-axis
         detailedChart.getAxisRight().setEnabled(false);
