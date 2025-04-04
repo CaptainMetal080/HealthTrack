@@ -362,9 +362,11 @@ public class PatientDetailActivity extends AppCompatActivity {
             if (label.contains("Heart")) {
                 if (value > MaxHRthreshold || value < MinHRthreshold) {
                     Toast.makeText(this, "⚠️ Heart Rate Anomaly Detected!", Toast.LENGTH_LONG).show();
+                    isAnomalyDetected=true;
                     colors.add(getColor(R.color.emergency));
                     textView.setTextColor(R.color.emergency);
                 } else {
+                    isAnomalyDetected=false;
                     colors.add(getColor(R.color.healthy));
                     textView.setTextColor(R.color.healthy);
                 }
