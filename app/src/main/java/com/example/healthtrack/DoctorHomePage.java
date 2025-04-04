@@ -283,7 +283,7 @@ public class DoctorHomePage extends AppCompatActivity {
                 });
     }
     private void predictHeartRate(List<Float> last10HeartRates, TextView heartText) {
-
+        try {
             float predictedROC = predictor.predict(last10HeartRates);
             float lastHR = last10HeartRates.get(9); // Most recent heart rate
             MaxHRthreshold = lastHR * (1 + predictedROC); // Calculate threshold
@@ -303,6 +303,9 @@ public class DoctorHomePage extends AppCompatActivity {
                 heartText.setTextColor(getColor(R.color.healthy));
             }
 
+        } catch (Exception e) {
+            Log.e("HeartRatePrediction", "Error predicting heart rate", e);
+        }
     }
     private void sendToFirebaseFunction(Map<String, String> notificationPayload) {
         // Your Firebase Cloud Function code here to send the notification

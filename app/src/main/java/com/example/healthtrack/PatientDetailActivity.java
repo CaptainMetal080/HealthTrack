@@ -35,7 +35,7 @@ public class PatientDetailActivity extends AppCompatActivity {
     private WarningAdapter warningAdapter;
     private FirebaseFirestore db;
     private String patientId;
-    private static final int MAX_POINTS = 25; // Consistent with PatientHealthData_nosensor
+    private static final int MAX_POINTS = 25;
     private boolean isAnomalyDetected = false;
     private TextView heartText;
     private TextView spo2Text;
@@ -95,6 +95,7 @@ public class PatientDetailActivity extends AppCompatActivity {
             return;
         }
 
+        try {
             float predictedROC = predictor.predict(last10HeartRates); // Get predicted rate of change
             float lastHR = last10HeartRates.get(9); // Most recent heart rate
 
@@ -116,7 +117,7 @@ public class PatientDetailActivity extends AppCompatActivity {
 
             // Show results
             if (isAnomalyDetected) {
-                Toast.makeText(this, "⚠️ Heart Rate Anomaly Detected!", Toast.LENGTH_LONG).show();
+
                 Log.w("AnomalyDetection", "Anomaly detected! Last HR: " + lastHR + " Threshold: " + MaxHRthreshold);
                 heartText.setTextColor(getColor(R.color.emergency)); // Highlight HR text
             } else {
@@ -124,7 +125,9 @@ public class PatientDetailActivity extends AppCompatActivity {
             }
 
             Log.w("Machine Learning Heart Rate", String.format("Predicted ROC: %.2f | Threshold: %.1f BPM", predictedROC, MaxHRthreshold));
-
+        } catch (Exception e) {
+            Log.w("Prediction Error", String.format("Unexpected prediction error occured"));
+        }
     }
 
 
@@ -221,8 +224,6 @@ public class PatientDetailActivity extends AppCompatActivity {
                                 currentDataIndex++;
                             }
                         }
-
-
                         // Update UI on main thread
                         runOnUiThread(() -> {
                             // Make prediction if we have enough data
@@ -316,6 +317,8 @@ public class PatientDetailActivity extends AppCompatActivity {
             lowerLimit.setLineWidth(1f);
             lowerLimit.setTextColor(Color.BLACK);
             lowerLimit.setTextSize(10f);
+
+
             leftAxis.addLimitLine(upperLimit);
             leftAxis.addLimitLine(lowerLimit);
         }
@@ -357,6 +360,7 @@ public class PatientDetailActivity extends AppCompatActivity {
 
             if (label.contains("Heart")) {
                 if (value > MaxHRthreshold || value < MinHRthreshold) {
+                    Toast.makeText(this, "⚠️ Heart Rate Anomaly Detected!", Toast.LENGTH_LONG).show();
                     colors.add(getColor(R.color.emergency));
                     textView.setTextColor(R.color.emergency);
                 } else {

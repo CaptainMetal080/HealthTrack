@@ -45,8 +45,12 @@ public class HeartRatePredictor {
 
         try {
             // Create input tensor for heart rate data - reshape to [batch_size, sequence_length, features]
+            if (features.size() != 10) {
+                throw new IllegalArgumentException("Need exactly 10 heart rate values");
+            }
+
             final Tensor inputTensor = Tensor.fromBlob(inputArray, new long[]{1, 10, 1});
-            
+
             // Create user_ids tensor with Long type
             long[] userIdArray = new long[]{0L};
             final Tensor userIdsTensor = Tensor.fromBlob(userIdArray, new long[]{1});
@@ -95,4 +99,4 @@ public class HeartRatePredictor {
             }
         }
     }
-} 
+}

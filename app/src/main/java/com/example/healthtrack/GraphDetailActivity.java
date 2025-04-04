@@ -261,13 +261,12 @@ public class GraphDetailActivity extends AppCompatActivity {
 
                             }
                         }
-
                         // Predict heart rate threshold if we have 10 readings
                         if (graphType.equals("heartRate") && last10HeartRates.size() == 10) {
                             predictHeartRate(last10HeartRates);
                         }
-                        updateChart(entries, labels);
 
+                        updateChart(entries, labels);
                     } else {
                         Log.w("GraphDetailActivity", "No data found for graph type: " + graphType);
                     }
@@ -279,34 +278,36 @@ public class GraphDetailActivity extends AppCompatActivity {
             Log.e("PredictHeartRate", "Insufficient data for prediction");
             return;
         }
+        try {
+            float predictedROC = predictor.predict(last10HeartRates); // Get predicted rate of change
+            float lastHR = last10HeartRates.get(9); // Most recent heart rate
 
-        float predictedROC = predictor.predict(last10HeartRates); // Get predicted rate of change
-        float lastHR = last10HeartRates.get(9); // Most recent heart rate
+            // Calculate threshold: HR should not exceed lastHR * (1 + predictedROC)
+            MaxHRthreshold = lastHR * (1 + predictedROC);
+            MinHRthreshold = lastHR * (1 - predictedROC);
+            boolean anomalyDetected = false;
 
-        // Calculate threshold: HR should not exceed lastHR * (1 + predictedROC)
-        MaxHRthreshold = lastHR * (1 + predictedROC);
-        MinHRthreshold = lastHR * (1 - predictedROC);
-        boolean anomalyDetected = false;
-
-        // Check if any recent HR reading exceeds the threshold
-        for (Float hr : last10HeartRates) {
-            if (hr > MaxHRthreshold || hr<MinHRthreshold) {
-                anomalyDetected = true;
-                break;
+            // Check if any recent HR reading exceeds the threshold
+            for (Float hr : last10HeartRates) {
+                if (hr > MaxHRthreshold || hr < MinHRthreshold) {
+                    anomalyDetected = true;
+                    break;
+                }
             }
-        }
 
-        // Update global anomaly status
-        isAnomalyDetected = anomalyDetected;
+            // Update global anomaly status
+            isAnomalyDetected = anomalyDetected;
 
-        // Show results
-        if (isAnomalyDetected) {
-            Toast.makeText(this, "⚠️ Heart Rate Anomaly Detected!", Toast.LENGTH_LONG).show();
-            Log.w("AnomalyDetection", "Anomaly detected! Last HR: " + lastHR + " Threshold: " + MaxHRthreshold);
-        }
+            // Show results
+            if (isAnomalyDetected) {
 
-        Log.w("Machine Learning Heart Rate", String.format("Predicted ROC: %.2f | Threshold: %.1f BPM", predictedROC, MaxHRthreshold));
+                Log.w("AnomalyDetection", "Anomaly detected! Last HR: " + lastHR + " Threshold: " + MaxHRthreshold);
+            }
 
+            Log.w("Machine Learning Heart Rate", String.format("Predicted ROC: %.2f | Threshold: %.1f BPM", predictedROC, MaxHRthreshold));
+        } catch (Exception e) {
+                Log.w("Prediction Error", String.format("Unexpected prediction error occured"));
+            }
     }
     private void updateChart(List<Entry> entries, List<String> labels) {
         if (entries.isEmpty()) {
@@ -323,6 +324,7 @@ public class GraphDetailActivity extends AppCompatActivity {
             switch (graphType) {
                 case "heartRate":
                     if (value > MaxHRthreshold||value<MinHRthreshold) {
+                        Toast.makeText(this, "⚠️ Heart Rate Anomaly Detected!", Toast.LENGTH_LONG).show();
                         colors.add(getColor(R.color.emergency));
                     } else {
                         colors.add(getColor(R.color.healthy));
