@@ -11,6 +11,7 @@ import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothProfile;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -18,7 +19,9 @@ import android.util.Log;
 import android.widget.Toast;
 import android.widget.TextView;
 import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.LimitLine;
 import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
@@ -34,6 +37,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -92,9 +96,12 @@ public class PatientHealthData_ extends AppCompatActivity {
     private DataUploader uploader;
     private SemiCircleMeter stressMeter;
 
-    // Add these member variables at the top of PatientHealthData_
-    private List<PatientData> recentPatientData = new ArrayList<>();
+    private HeartRatePredictor predictor;
+    private float MaxHRthreshold = 100f; // Default values
+    private float MinHRthreshold = 30f;
+    private float predictedROC;
     private boolean isAnomalyDetected = false;
+    private List<Float> last10HeartRates = new ArrayList<>();
     private Handler warningHandler = new Handler();
     private static final long WARNING_COOLDOWN_MS = 10000; // 10 seconds between same warnings
     private Map<String, Long> lastWarningTimeMap = new HashMap<>(); // Track last shown time for each warning type
@@ -345,6 +352,8 @@ public class PatientHealthData_ extends AppCompatActivity {
 
     private void updateUI() {
         runOnUiThread(() -> {
+
+            predictandfetchLast10HeartRates();
             // Update heart rate
             handleHeartRate();
 
@@ -425,11 +434,11 @@ public class PatientHealthData_ extends AppCompatActivity {
     }
 
     private void handleHeartRate() {
-        if (heartRate > 100) {
+        if (heartRate > MaxHRthreshold) {
             showCriticalAlert("Critical: High Heart Rate!");
             sendEmergencyNotification("Emergency: High Heart Rate", "Patient has a High heart rate ");
             emergencyRateCount++;
-        } else if (heartRate < 50) {
+        } else if (heartRate < MinHRthreshold) {
             showCriticalAlert("Critical: Slow Heart Rate!");
             sendEmergencyNotification("Emergency: Low Heart Rate", "Patient has a low heart rate ");
             emergencyRateCount++;
@@ -674,8 +683,92 @@ public class PatientHealthData_ extends AppCompatActivity {
         chart.getAxisLeft().setAxisMinimum(0f); // Minimum Y-axis value
         chart.getAxisLeft().setAxisMaximum(max); // Maximum Y-axis value
         chart.getAxisLeft().setGranularity(1f);  // Prevent duplicates on Y-axis
-    }
 
+        if (chart.getId() == R.id.heartGraph) {
+            YAxis leftAxis = chart.getAxisLeft();
+            leftAxis.removeAllLimitLines();
+
+            LimitLine upperLimit = new LimitLine(MaxHRthreshold, "Upper Threshold");
+            upperLimit.setLineColor(Color.RED);
+            upperLimit.setLineWidth(1f);
+
+            LimitLine lowerLimit = new LimitLine(MinHRthreshold, "Lower Threshold");
+            lowerLimit.setLineColor(Color.RED);
+            lowerLimit.setLineWidth(1f);
+
+            leftAxis.addLimitLine(upperLimit);
+            leftAxis.addLimitLine(lowerLimit);
+        }
+    }
+    private void predictHeartRate(List<Float> last10HeartRates) {
+        if (last10HeartRates.size() != 10) {
+            Log.e("PredictHeartRate", "Insufficient data for prediction");
+            return;
+        }
+
+        try {
+            predictedROC = predictor.predict(last10HeartRates);
+            float lastHR = last10HeartRates.get(9);
+
+            MaxHRthreshold = lastHR * (1 + predictedROC);
+            MinHRthreshold = lastHR * (1 - predictedROC);
+            isAnomalyDetected = false;
+
+            // Check thresholds against all readings
+            for (Float hr : last10HeartRates) {
+                if (hr > MaxHRthreshold || hr < MinHRthreshold) {
+                    isAnomalyDetected = true;
+                    break;
+                }
+            }
+
+            Log.d("HeartRatePrediction",
+                    String.format("Thresholds: %.1f-%.1f | ROC: %.2f",
+                            MinHRthreshold, MaxHRthreshold, predictedROC));
+
+            // Update chart with new thresholds
+            configureChart(heartChart, 200f);
+
+        } catch (Exception e) {
+            Log.e("HeartRatePrediction", "Prediction failed", e);
+        }
+    }
+    private void predictandfetchLast10HeartRates() {
+        String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+        FirebaseFirestore.getInstance()
+                .collection("patient_collection")
+                .document(uid)
+                .collection("health_records")
+                .orderBy(FieldPath.documentId(), Query.Direction.DESCENDING)
+                .limit(10) // Only get last 10 readings
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful() && !task.getResult().isEmpty()) {
+                        List<Float> last10HeartRates = new ArrayList<>();
+
+                        // Process in chronological order (oldest first)
+                        List<DocumentSnapshot> documents = new ArrayList<>(task.getResult().getDocuments());
+                        Collections.reverse(documents);
+
+                        for (DocumentSnapshot doc : documents) {
+                            Long hr = doc.getLong("heartRate");
+                            if (hr != null) {
+                                last10HeartRates.add(hr.floatValue());
+                            }
+                        }
+
+                        // Only predict if we got exactly 10 readings
+                        if (last10HeartRates.size() == 10) {
+                            predictHeartRate(last10HeartRates); // Use the existing prediction function
+                        } else {
+                            Log.w("Prediction", "Only got " + last10HeartRates.size() + " heart rate readings");
+                        }
+                    } else {
+                        Log.e("Firestore", "Error fetching heart rate data", task.getException());
+                    }
+                });
+    }
     private void updateChart(LineChart chart, LineDataSet dataSet, float value, int index) {
         dataSet.addEntry(new Entry(index, value));
 

@@ -302,6 +302,7 @@ public class PatientDetailActivity extends AppCompatActivity {
         chart.getAxisLeft().setGranularity(1f);  // Prevent duplicates on Y-axis
 
 
+
         if (chart.getId() == R.id.heartChart) {
             YAxis leftAxis = chart.getAxisLeft();
             leftAxis.removeAllLimitLines();

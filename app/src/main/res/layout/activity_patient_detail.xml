@@ -13,12 +13,6 @@
         android:background="#FFF7F9">
 
         <!-- Heart Rate -->
-        <com.github.mikephil.charting.charts.LineChart
-            android:id="@+id/heartChart"
-            android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:background="#FFFFFF"
-            android:elevation="4dp"/>
         <TextView
             android:id="@+id/heartRateTextView"
             android:layout_width="wrap_content"
@@ -27,14 +21,15 @@
             android:textColor="#333333"
             android:textSize="18sp"
             android:paddingTop="8dp"/>
-
-        <!-- Oxygen Level -->
         <com.github.mikephil.charting.charts.LineChart
-            android:id="@+id/spo2Chart"
+            android:id="@+id/heartChart"
             android:layout_width="match_parent"
             android:layout_height="200dp"
             android:background="#FFFFFF"
             android:elevation="4dp"/>
+
+
+        <!-- Oxygen Level -->
         <TextView
             android:id="@+id/OxiTextView"
             android:layout_width="wrap_content"
@@ -43,14 +38,15 @@
             android:textColor="#333333"
             android:textSize="18sp"
             android:paddingTop="8dp"/>
-
-        <!-- Temperature -->
         <com.github.mikephil.charting.charts.LineChart
-            android:id="@+id/tempChart"
+            android:id="@+id/spo2Chart"
             android:layout_width="match_parent"
             android:layout_height="200dp"
             android:background="#FFFFFF"
             android:elevation="4dp"/>
+
+
+        <!-- Temperature -->
         <TextView
             android:id="@+id/tempTextView"
             android:layout_width="wrap_content"
@@ -59,6 +55,12 @@
             android:textColor="#333333"
             android:textSize="18sp"
             android:paddingTop="8dp"/>
+        <com.github.mikephil.charting.charts.LineChart
+            android:id="@+id/tempChart"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:background="#FFFFFF"
+            android:elevation="4dp"/>
 
         <!-- Stress Meter -->
         <com.example.healthtrack.SemiCircleMeter
